@@ -81,9 +81,13 @@ export default function ClientDetailClient({
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
-      <Link href="/dashboard/clients" className="text-sm mb-6 inline-block" style={{ color: "var(--text-muted)" }}>
-        ← Klanten
-      </Link>
+      <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
+        <Link href="/dashboard/clients" className="hover:underline" style={{ color: "var(--text-muted)" }}>
+          Klanten
+        </Link>
+        <CaretRight size={12} weight="bold" />
+        <span style={{ color: "var(--text-heading)" }}>{client.name}</span>
+      </nav>
 
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-4">
