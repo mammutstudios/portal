@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
 
@@ -9,24 +10,34 @@ export default async function PortalPage() {
 
   if (!user) redirect("/login");
 
+  const cookieStore = await cookies();
+  const previewClientId = cookieStore.get("preview_client_id")?.value ?? null;
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name")
     .eq("id", user.id)
     .single();
 
-  const { data: projects } = await supabase
-    .from("projects")
-    .select("*, clients(name)")
-    .order("created_at", { ascending: false });
+  let query = supabase.from("projects").select("*, clients(name)").order("created_at", { ascending: false });
+  if (previewClientId) query = query.eq("client_id", previewClientId);
+
+  const { data: projects } = await query;
+
+  // Get the previewed client name for the heading
+  let previewClientName: string | null = null;
+  if (previewClientId) {
+    const { data: c } = await supabase.from("clients").select("name").eq("id", previewClientId).single();
+    previewClientName = c?.name ?? null;
+  }
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
       <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-        {profile?.full_name ? `Welkom, ${profile.full_name}` : "Mijn projecten"}
+        {previewClientName ?? (profile?.full_name ? `Welkom, ${profile.full_name}` : "Mijn projecten")}
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        Hier zie je de voortgang van je projecten.
+        {previewClientName ? `Projecten van ${previewClientName}` : "Hier zie je de voortgang van je projecten."}
       </p>
 
       <div className="grid gap-3">

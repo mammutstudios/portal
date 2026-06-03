@@ -15,6 +15,7 @@ import {
   Eye,
   SignOut,
   FolderOpen,
+  X,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -175,10 +176,13 @@ const clientNav: NavItem[] = [
   },
 ];
 
-export default function Sidebar({ role }: { role: "admin" | "client" }) {
+type ClientOption = { id: string; name: string; logo_url: string | null };
+
+export default function Sidebar({ role, clients = [] }: { role: "admin" | "client"; clients?: ClientOption[] }) {
   const router = useRouter();
   const supabase = createClient();
   const navItems = role === "admin" ? adminNav : clientNav;
+  const [showClientPicker, setShowClientPicker] = useState(false);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -215,16 +219,70 @@ export default function Sidebar({ role }: { role: "admin" | "client" }) {
       {/* Preview + Sign out */}
       <div className="px-2 py-3 space-y-0.5" style={{ borderTop: "1px solid var(--border)" }}>
         {role === "admin" && (
-          <form action={startPreviewAction}>
+          <>
             <button
-              type="submit"
+              onClick={() => setShowClientPicker(true)}
               className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm w-full transition-colors hover:bg-[#f1f1ef] hover:text-[var(--text-heading)]"
               style={{ color: "var(--text-muted)" }}
             >
               <Eye size={16} weight="regular" className="opacity-70" />
               Klantportaal bekijken
             </button>
-          </form>
+
+            {/* Client picker overlay */}
+            {showClientPicker && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center"
+                style={{ background: "rgba(0,0,0,0.3)" }}
+                onClick={() => setShowClientPicker(false)}
+              >
+                <div
+                  className="rounded-xl p-5 w-80 max-h-[70vh] flex flex-col"
+                  style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>Bekijk als organisatie</h2>
+                    <button onClick={() => setShowClientPicker(false)} style={{ color: "var(--text-muted)" }}>
+                      <X size={15} weight="bold" />
+                    </button>
+                  </div>
+                  <div className="overflow-y-auto space-y-1">
+                    {clients.map((c) => (
+                      <form key={c.id} action={startPreviewAction}>
+                        <input type="hidden" name="client_id" value={c.id} />
+                        <button
+                          type="submit"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm"
+                          style={{ color: "var(--text-heading)" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                        >
+                          <div
+                            className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 overflow-hidden"
+                            style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+                          >
+                            {c.logo_url ? (
+                              /^https?|^\//.test(c.logo_url) ? (
+                                <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
+                              ) : (
+                                <span style={{ fontSize: "14px" }}>{c.logo_url}</span>
+                              )
+                            ) : (
+                              <span style={{ fontSize: "10px", fontWeight: 600, color: "var(--text-muted)" }}>
+                                {c.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          {c.name}
+                        </button>
+                      </form>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
         <button
           onClick={handleSignOut}

@@ -12,6 +12,13 @@ export default async function PortalLayout({ children }: { children: React.React
 
   const cookieStore = await cookies();
   const isPreview = cookieStore.get("admin_preview")?.value === "true";
+  const previewClientId = cookieStore.get("preview_client_id")?.value ?? null;
+
+  let previewClientName: string | null = null;
+  if (isPreview && previewClientId) {
+    const { data: c } = await supabase.from("clients").select("name").eq("id", previewClientId).single();
+    previewClientName = c?.name ?? null;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -23,7 +30,7 @@ export default async function PortalLayout({ children }: { children: React.React
             style={{ background: "#1e1e1e", color: "#fff" }}
           >
             <span style={{ opacity: 0.75 }}>
-              Preview — je bekijkt het klantportaal als admin
+              Preview — je bekijkt het portaal als {previewClientName ?? "klant"}
             </span>
             <form action={stopPreviewAction}>
               <button

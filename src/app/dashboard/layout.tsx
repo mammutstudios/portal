@@ -8,9 +8,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect("/login");
 
+  const { data: clients } = await supabase
+    .from("clients")
+    .select("id, name, logo_url")
+    .order("name");
+
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar role="admin" />
+      <Sidebar role="admin" clients={clients ?? []} />
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
