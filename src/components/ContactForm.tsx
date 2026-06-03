@@ -31,7 +31,7 @@ export default function ContactForm({
       {contact && <input type="hidden" name="id" value={contact.id} />}
       {clientId && <input type="hidden" name="client_id" value={clientId} />}
 
-      {/* Klant kiezen als geen clientId meegegeven */}
+      {/* Klant kiezen als geen vaste clientId meegegeven */}
       {!clientId && clients && (
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>

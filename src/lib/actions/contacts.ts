@@ -28,14 +28,27 @@ export async function createContactAction(formData: FormData) {
 export async function updateContactAction(formData: FormData) {
   const supabase = await createClient();
   const id = formData.get("id") as string;
-  const client_id = formData.get("client_id") as string;
+  const client_id = (formData.get("client_id") as string) || null;
 
   await supabase.from("contacts").update({
+    client_id,
     name: formData.get("name") as string,
     email: (formData.get("email") as string) || null,
     phone: (formData.get("phone") as string) || null,
     job_title: (formData.get("job_title") as string) || null,
   }).eq("id", id);
+
+  if (client_id) revalidatePath(`/dashboard/clients/${client_id}`);
+  revalidatePath(`/dashboard/contacts/${id}`);
+  revalidatePath("/dashboard/contacts");
+}
+
+export async function linkContactToClientAction(formData: FormData) {
+  const supabase = await createClient();
+  const contact_id = formData.get("contact_id") as string;
+  const client_id = formData.get("client_id") as string;
+
+  await supabase.from("contacts").update({ client_id }).eq("id", contact_id);
 
   revalidatePath(`/dashboard/clients/${client_id}`);
   revalidatePath("/dashboard/contacts");

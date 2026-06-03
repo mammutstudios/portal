@@ -8,20 +8,70 @@ import { ProjectStatusBadge, ClientTagBadge } from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
 import ClientForm from "@/components/ClientForm";
 import ContactForm from "@/components/ContactForm";
-import { deleteContactAction } from "@/lib/actions/contacts";
+import { deleteContactAction, linkContactToClientAction } from "@/lib/actions/contacts";
+import SearchSelect from "@/components/SearchSelect";
 import type { Client, Project, Contact } from "@/lib/types";
+
+function LinkContactForm({ clientId, allContacts, linkedIds, onClose }: {
+  clientId: string;
+  allContacts: Contact[];
+  linkedIds: string[];
+  onClose: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const available = allContacts.filter((c) => !linkedIds.includes(c.id));
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    fd.set("client_id", clientId);
+    await linkContactToClientAction(fd);
+    onClose();
+  }
+
+  if (available.length === 0) {
+    return (
+      <p className="text-sm py-4 text-center" style={{ color: "var(--text-muted)" }}>
+        Alle contactpersonen zijn al gekoppeld aan deze klant.
+      </p>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <SearchSelect
+        name="contact_id"
+        placeholder="Zoek een contactpersoon..."
+        options={available.map((c) => ({ value: c.id, label: c.name, sublabel: c.job_title ?? undefined }))}
+        required
+      />
+      <div className="flex justify-end gap-2 pt-1">
+        <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-md text-sm" style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+          Annuleren
+        </button>
+        <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-md text-sm font-medium" style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}>
+          {loading ? "Bezig..." : "Koppelen"}
+        </button>
+      </div>
+    </form>
+  );
+}
 
 export default function ClientDetailClient({
   client,
   projects,
   contacts,
+  allContacts,
 }: {
   client: Client;
   projects: Project[];
   contacts: Contact[];
+  allContacts: Contact[];
 }) {
   const [showEdit, setShowEdit] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
+  const [showLinkContact, setShowLinkContact] = useState(false);
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const router = useRouter();
 
@@ -85,13 +135,22 @@ export default function ClientDetailClient({
         <h2 className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
           Contactpersonen
         </h2>
-        <button
-          onClick={() => setShowAddContact(true)}
-          className="text-xs px-2.5 py-1 rounded-md"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
-          + Toevoegen
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowLinkContact(true)}
+            className="text-xs px-2.5 py-1 rounded-md"
+            style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+          >
+            Koppelen
+          </button>
+          <button
+            onClick={() => setShowAddContact(true)}
+            className="text-xs px-2.5 py-1 rounded-md"
+            style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+          >
+            + Nieuw
+          </button>
+        </div>
       </div>
 
       <div className="rounded-lg overflow-hidden mb-8" style={{ border: "1px solid var(--border)" }}>
@@ -108,9 +167,19 @@ export default function ClientDetailClient({
             </thead>
             <tbody>
               {contacts.map((contact, i) => (
-                <tr key={contact.id} style={{ borderBottom: i < contacts.length - 1 ? "1px solid var(--border)" : "none" }}>
+                <tr
+                  key={contact.id}
+                  style={{ borderBottom: i < contacts.length - 1 ? "1px solid var(--border)" : "none" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                >
                   <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--text-heading)" }}>
-                    {contact.name}
+                    <button
+                      onClick={() => router.push(`/dashboard/contacts/${contact.id}`)}
+                      className="hover:underline text-left"
+                    >
+                      {contact.name}
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
                     {contact.job_title ?? "—"}
@@ -171,8 +240,10 @@ export default function ClientDetailClient({
                 <tr
                   key={project.id}
                   onClick={() => router.push(`/dashboard/projects/${project.id}`)}
-                  className="cursor-pointer hover:bg-[#f7f7f5]"
+                  className="cursor-pointer"
                   style={{ borderBottom: i < projects.length - 1 ? "1px solid var(--border)" : "none" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                 >
                   <td className="px-4 py-3 font-medium" style={{ color: "var(--text-heading)" }}>
                     {project.title}
@@ -201,8 +272,14 @@ export default function ClientDetailClient({
       )}
 
       {showAddContact && (
-        <Modal title="Contactpersoon toevoegen" onClose={() => setShowAddContact(false)}>
+        <Modal title="Nieuw contactpersoon" onClose={() => setShowAddContact(false)}>
           <ContactForm clientId={client.id} projects={projects} onClose={() => setShowAddContact(false)} />
+        </Modal>
+      )}
+
+      {showLinkContact && (
+        <Modal title="Bestaand contactpersoon koppelen" onClose={() => setShowLinkContact(false)}>
+          <LinkContactForm clientId={client.id} allContacts={allContacts} linkedIds={contacts.map((c) => c.id)} onClose={() => setShowLinkContact(false)} />
         </Modal>
       )}
 
