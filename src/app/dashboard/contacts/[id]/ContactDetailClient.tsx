@@ -149,7 +149,10 @@ export default function ContactDetailClient({
               <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Organisaties</p>
             </div>
             <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-              {linkedClients.length > 0 ? linkedClients.map((c, i) => (
+              {linkedClients.length === 0 && (
+                <p className="px-3 py-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>Geen organisaties gekoppeld.</p>
+              )}
+              {linkedClients.map((c, i) => (
                 <div
                   key={c.id}
                   className="flex items-center justify-between px-3 py-2.5 group"
@@ -188,19 +191,21 @@ export default function ContactDetailClient({
                   </button>
                 </div>
               ))}
-              <button
-                onClick={() => setShowAddClient(true)}
-                className="w-full px-3 py-2.5 text-sm text-left"
-                style={{
-                  color: "var(--text-muted)",
-                  borderTop: linkedClients.length > 0 ? "1px solid var(--border)" : "none",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-              >
-                + Organisatie koppelen
-              </button>
             </div>
+
+            {/* Dotted add card */}
+            <button
+              onClick={() => setShowAddClient(true)}
+              className="w-full mt-2 px-3 py-2.5 rounded-lg text-sm text-center"
+              style={{
+                border: "1.5px dashed var(--border)",
+                color: "var(--text-muted)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--text-muted)"; e.currentTarget.style.color = "var(--text)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+            >
+              + Organisatie toevoegen
+            </button>
           </div>
         </div>
 
