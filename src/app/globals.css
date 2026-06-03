@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "PP Mori";
+  src: url("/fonts/PPMori-Medium.woff2") format("woff2"),
+       url("/fonts/PPMori-Medium.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Mori";
+  src: url("/fonts/PPMori-Semibold.woff2") format("woff2"),
+       url("/fonts/PPMori-Semibold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Mori";
+  src: url("/fonts/PPMori-Extrabold.woff2") format("woff2"),
+       url("/fonts/PPMori-Extrabold.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --bg: #ffffff;
+  --bg-secondary: #f7f7f5;
+  --bg-hover: #f1f1ef;
+  --border: #e9e9e7;
+  --text: #37352f;
+  --text-muted: #9b9a97;
+  --text-heading: #1a1a1a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "PP Mori", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 20px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+}
+
+.card-hover {
+  transition: background 150ms;
+}
+
+.card-hover:hover {
+  background: var(--bg-hover) !important;
+}
+
+th, td {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-size: 0.875rem;
 }

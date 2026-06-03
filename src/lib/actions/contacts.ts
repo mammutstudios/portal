@@ -1,0 +1,71 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+
+export async function createContactAction(formData: FormData) {
+  const supabase = await createClient();
+  const client_id = (formData.get("client_id") as string) || null;
+  const project_id = (formData.get("project_id") as string) || null;
+
+  const { data: contact } = await supabase.from("contacts").insert({
+    client_id,
+    name: formData.get("name") as string,
+    email: (formData.get("email") as string) || null,
+    phone: (formData.get("phone") as string) || null,
+    job_title: (formData.get("job_title") as string) || null,
+  }).select().single();
+
+  if (contact && project_id) {
+    await supabase.from("project_contacts").insert({ project_id, contact_id: contact.id });
+    revalidatePath(`/dashboard/projects/${project_id}`);
+  }
+
+  revalidatePath(`/dashboard/clients/${client_id}`);
+  revalidatePath("/dashboard/contacts");
+}
+
+export async function updateContactAction(formData: FormData) {
+  const supabase = await createClient();
+  const id = formData.get("id") as string;
+  const client_id = formData.get("client_id") as string;
+
+  await supabase.from("contacts").update({
+    name: formData.get("name") as string,
+    email: (formData.get("email") as string) || null,
+    phone: (formData.get("phone") as string) || null,
+    job_title: (formData.get("job_title") as string) || null,
+  }).eq("id", id);
+
+  revalidatePath(`/dashboard/clients/${client_id}`);
+  revalidatePath("/dashboard/contacts");
+}
+
+export async function addContactToProjectAction(formData: FormData) {
+  const supabase = await createClient();
+  const project_id = formData.get("project_id") as string;
+  const contact_id = formData.get("contact_id") as string;
+
+  await supabase.from("project_contacts").insert({ project_id, contact_id });
+  revalidatePath(`/dashboard/projects/${project_id}`);
+}
+
+export async function removeContactFromProjectAction(formData: FormData) {
+  const supabase = await createClient();
+  const project_id = formData.get("project_id") as string;
+  const contact_id = formData.get("contact_id") as string;
+
+  await supabase.from("project_contacts").delete().eq("project_id", project_id).eq("contact_id", contact_id);
+  revalidatePath(`/dashboard/projects/${project_id}`);
+}
+
+export async function deleteContactAction(formData: FormData) {
+  const supabase = await createClient();
+  const id = formData.get("id") as string;
+  const client_id = formData.get("client_id") as string;
+
+  await supabase.from("contacts").delete().eq("id", id);
+
+  revalidatePath(`/dashboard/clients/${client_id}`);
+  revalidatePath("/dashboard/contacts");
+}
