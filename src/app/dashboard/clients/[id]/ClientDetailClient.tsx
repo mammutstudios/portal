@@ -8,7 +8,7 @@ import { ProjectStatusBadge, ClientTagBadge } from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
 import ClientForm from "@/components/ClientForm";
 import ContactForm from "@/components/ContactForm";
-import { deleteContactAction, linkContactToClientAction } from "@/lib/actions/contacts";
+import { unlinkContactFromClientAction, linkContactToClientAction } from "@/lib/actions/contacts";
 import SearchSelect from "@/components/SearchSelect";
 import type { Client, Project, Contact } from "@/lib/types";
 
@@ -72,7 +72,6 @@ export default function ClientDetailClient({
   const [showEdit, setShowEdit] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
   const [showLinkContact, setShowLinkContact] = useState(false);
-  const [editContact, setEditContact] = useState<Contact | null>(null);
   const router = useRouter();
 
   const Chevron = () => (
@@ -195,22 +194,15 @@ export default function ClientDetailClient({
                     {contact.phone ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setEditContact(contact)}
-                      className="text-xs px-2 py-1 rounded-md mr-1"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      Bewerken
-                    </button>
-                    <form action={deleteContactAction} className="inline">
-                      <input type="hidden" name="id" value={contact.id} />
+                    <form action={unlinkContactFromClientAction} className="inline">
+                      <input type="hidden" name="contact_id" value={contact.id} />
                       <input type="hidden" name="client_id" value={client.id} />
                       <button
                         type="submit"
                         className="text-xs px-2 py-1 rounded-md"
-                        style={{ color: "#e57373" }}
+                        style={{ color: "var(--text-muted)" }}
                       >
-                        Verwijderen
+                        Ontkoppelen
                       </button>
                     </form>
                   </td>
@@ -277,7 +269,7 @@ export default function ClientDetailClient({
 
       {showAddContact && (
         <Modal title="Nieuw contactpersoon" onClose={() => setShowAddContact(false)}>
-          <ContactForm clientId={client.id} projects={projects} onClose={() => setShowAddContact(false)} />
+          <ContactForm initialClientId={client.id} onClose={() => setShowAddContact(false)} />
         </Modal>
       )}
 
@@ -287,11 +279,6 @@ export default function ClientDetailClient({
         </Modal>
       )}
 
-      {editContact && (
-        <Modal title="Contactpersoon bewerken" onClose={() => setEditContact(null)}>
-          <ContactForm clientId={client.id} contact={editContact} onClose={() => setEditContact(null)} />
-        </Modal>
-      )}
     </div>
   );
 }

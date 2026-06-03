@@ -56,13 +56,12 @@ export type Task = {
 
 export type Contact = {
   id: string;
-  client_id: string;
   name: string;
   email: string | null;
   phone: string | null;
   job_title: string | null;
   created_at: string;
-  clients?: Client;
+  contact_clients?: { clients: Pick<Client, "id" | "name" | "logo_url" | "client_number"> }[];
 };
 
 export type ProjectContact = {

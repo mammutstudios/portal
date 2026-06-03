@@ -9,11 +9,13 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const [{ data: client }, { data: projects }, { data: contacts }, { data: allContacts }] = await Promise.all([
     supabase.from("clients").select("*").eq("id", id).single(),
     supabase.from("projects").select("*").eq("client_id", id).order("created_at", { ascending: false }),
-    supabase.from("contacts").select("*").eq("client_id", id).order("created_at", { ascending: true }),
+    supabase.from("contact_clients").select("contacts(*)").eq("client_id", id),
     supabase.from("contacts").select("*").order("name"),
   ]);
 
   if (!client) notFound();
 
-  return <ClientDetailClient client={client} projects={projects ?? []} contacts={contacts ?? []} allContacts={allContacts ?? []} />;
+  const linkedContacts = (contacts ?? []).map((cc: any) => cc.contacts).filter(Boolean);
+
+  return <ClientDetailClient client={client} projects={projects ?? []} contacts={linkedContacts} allContacts={allContacts ?? []} />;
 }

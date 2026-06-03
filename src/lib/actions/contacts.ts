@@ -9,36 +9,36 @@ export async function createContactAction(formData: FormData) {
   const project_id = (formData.get("project_id") as string) || null;
 
   const { data: contact } = await supabase.from("contacts").insert({
-    client_id,
     name: formData.get("name") as string,
     email: (formData.get("email") as string) || null,
     phone: (formData.get("phone") as string) || null,
     job_title: (formData.get("job_title") as string) || null,
   }).select().single();
 
+  if (contact && client_id) {
+    await supabase.from("contact_clients").insert({ contact_id: contact.id, client_id });
+  }
+
   if (contact && project_id) {
     await supabase.from("project_contacts").insert({ project_id, contact_id: contact.id });
     revalidatePath(`/dashboard/projects/${project_id}`);
   }
 
-  revalidatePath(`/dashboard/clients/${client_id}`);
+  if (client_id) revalidatePath(`/dashboard/clients/${client_id}`);
   revalidatePath("/dashboard/contacts");
 }
 
 export async function updateContactAction(formData: FormData) {
   const supabase = await createClient();
   const id = formData.get("id") as string;
-  const client_id = (formData.get("client_id") as string) || null;
 
   await supabase.from("contacts").update({
-    client_id,
     name: formData.get("name") as string,
     email: (formData.get("email") as string) || null,
     phone: (formData.get("phone") as string) || null,
     job_title: (formData.get("job_title") as string) || null,
   }).eq("id", id);
 
-  if (client_id) revalidatePath(`/dashboard/clients/${client_id}`);
   revalidatePath(`/dashboard/contacts/${id}`);
   revalidatePath("/dashboard/contacts");
 }
@@ -48,9 +48,24 @@ export async function linkContactToClientAction(formData: FormData) {
   const contact_id = formData.get("contact_id") as string;
   const client_id = formData.get("client_id") as string;
 
-  await supabase.from("contacts").update({ client_id }).eq("id", contact_id);
+  await supabase.from("contact_clients").upsert({ contact_id, client_id });
 
   revalidatePath(`/dashboard/clients/${client_id}`);
+  revalidatePath(`/dashboard/contacts/${contact_id}`);
+  revalidatePath("/dashboard/contacts");
+}
+
+export async function unlinkContactFromClientAction(formData: FormData) {
+  const supabase = await createClient();
+  const contact_id = formData.get("contact_id") as string;
+  const client_id = formData.get("client_id") as string;
+
+  await supabase.from("contact_clients").delete()
+    .eq("contact_id", contact_id)
+    .eq("client_id", client_id);
+
+  revalidatePath(`/dashboard/clients/${client_id}`);
+  revalidatePath(`/dashboard/contacts/${contact_id}`);
   revalidatePath("/dashboard/contacts");
 }
 
@@ -75,10 +90,10 @@ export async function removeContactFromProjectAction(formData: FormData) {
 export async function deleteContactAction(formData: FormData) {
   const supabase = await createClient();
   const id = formData.get("id") as string;
-  const client_id = formData.get("client_id") as string;
+  const client_id = formData.get("client_id") as string | null;
 
   await supabase.from("contacts").delete().eq("id", id);
 
-  revalidatePath(`/dashboard/clients/${client_id}`);
+  if (client_id) revalidatePath(`/dashboard/clients/${client_id}`);
   revalidatePath("/dashboard/contacts");
 }

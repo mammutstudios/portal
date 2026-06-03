@@ -2,20 +2,15 @@
 
 import { useRef } from "react";
 import { createContactAction, updateContactAction } from "@/lib/actions/contacts";
-import SearchSelect from "@/components/SearchSelect";
-import type { Contact, Project, Client } from "@/lib/types";
+import type { Contact } from "@/lib/types";
 
 export default function ContactForm({
-  clientId,
   contact,
-  projects,
-  clients,
+  initialClientId,
   onClose,
 }: {
-  clientId?: string;
   contact?: Contact;
-  projects?: Project[];
-  clients?: Client[];
+  initialClientId?: string;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLFormElement>(null);
@@ -29,22 +24,7 @@ export default function ContactForm({
   return (
     <form ref={ref} action={handleSubmit} className="space-y-3">
       {contact && <input type="hidden" name="id" value={contact.id} />}
-      {clientId && <input type="hidden" name="client_id" value={clientId} />}
-
-      {/* Klant kiezen als geen vaste clientId meegegeven */}
-      {!clientId && clients && (
-        <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
-            Klant
-          </label>
-          <SearchSelect
-            name="client_id"
-            placeholder="Selecteer een klant (optioneel)"
-            options={clients.map((c) => ({ value: c.id, label: c.name, sublabel: c.client_number ?? undefined }))}
-            defaultValue={contact?.client_id ?? undefined}
-          />
-        </div>
-      )}
+      {initialClientId && <input type="hidden" name="client_id" value={initialClientId} />}
 
       <div>
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
@@ -95,19 +75,6 @@ export default function ContactForm({
           style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
         />
       </div>
-
-      {!contact && projects && projects.length > 0 && (
-        <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
-            Koppelen aan project (optioneel)
-          </label>
-          <SearchSelect
-            name="project_id"
-            placeholder="— Geen —"
-            options={projects.map((p) => ({ value: p.id, label: p.title }))}
-          />
-        </div>
-      )}
 
       <div className="flex justify-end gap-2 pt-1">
         <button
