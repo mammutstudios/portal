@@ -147,15 +147,6 @@ export default function ContactDetailClient({
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Organisaties</p>
-              {linkedClients.length > 0 && (
-                <button
-                  onClick={() => setShowAddClient(true)}
-                  className="text-xs px-2 py-0.5 rounded-md"
-                  style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-                >
-                  + Koppelen
-                </button>
-              )}
             </div>
             <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
               {linkedClients.length > 0 ? linkedClients.map((c, i) => (
@@ -196,17 +187,19 @@ export default function ContactDetailClient({
                     <X size={12} weight="bold" />
                   </button>
                 </div>
-              )) : (
-                <button
-                  onClick={() => setShowAddClient(true)}
-                  className="w-full px-3 py-3 text-sm text-left"
-                  style={{ color: "var(--text-muted)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-                >
-                  + Organisatie koppelen
-                </button>
-              )}
+              ))}
+              <button
+                onClick={() => setShowAddClient(true)}
+                className="w-full px-3 py-2.5 text-sm text-left"
+                style={{
+                  color: "var(--text-muted)",
+                  borderTop: linkedClients.length > 0 ? "1px solid var(--border)" : "none",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+              >
+                + Organisatie koppelen
+              </button>
             </div>
           </div>
         </div>
