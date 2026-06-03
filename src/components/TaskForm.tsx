@@ -36,7 +36,7 @@ export default function TaskForm({
   onClose: () => void;
 }) {
   const [status, setStatus] = useState(task?.status ?? "todo");
-  const [priority, setPriority] = useState(task?.priority ?? "medium");
+  const [highPriority, setHighPriority] = useState((task?.priority ?? "medium") === "high");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +83,7 @@ export default function TaskForm({
     <form onSubmit={handleSubmit} className="space-y-3">
       {task && <input type="hidden" name="id" value={task.id} />}
       <input type="hidden" name="status" value={status} />
-      <input type="hidden" name="priority" value={priority} />
+      <input type="hidden" name="priority" value={highPriority ? "high" : "medium"} />
 
       {/* Titel */}
       <div>
@@ -110,47 +110,53 @@ export default function TaskForm({
         />
       </div>
 
-      {/* Status + Prioriteit naast elkaar */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Status</label>
-          <div className="flex flex-wrap gap-1">
-            {STATUSES.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                onClick={() => setStatus(s.value as any)}
-                className="px-2 py-1 rounded-md text-xs font-medium"
-                style={{
-                  border: `1px solid ${status === s.value ? "var(--text-heading)" : "var(--border)"}`,
-                  background: status === s.value ? "var(--text-heading)" : "transparent",
-                  color: status === s.value ? "#fff" : "var(--text-muted)",
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
+      {/* Status (alleen bij bewerken) + Prioriteit checkbox */}
+      <div className="flex items-center gap-4 flex-wrap">
+        {task && (
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Status</label>
+            <div className="flex flex-wrap gap-1">
+              {STATUSES.map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => setStatus(s.value as any)}
+                  className="px-2 py-1 rounded-md text-xs font-medium"
+                  style={{
+                    border: `1px solid ${status === s.value ? "var(--text-heading)" : "var(--border)"}`,
+                    background: status === s.value ? "var(--text-heading)" : "transparent",
+                    color: status === s.value ? "#fff" : "var(--text-muted)",
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-        <div>
-          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Prioriteit</label>
-          <div className="flex gap-1">
-            {PRIORITIES.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => setPriority(p.value as any)}
-                className="px-2 py-1 rounded-md text-xs font-medium"
-                style={{
-                  border: `1px solid ${priority === p.value ? PRIORITY_COLORS[p.value].border : "var(--border)"}`,
-                  background: priority === p.value ? PRIORITY_COLORS[p.value].bg : "transparent",
-                  color: priority === p.value ? PRIORITY_COLORS[p.value].text : "var(--text-muted)",
-                }}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+        )}
+        <div className={task ? "" : "pt-0"}>
+          {task && <div className="text-xs font-medium mb-1" style={{ color: "transparent" }}>_</div>}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <button
+              type="button"
+              onClick={() => setHighPriority((v) => !v)}
+              className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center"
+              style={{
+                border: `1.5px solid ${highPriority ? PRIORITY_COLORS.high.border : "var(--border)"}`,
+                background: highPriority ? PRIORITY_COLORS.high.bg : "transparent",
+                transition: "all 150ms",
+              }}
+            >
+              {highPriority && (
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M1 4l2 2 4-4" stroke={PRIORITY_COLORS.high.text} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+            <span className="text-sm" style={{ color: highPriority ? PRIORITY_COLORS.high.text : "var(--text-muted)" }}>
+              Hoge prioriteit
+            </span>
+          </label>
         </div>
       </div>
 
@@ -202,7 +208,7 @@ export default function TaskForm({
           Annuleren
         </button>
         <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-md text-sm font-medium" style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}>
-          {loading ? "Bezig..." : task ? "Opslaan" : "Aanmaken"}
+          {loading ? "Bezig..." : task ? "Opslaan" : "Ticket aanmaken"}
         </button>
       </div>
     </form>

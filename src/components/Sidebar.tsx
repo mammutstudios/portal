@@ -16,6 +16,7 @@ import {
   SignOut,
   FolderOpen,
   X,
+  GearSix,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -143,7 +144,7 @@ const adminNav: NavItem[] = [
     icon: <SquaresFour size={17} weight="fill" />,
   },
   {
-    label: "Taken",
+    label: "Tickets",
     href: "/dashboard/tasks",
     icon: <CheckSquare size={17} weight="fill" />,
   },
@@ -284,6 +285,14 @@ export default function Sidebar({ role, clients = [] }: { role: "admin" | "clien
             )}
           </>
         )}
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm w-full transition-colors hover:bg-[#f1f1ef] hover:text-[var(--text-heading)]"
+          style={{ color: "var(--text-muted)" }}
+        >
+          <GearSix size={16} weight="regular" className="opacity-70" />
+          Instellingen
+        </Link>
         <button
           onClick={handleSignOut}
           className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm w-full transition-colors hover:bg-[#f1f1ef] hover:text-[var(--text-heading)]"

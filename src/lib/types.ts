@@ -58,7 +58,15 @@ export type Task = {
   created_at: string;
   projects?: { id: string; title: string } | null;
   contacts?: { id: string; name: string } | null;
-  profiles?: { id: string; full_name: string | null } | null;
+  profiles?: { id: string; full_name: string | null; avatar_url: string | null } | null;
+};
+
+export type Subtask = {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  created_at: string;
 };
 
 export type Contact = {
