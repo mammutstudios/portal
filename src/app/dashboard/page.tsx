@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   const currentMonth = now.getMonth();
 
   const [{ data: projects }, { count: taskCount }, { data: transactions }] = await Promise.all([
-    supabase.from("projects").select("*, clients(name)").eq("status", "active").order("created_at", { ascending: false }).limit(10),
+    supabase.from("projects").select("*, clients(name, logo_url)").eq("status", "active").order("created_at", { ascending: false }).limit(10),
     supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
     supabase.from("transactions").select("amount, date"),
   ]);
@@ -137,8 +137,30 @@ export default async function DashboardPage() {
                         {project.title}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
-                      {project.clients?.name ?? "—"}
+                    <td className="px-4 py-3 text-sm">
+                      {project.clients ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 overflow-hidden"
+                            style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+                          >
+                            {project.clients.logo_url ? (
+                              /^https?|^\//.test(project.clients.logo_url) ? (
+                                <img src={project.clients.logo_url} alt={project.clients.name} className="w-full h-full object-contain" />
+                              ) : (
+                                <span style={{ fontSize: "11px" }}>{project.clients.logo_url}</span>
+                              )
+                            ) : (
+                              <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>
+                                {project.clients.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ color: "var(--text-muted)" }}>{project.clients.name}</span>
+                        </div>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <ProjectStatusBadge status={project.status} />
