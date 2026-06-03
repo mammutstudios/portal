@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { createTaskAction, updateTaskAction } from "@/lib/actions/tasks";
 import SearchSelect from "@/components/SearchSelect";
-import type { Task, Project, Contact, Profile } from "@/lib/types";
+import type { Task, Contact, Profile } from "@/lib/types";
+
+type ProjectOption = { id: string; title: string; clients?: { name: string; logo_url: string | null } | null };
 
 const STATUSES = [
   { value: "todo", label: "Te doen" },
@@ -27,7 +29,7 @@ export default function TaskForm({
   onClose,
 }: {
   task?: Task;
-  projects: Pick<Project, "id" | "title">[];
+  projects: ProjectOption[];
   contacts: Pick<Contact, "id" | "name" | "job_title">[];
   profiles: Pick<Profile, "id" | "full_name">[];
   defaultProjectId?: string;
@@ -163,7 +165,11 @@ export default function TaskForm({
         <SearchSelect
           name="project_id"
           placeholder="— Geen —"
-          options={projects.map((p) => ({ value: p.id, label: p.title }))}
+          options={projects.map((p) => ({
+            value: p.id,
+            label: p.title,
+            rightMeta: p.clients ? { label: p.clients.name, logo_url: p.clients.logo_url } : undefined,
+          }))}
           defaultValue={task?.project_id ?? defaultProjectId ?? undefined}
         />
       </div>
