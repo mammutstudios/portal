@@ -143,17 +143,19 @@ export default function ContactDetailClient({
             </div>
           )}
 
-          {/* Klanten */}
+          {/* Organisaties */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Organisaties</p>
-              <button
-                onClick={() => setShowAddClient(true)}
-                className="text-xs px-2 py-0.5 rounded-md"
-                style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-              >
-                + Koppelen
-              </button>
+              {linkedClients.length > 0 && (
+                <button
+                  onClick={() => setShowAddClient(true)}
+                  className="text-xs px-2 py-0.5 rounded-md"
+                  style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+                >
+                  + Koppelen
+                </button>
+              )}
             </div>
             <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
               {linkedClients.length > 0 ? linkedClients.map((c, i) => (
@@ -164,7 +166,7 @@ export default function ContactDetailClient({
                 >
                   <Link
                     href={`/dashboard/clients/${c.id}`}
-                    className="flex items-center gap-2 flex-1 min-w-0 hover:underline"
+                    className="flex items-center gap-2 flex-1 min-w-0"
                     style={{ color: "inherit", textDecoration: "none" }}
                   >
                     <div
@@ -195,9 +197,15 @@ export default function ContactDetailClient({
                   </button>
                 </div>
               )) : (
-                <p className="px-3 py-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>
-                  Geen organisaties gekoppeld.
-                </p>
+                <button
+                  onClick={() => setShowAddClient(true)}
+                  className="w-full px-3 py-3 text-sm text-left"
+                  style={{ color: "var(--text-muted)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+                >
+                  + Organisatie koppelen
+                </button>
               )}
             </div>
           </div>
