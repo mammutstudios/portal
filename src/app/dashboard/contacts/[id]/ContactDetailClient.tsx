@@ -145,9 +145,7 @@ export default function ContactDetailClient({
 
           {/* Organisaties */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Organisaties</p>
-            </div>
+            <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Organisaties</h2>
             <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
               {linkedClients.length === 0 && (
                 <p className="px-3 py-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>Geen organisaties gekoppeld.</p>
