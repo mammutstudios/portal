@@ -43,15 +43,22 @@ export type Project = {
 };
 
 export type TaskStatus = "todo" | "in_progress" | "review" | "done";
+export type TaskPriority = "low" | "medium" | "high";
 
 export type Task = {
   id: string;
-  project_id: string;
+  project_id: string | null;
   title: string;
   description: string | null;
   status: TaskStatus;
+  priority: TaskPriority | null;
   due_date: string | null;
+  assigned_contact_id: string | null;
+  assigned_profile_id: string | null;
   created_at: string;
+  projects?: { id: string; title: string } | null;
+  contacts?: { id: string; name: string } | null;
+  profiles?: { id: string; full_name: string | null } | null;
 };
 
 export type Contact = {
