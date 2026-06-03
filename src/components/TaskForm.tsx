@@ -40,14 +40,30 @@ export default function TaskForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(formData: FormData) {
+  const [assignee, setAssignee] = useState<string | undefined>(
+    task?.assigned_profile_id ? `profile:${task.assigned_profile_id}`
+    : task?.assigned_contact_id ? `contact:${task.assigned_contact_id}`
+    : undefined
+  );
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
     setLoading(true);
     try {
+      const fd = new FormData(e.currentTarget);
+      // Parse assignee
+      if (assignee?.startsWith("profile:")) {
+        fd.set("assigned_profile_id", assignee.replace("profile:", ""));
+        fd.set("assigned_contact_id", "");
+      } else if (assignee?.startsWith("contact:")) {
+        fd.set("assigned_contact_id", assignee.replace("contact:", ""));
+        fd.set("assigned_profile_id", "");
+      }
       if (task) {
-        await updateTaskAction(formData);
+        await updateTaskAction(fd);
       } else {
-        await createTaskAction(formData);
+        await createTaskAction(fd);
       }
       onClose();
     } catch (e: any) {
@@ -63,29 +79,8 @@ export default function TaskForm({
     ...contacts.map((c) => ({ value: `contact:${c.id}`, label: c.name, sublabel: c.job_title ?? "Contact" })),
   ];
 
-  const defaultAssignee = task?.assigned_profile_id
-    ? `profile:${task.assigned_profile_id}`
-    : task?.assigned_contact_id
-    ? `contact:${task.assigned_contact_id}`
-    : undefined;
-
   return (
-    <form
-      action={(fd) => {
-        // Parse assignee value
-        const assignee = fd.get("assignee") as string | null;
-        fd.delete("assignee");
-        if (assignee?.startsWith("profile:")) {
-          fd.set("assigned_profile_id", assignee.replace("profile:", ""));
-          fd.set("assigned_contact_id", "");
-        } else if (assignee?.startsWith("contact:")) {
-          fd.set("assigned_contact_id", assignee.replace("contact:", ""));
-          fd.set("assigned_profile_id", "");
-        }
-        handleSubmit(fd);
-      }}
-      className="space-y-3"
-    >
+    <form onSubmit={handleSubmit} className="space-y-3">
       {task && <input type="hidden" name="id" value={task.id} />}
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="priority" value={priority} />
@@ -193,7 +188,8 @@ export default function TaskForm({
           name="assignee"
           placeholder="— Niemand —"
           options={assigneeOptions}
-          defaultValue={defaultAssignee}
+          defaultValue={assignee}
+          onChange={(val) => setAssignee(val)}
         />
       </div>
 
