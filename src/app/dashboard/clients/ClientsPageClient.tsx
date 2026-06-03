@@ -17,7 +17,7 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
     <div className="px-10 py-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          Klanten <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({clients.length})</span>
+          Organisaties <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({clients.length})</span>
         </h1>
         <button
           onClick={() => setShowModal(true)}
