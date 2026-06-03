@@ -210,7 +210,7 @@ export default function ClientForm({
           required
           autoFocus
           defaultValue={client?.name ?? ""}
-          placeholder="Klantnaam"
+          placeholder="Organisatienaam"
           className="w-full px-3 py-2 text-sm rounded-md outline-none"
           style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text)" }}
           onChange={(e) => {
@@ -247,7 +247,7 @@ export default function ClientForm({
           className="text-sm px-4 py-1.5 rounded-md font-medium disabled:opacity-50"
           style={{ background: "var(--text-heading)", color: "#fff" }}
         >
-          {loading ? "Opslaan…" : isEdit ? "Opslaan" : "Klant aanmaken"}
+          {loading ? "Opslaan…" : isEdit ? "Opslaan" : "Organisatie aanmaken"}
         </button>
       </div>
     </form>

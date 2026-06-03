@@ -12,7 +12,7 @@ export async function createProjectAction(formData: FormData) {
   const tags = formData.getAll("tags") as string[];
 
   if (!title?.trim()) return { error: "Naam is verplicht" };
-  if (!client_id) return { error: "Klant is verplicht" };
+  if (!client_id) return { error: "Organisatie is verplicht" };
 
   const supabase = await createClient();
   const { error } = await supabase.from("projects").insert({

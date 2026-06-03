@@ -29,7 +29,7 @@ function AddClientForm({ contactId, allClients, linkedIds, onClose }: {
   const available = allClients.filter((c) => !linkedIds.includes(c.id));
 
   if (available.length === 0) {
-    return <p className="text-sm py-3 text-center" style={{ color: "var(--text-muted)" }}>Alle klanten zijn al gekoppeld.</p>;
+    return <p className="text-sm py-3 text-center" style={{ color: "var(--text-muted)" }}>Alle organisaties zijn al gekoppeld.</p>;
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -45,7 +45,7 @@ function AddClientForm({ contactId, allClients, linkedIds, onClose }: {
     <form onSubmit={handleSubmit} className="space-y-3">
       <SearchSelect
         name="client_id"
-        placeholder="Zoek een klant..."
+        placeholder="Zoek een organisatie..."
         options={available.map((c) => ({ value: c.id, label: c.name, sublabel: c.client_number ?? undefined }))}
         required
       />
@@ -146,7 +146,7 @@ export default function ContactDetailClient({
           {/* Klanten */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Klanten</p>
+              <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Organisaties</p>
               <button
                 onClick={() => setShowAddClient(true)}
                 className="text-xs px-2 py-0.5 rounded-md"
@@ -196,7 +196,7 @@ export default function ContactDetailClient({
                 </div>
               )) : (
                 <p className="px-3 py-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>
-                  Geen klanten gekoppeld.
+                  Geen organisaties gekoppeld.
                 </p>
               )}
             </div>
@@ -255,7 +255,7 @@ export default function ContactDetailClient({
       )}
 
       {showAddClient && (
-        <Modal title="Klant koppelen" onClose={() => setShowAddClient(false)}>
+        <Modal title="Organisatie koppelen" onClose={() => setShowAddClient(false)}>
           <AddClientForm
             contactId={contact.id}
             allClients={clients}

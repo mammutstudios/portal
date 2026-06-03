@@ -157,7 +157,7 @@ const adminNav: NavItem[] = [
     icon: <CurrencyDollar size={17} weight="bold" />,
   },
   {
-    label: "Klanten",
+    label: "CRM",
     href: "/dashboard/clients",
     icon: <Users size={17} weight="fill" />,
     children: [

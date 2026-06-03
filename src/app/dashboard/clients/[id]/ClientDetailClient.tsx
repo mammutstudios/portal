@@ -33,7 +33,7 @@ function LinkContactForm({ clientId, allContacts, linkedIds, onClose }: {
   if (available.length === 0) {
     return (
       <p className="text-sm py-4 text-center" style={{ color: "var(--text-muted)" }}>
-        Alle contactpersonen zijn al gekoppeld aan deze klant.
+        Alle contactpersonen zijn al gekoppeld aan deze organisatie.
       </p>
     );
   }
@@ -82,7 +82,7 @@ export default function ClientDetailClient({
     <div className="px-10 py-10 max-w-5xl mx-auto">
       <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
         <Link href="/dashboard/clients" className="hover:underline" style={{ color: "var(--text-muted)" }}>
-          Klanten
+          Organisaties
         </Link>
         <CaretRight size={12} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{client.name}</span>
@@ -256,13 +256,13 @@ export default function ClientDetailClient({
           </table>
         ) : (
           <p className="px-4 py-6 text-sm text-center" style={{ color: "var(--text-muted)" }}>
-            Geen projecten voor deze klant.
+            Geen projecten voor deze organisatie.
           </p>
         )}
       </div>
 
       {showEdit && (
-        <Modal title="Klant bewerken" onClose={() => setShowEdit(false)}>
+        <Modal title="Organisatie bewerken" onClose={() => setShowEdit(false)}>
           <ClientForm client={client} onClose={() => setShowEdit(false)} />
         </Modal>
       )}

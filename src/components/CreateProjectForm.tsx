@@ -71,7 +71,7 @@ export default function CreateProjectForm({
         <SearchSelect
           name="client_id"
           required
-          placeholder="Selecteer een klant"
+          placeholder="Selecteer een organisatie"
           defaultValue={defaultClientId}
           options={clients.map((c) => ({
             value: c.id,

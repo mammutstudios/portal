@@ -24,7 +24,7 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
           className="text-sm px-3 py-1.5 rounded-md font-medium"
           style={{ background: "var(--text-heading)", color: "#fff" }}
         >
-          + Nieuwe klant
+          + Nieuwe organisatie
         </button>
       </div>
       <div className="mb-8" />
@@ -81,7 +81,7 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
           </table>
         ) : (
           <p className="px-4 py-6 text-sm text-center" style={{ color: "var(--text-muted)" }}>
-            Nog geen klanten.{" "}
+            Nog geen organisaties.{" "}
             <button onClick={() => setShowModal(true)} className="underline" style={{ color: "var(--text)" }}>
               Maak de eerste aan.
             </button>
@@ -90,7 +90,7 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
       </div>
 
       {showModal && (
-        <Modal title="Nieuwe klant" onClose={() => setShowModal(false)}>
+        <Modal title="Nieuwe organisatie" onClose={() => setShowModal(false)}>
           <ClientForm onClose={() => setShowModal(false)} />
         </Modal>
       )}

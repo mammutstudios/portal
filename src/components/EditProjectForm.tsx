@@ -54,7 +54,7 @@ export default function EditProjectForm({
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Klant</label>
         <SearchSelect
           name="client_id"
-          placeholder="Selecteer een klant"
+          placeholder="Selecteer een organisatie"
           options={clients.map((c) => ({ value: c.id, label: c.name, sublabel: c.client_number ?? undefined }))}
           defaultValue={project.client_id ?? undefined}
         />
