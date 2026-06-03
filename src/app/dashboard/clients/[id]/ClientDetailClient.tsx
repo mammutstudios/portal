@@ -42,7 +42,11 @@ export default function ClientDetailClient({
             style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
           >
             {client.logo_url ? (
-              <img src={client.logo_url} alt={client.name} className="w-full h-full object-contain" />
+              /^https?|^\//.test(client.logo_url) ? (
+                <img src={client.logo_url} alt={client.name} className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-2xl">{client.logo_url}</span>
+              )
             ) : (
               <span className="text-lg font-semibold" style={{ color: "var(--text-muted)" }}>
                 {client.name.charAt(0).toUpperCase()}

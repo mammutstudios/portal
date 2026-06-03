@@ -41,7 +41,7 @@ export default function ProjectsPageClient({
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-5">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
           Projecten <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({filtered.length})</span>
         </h1>
@@ -55,7 +55,7 @@ export default function ProjectsPageClient({
       </div>
 
       {/* Filters */}
-      <div className="flex gap-1 mt-4 mb-6">
+      <div className="flex gap-1 mt-6 mb-4">
         {FILTERS.map((f) => (
           <button
             key={f.value}
@@ -107,7 +107,11 @@ export default function ProjectsPageClient({
                           style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
                         >
                           {project.clients.logo_url ? (
-                            <img src={project.clients.logo_url} alt={project.clients.name} className="w-full h-full object-contain" />
+                            /^https?|^\//.test(project.clients.logo_url) ? (
+                              <img src={project.clients.logo_url} alt={project.clients.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <span style={{ fontSize: "11px" }}>{project.clients.logo_url}</span>
+                            )
                           ) : (
                             <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>
                               {project.clients.name.charAt(0).toUpperCase()}

@@ -158,7 +158,11 @@ export default function SearchSelect({
                       style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
                     >
                       {option.rightMeta.logo_url ? (
-                        <img src={option.rightMeta.logo_url} alt={option.rightMeta.label} className="w-full h-full object-contain" />
+                        /^https?|^\//.test(option.rightMeta.logo_url) ? (
+                          <img src={option.rightMeta.logo_url} alt={option.rightMeta.label} className="w-full h-full object-contain" />
+                        ) : (
+                          <span style={{ fontSize: "9px" }}>{option.rightMeta.logo_url}</span>
+                        )
                       ) : (
                         <span style={{ fontSize: "8px", color: "var(--text-muted)", fontWeight: 600 }}>
                           {option.rightMeta.label.charAt(0).toUpperCase()}

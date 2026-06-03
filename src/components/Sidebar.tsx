@@ -201,7 +201,7 @@ export default function Sidebar({ role }: { role: "admin" | "client" }) {
           <img src="/icon.png" alt="Mammut" className="w-full h-full object-cover" />
         </div>
         <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
-          Portal
+          Mammut Studios
         </span>
       </div>
 

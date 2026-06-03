@@ -44,6 +44,7 @@ export async function createClientAction(formData: FormData) {
   const client_number = formData.get("client_number") as string;
   const tag = formData.get("tag") as string;
   const logoFile = formData.get("logo") as File | null;
+  const emoji = formData.get("emoji") as string | null;
 
   if (!name?.trim()) return { error: "Naam is verplicht" };
 
@@ -58,7 +59,9 @@ export async function createClientAction(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  if (logoFile && logoFile.size > 0 && client) {
+  if (emoji?.trim() && client) {
+    await supabase.from("clients").update({ logo_url: emoji.trim() }).eq("id", client.id);
+  } else if (logoFile && logoFile.size > 0 && client) {
     const { url, error: uploadError } = await uploadLogo(supabase, logoFile, client.id);
     if (uploadError) return { error: `Logo upload mislukt: ${uploadError}` };
     if (url) await supabase.from("clients").update({ logo_url: url }).eq("id", client.id);
@@ -76,13 +79,16 @@ export async function updateClientAction(id: string, formData: FormData) {
   const client_number = formData.get("client_number") as string;
   const tag = formData.get("tag") as string;
   const logoFile = formData.get("logo") as File | null;
+  const emoji = formData.get("emoji") as string | null;
 
   if (!name?.trim()) return { error: "Naam is verplicht" };
 
   const supabase = await createClient();
 
   let logo_url: string | undefined;
-  if (logoFile && logoFile.size > 0) {
+  if (emoji?.trim()) {
+    logo_url = emoji.trim();
+  } else if (logoFile && logoFile.size > 0) {
     const { url, error: uploadError } = await uploadLogo(supabase, logoFile, id);
     if (uploadError) return { error: `Logo upload mislukt: ${uploadError}` };
     logo_url = url ?? undefined;
@@ -96,7 +102,7 @@ export async function updateClientAction(id: string, formData: FormData) {
       slug: slug?.trim() || null,
       client_number: client_number?.trim() || null,
       tag: tag || null,
-      ...(logo_url ? { logo_url } : {}),
+      ...(logo_url !== undefined ? { logo_url } : {}),
     })
     .eq("id", id);
 

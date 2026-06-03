@@ -2,9 +2,15 @@
 
 import { useState, useRef } from "react";
 import { ImageSquare } from "@phosphor-icons/react";
+import Picker from "@emoji-mart/react";
+import data from "@emoji-mart/data";
 import { createClientAction, updateClientAction } from "@/lib/actions/clients";
 import { useRouter } from "next/navigation";
 import type { Client } from "@/lib/types";
+
+function isEmoji(val: string) {
+  return !val.startsWith("http") && !val.startsWith("/") && !val.startsWith("data:");
+}
 
 function toSlug(name: string) {
   return name
@@ -23,7 +29,14 @@ export default function ClientForm({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(client?.logo_url ?? null);
+  const existingLogo = client?.logo_url ?? null;
+  const [logoMode, setLogoMode] = useState<"image" | "emoji">(
+    existingLogo && isEmoji(existingLogo) ? "emoji" : "image"
+  );
+  const [preview, setPreview] = useState<string | null>(existingLogo);
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(
+    existingLogo && isEmoji(existingLogo) ? existingLogo : null
+  );
   const [tag, setTag] = useState<string>(client?.tag ?? "client");
   const [slug, setSlug] = useState<string>(client?.slug ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -52,55 +65,114 @@ export default function ClientForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Logo upload */}
+      {/* Logo */}
       <div>
         <label className="block text-sm mb-1.5" style={{ color: "var(--text)" }}>Logo</label>
-        <div className="flex items-center gap-3">
-          <div
-            className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
-            style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
-          >
-            {preview ? (
-              <img src={preview} alt="Logo" className="w-full h-full object-contain" />
-            ) : (
-              <ImageSquare size={20} style={{ color: "var(--text-muted)" }} />
-            )}
-          </div>
-          <div>
+
+        {/* Mode tabs */}
+        <div className="flex gap-1 mb-3">
+          {(["image", "emoji"] as const).map((mode) => (
             <button
+              key={mode}
               type="button"
-              onClick={() => fileRef.current?.click()}
-              className="text-sm px-3 py-1.5 rounded-md"
-              style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-            >
-              {preview ? "Wijzigen" : "Uploaden"}
-            </button>
-            <input
-              ref={fileRef}
-              name="logo"
-              type="file"
-              accept="image/*, image/svg+xml"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) setPreview(URL.createObjectURL(file));
+              onClick={() => {
+                setLogoMode(mode);
+                setPreview(null);
+                setSelectedEmoji(null);
+                if (fileRef.current) fileRef.current.value = "";
               }}
-            />
-            {preview && (
+              className="px-3 py-1 rounded-md text-xs"
+              style={{
+                border: `1px solid ${logoMode === mode ? "var(--text-heading)" : "var(--border)"}`,
+                background: logoMode === mode ? "var(--text-heading)" : "transparent",
+                color: logoMode === mode ? "#fff" : "var(--text-muted)",
+                fontWeight: logoMode === mode ? 600 : 400,
+              }}
+            >
+              {mode === "image" ? "Afbeelding" : "Emoji"}
+            </button>
+          ))}
+        </div>
+
+        {logoMode === "image" ? (
+          <div className="flex items-center gap-3">
+            <div
+              className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+              style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+            >
+              {preview ? (
+                <img src={preview} alt="Logo" className="w-full h-full object-contain" />
+              ) : (
+                <ImageSquare size={20} style={{ color: "var(--text-muted)" }} />
+              )}
+            </div>
+            <div>
               <button
                 type="button"
-                className="ml-2 text-sm px-3 py-1.5 rounded-md"
-                style={{ color: "var(--text-muted)" }}
-                onClick={() => {
-                  setPreview(null);
-                  if (fileRef.current) fileRef.current.value = "";
-                }}
+                onClick={() => fileRef.current?.click()}
+                className="text-sm px-3 py-1.5 rounded-md"
+                style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
               >
-                Verwijderen
+                {preview ? "Wijzigen" : "Uploaden"}
               </button>
-            )}
+              <input
+                ref={fileRef}
+                name="logo"
+                type="file"
+                accept="image/*, image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setPreview(URL.createObjectURL(file));
+                }}
+              />
+              {preview && (
+                <button
+                  type="button"
+                  className="ml-2 text-sm px-3 py-1.5 rounded-md"
+                  style={{ color: "var(--text-muted)" }}
+                  onClick={() => {
+                    setPreview(null);
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                >
+                  Verwijderen
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <input type="hidden" name="emoji" value={selectedEmoji ?? ""} />
+            {selectedEmoji && (
+              <div className="flex items-center gap-2 mb-3">
+                <div
+                  className="w-14 h-14 rounded-lg flex items-center justify-center text-3xl"
+                  style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+                >
+                  {selectedEmoji}
+                </div>
+                <button
+                  type="button"
+                  className="text-sm px-3 py-1.5 rounded-md"
+                  style={{ color: "var(--text-muted)" }}
+                  onClick={() => setSelectedEmoji(null)}
+                >
+                  Verwijderen
+                </button>
+              </div>
+            )}
+            <Picker
+              data={data}
+              onEmojiSelect={(e: { native: string }) => setSelectedEmoji(e.native)}
+              locale="nl"
+              theme="light"
+              previewPosition="none"
+              skinTonePosition="none"
+              set="native"
+            />
+          </div>
+        )}
       </div>
 
       {/* Type — Client first, default */}

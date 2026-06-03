@@ -11,12 +11,9 @@ export default async function TasksPage() {
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-        Taken
+      <h1 className="text-3xl font-extrabold mb-8" style={{ color: "var(--text-heading)" }}>
+        Taken <span className="font-medium" style={{ color: "var(--text-muted)" }}>({tasks?.length ?? 0})</span>
       </h1>
-      <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        {tasks?.length ?? 0} taken
-      </p>
 
       <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
         {tasks && tasks.length > 0 ? (

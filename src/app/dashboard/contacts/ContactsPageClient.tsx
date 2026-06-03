@@ -64,7 +64,11 @@ export default function ContactsPageClient({
                           style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
                         >
                           {contact.clients.logo_url ? (
-                            <img src={contact.clients.logo_url} alt={contact.clients.name} className="w-full h-full object-contain" />
+                            /^https?|^\//.test(contact.clients.logo_url) ? (
+                              <img src={contact.clients.logo_url} alt={contact.clients.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <span style={{ fontSize: "11px" }}>{contact.clients.logo_url}</span>
+                            )
                           ) : (
                             <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>
                               {contact.clients.name.charAt(0).toUpperCase()}

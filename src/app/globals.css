@@ -41,7 +41,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "PP Mori", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 20px;
+  font-size: 1.125rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }

@@ -163,8 +163,9 @@ export default function FinancePageClient({
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>Finance</h1>
-      <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>{currentYear}</p>
+      <h1 className="text-3xl font-extrabold mb-8" style={{ color: "var(--text-heading)" }}>
+        Finance <span className="font-medium" style={{ color: "var(--text-muted)" }}>({currentYear})</span>
+      </h1>
 
       {/* Top panels */}
       <div className="grid grid-cols-3 gap-4 mb-8">
@@ -281,7 +282,11 @@ export default function FinancePageClient({
                           style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
                         >
                           {tx.clients.logo_url ? (
-                            <img src={tx.clients.logo_url} alt={tx.clients.name} className="w-full h-full object-contain" />
+                            /^https?|^\//.test(tx.clients.logo_url) ? (
+                              <img src={tx.clients.logo_url} alt={tx.clients.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <span className="text-sm">{tx.clients.logo_url}</span>
+                            )
                           ) : (
                             <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
                               {tx.clients.name.charAt(0).toUpperCase()}

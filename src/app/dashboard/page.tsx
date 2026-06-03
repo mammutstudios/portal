@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
+import HoverRow from "@/components/HoverRow";
 import type { Project } from "@/lib/types";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
@@ -17,7 +19,7 @@ export default async function DashboardPage() {
   const currentMonth = now.getMonth();
 
   const [{ data: projects }, { count: taskCount }, { data: transactions }] = await Promise.all([
-    supabase.from("projects").select("*, clients(name)").order("created_at", { ascending: false }).limit(10),
+    supabase.from("projects").select("*, clients(name)").eq("status", "active").order("created_at", { ascending: false }).limit(10),
     supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
     supabase.from("transactions").select("amount, date"),
   ]);
@@ -106,7 +108,7 @@ export default async function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
-            Recente projecten
+            Actieve projecten
           </h2>
           <Link href="/dashboard/projects" className="text-sm" style={{ color: "var(--text-muted)" }}>
             Alle projecten →
@@ -121,13 +123,17 @@ export default async function DashboardPage() {
                   <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
                   <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Klant</th>
                   <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {(projects as Project[]).map((project, i) => (
-                  <tr key={project.id} style={{ borderBottom: i < projects.length - 1 ? "1px solid var(--border)" : "none" }}>
+                  <HoverRow
+                    key={project.id}
+                    style={{ borderBottom: i < projects.length - 1 ? "1px solid var(--border)" : "none" }}
+                  >
                     <td className="px-4 py-3">
-                      <Link href={`/dashboard/projects/${project.id}`} className="text-sm font-medium hover:underline" style={{ color: "var(--text-heading)" }}>
+                      <Link href={`/dashboard/projects/${project.id}`} className="text-sm font-semibold after:absolute after:inset-0 after:content-['']" style={{ color: "var(--text-heading)" }}>
                         {project.title}
                       </Link>
                     </td>
@@ -137,7 +143,10 @@ export default async function DashboardPage() {
                     <td className="px-4 py-3">
                       <ProjectStatusBadge status={project.status} />
                     </td>
-                  </tr>
+                    <td className="px-4 py-3 text-right">
+                      <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+                    </td>
+                  </HoverRow>
                 ))}
               </tbody>
             </table>
