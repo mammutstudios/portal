@@ -1,11 +1,91 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { CaretDown, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { createTransactionAction, updateTransactionAction } from "@/lib/actions/transactions";
 import SearchSelect from "@/components/SearchSelect";
 import type { Transaction, Client, Project } from "@/lib/types";
 
 const TYPES = ["Aanbetaling", "Restant", "Retainer", "Volledig"] as const;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
+const MONTHS_FULL = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
+
+function MonthPicker({ name, defaultValue }: { name: string; defaultValue?: string }) {
+  const now = new Date();
+  const [open, setOpen] = useState(false);
+  const [year, setYear] = useState(defaultValue ? parseInt(defaultValue.slice(0, 4)) : now.getFullYear());
+  const [month, setMonth] = useState(defaultValue ? parseInt(defaultValue.slice(5, 7)) - 1 : now.getMonth());
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const value = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const label = `${MONTHS_FULL[month]} ${year}`;
+
+  return (
+    <div ref={ref} className="relative">
+      <input type="hidden" name={name} value={value} />
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full px-3 py-2 rounded-md text-sm flex items-center justify-between outline-none"
+        style={{ border: `1px solid ${open ? "var(--text-heading)" : "var(--border)"}`, background: "var(--bg)", color: "var(--text)" }}
+      >
+        <span>{label}</span>
+        <CaretDown size={13} weight="bold" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute z-50 w-full mt-1 rounded-md p-3"
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}
+        >
+          {/* Year nav */}
+          <div className="flex items-center justify-between mb-3">
+            <button type="button" onClick={() => setYear((y) => y - 1)} className="p-1 rounded-md hover:bg-[var(--bg-hover)]">
+              <CaretLeft size={13} weight="bold" style={{ color: "var(--text-muted)" }} />
+            </button>
+            <span className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>{year}</span>
+            <button type="button" onClick={() => setYear((y) => y + 1)} className="p-1 rounded-md hover:bg-[var(--bg-hover)]">
+              <CaretRight size={13} weight="bold" style={{ color: "var(--text-muted)" }} />
+            </button>
+          </div>
+
+          {/* Month grid */}
+          <div className="grid grid-cols-4 gap-1">
+            {MONTHS.map((m, i) => {
+              const isSelected = i === month && year === (defaultValue ? parseInt(value.slice(0, 4)) : year) || (i === month);
+              const isCurrentSelected = value === `${year}-${String(i + 1).padStart(2, "0")}`;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => { setMonth(i); setOpen(false); }}
+                  className="py-1.5 rounded-md text-xs font-medium text-center"
+                  style={{
+                    background: isCurrentSelected ? "var(--text-heading)" : "transparent",
+                    color: isCurrentSelected ? "#fff" : "var(--text)",
+                    border: `1px solid ${isCurrentSelected ? "var(--text-heading)" : "transparent"}`,
+                  }}
+                  onMouseEnter={(e) => { if (!isCurrentSelected) e.currentTarget.style.background = "var(--bg-hover)"; }}
+                  onMouseLeave={(e) => { if (!isCurrentSelected) e.currentTarget.style.background = "transparent"; }}
+                >
+                  {m}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TransactionForm({
   transaction,
@@ -85,14 +165,7 @@ export default function TransactionForm({
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
           Maand *
         </label>
-        <input
-          name="date"
-          type="month"
-          required
-          defaultValue={transaction?.date?.slice(0, 7) ?? today.slice(0, 7)}
-          className="w-full px-3 py-2 rounded-md text-sm outline-none"
-          style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
-        />
+        <MonthPicker name="date" defaultValue={transaction?.date?.slice(0, 7) ?? today.slice(0, 7)} />
       </div>
 
       <div>
