@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createTaskAction, updateTaskAction } from "@/lib/actions/tasks";
 import SearchSelect from "@/components/SearchSelect";
+import DatePicker from "@/components/DatePicker";
 import type { Task, Contact, Profile } from "@/lib/types";
 
 type ProjectOption = { id: string; title: string; clients?: { name: string; logo_url: string | null } | null };
@@ -178,13 +179,7 @@ export default function TaskForm({
       {/* Deadline */}
       <div>
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Deadline</label>
-        <input
-          name="due_date"
-          type="date"
-          defaultValue={task?.due_date?.slice(0, 10) ?? ""}
-          className="w-full px-3 py-2 rounded-md text-sm outline-none"
-          style={{ border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)" }}
-        />
+        <DatePicker name="due_date" defaultValue={task?.due_date?.slice(0, 10)} placeholder="— Geen —" />
       </div>
 
       {/* Toewijzen */}

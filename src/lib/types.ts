@@ -27,7 +27,7 @@ export type ClientMember = {
   profile_id: string;
 };
 
-export type ProjectStatus = "active" | "review" | "completed" | "on_hold";
+export type ProjectStatus = "upcoming" | "active" | "review" | "completed" | "on_hold";
 
 export type Project = {
   id: string;
@@ -69,6 +69,18 @@ export type Subtask = {
   created_at: string;
 };
 
+export type TimeEntry = {
+  id: string;
+  task: string;
+  hours: number;
+  project_id: string | null;
+  date: string;
+  profile_id: string | null;
+  created_at: string;
+  projects?: { id: string; title: string; clients?: { name: string; logo_url: string | null } | null } | null;
+  profiles?: { id: string; full_name: string | null; avatar_url: string | null } | null;
+};
+
 export type Contact = {
   id: string;
   name: string;
@@ -90,6 +102,7 @@ export type Transaction = {
   id: string;
   description: string;
   amount: number;
+  status: "confirmed" | "draft";
   client_id: string | null;
   project_id: string | null;
   date: string;

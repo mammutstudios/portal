@@ -14,7 +14,7 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
   const router = useRouter();
 
   return (
-    <div className="px-10 py-10 max-w-5xl mx-auto">
+    <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
           Organisaties <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({clients.length})</span>
@@ -29,9 +29,9 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
       </div>
       <div className="mb-8" />
 
-      <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
         {clients.length > 0 ? (
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                 <th className="w-20 px-4 py-2.5" />

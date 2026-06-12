@@ -86,7 +86,7 @@ export default function ContactDetailClient({
   }
 
   return (
-    <div className="px-10 py-10 max-w-5xl mx-auto">
+    <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
         <Link href="/dashboard/contacts" className="hover:underline" style={{ color: "var(--text-muted)" }}>
@@ -123,7 +123,7 @@ export default function ContactDetailClient({
 
           {/* Contact details */}
           {(contact.email || contact.phone) && (
-            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+            <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
               {contact.email && (
                 <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: contact.phone ? "1px solid var(--border)" : "none" }}>
                   <EnvelopeSimple size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
@@ -146,7 +146,7 @@ export default function ContactDetailClient({
           {/* Organisaties */}
           <div>
             <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Organisaties</h2>
-            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+            <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
               {linkedClients.length === 0 && (
                 <p className="px-3 py-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>Geen organisaties gekoppeld.</p>
               )}
@@ -210,9 +210,9 @@ export default function ContactDetailClient({
         {/* Right: projects */}
         <div className="flex-1">
           <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Projecten</h2>
-          <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+          <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
             {projects.length > 0 ? (
-              <table className="w-full">
+              <table className="w-full min-w-[640px]">
                 <thead>
                   <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                     <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>

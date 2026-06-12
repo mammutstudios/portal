@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { CaretDown, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { createTransactionAction, updateTransactionAction } from "@/lib/actions/transactions";
+import { quickCreateProjectAction } from "@/lib/actions/projects";
 import SearchSelect from "@/components/SearchSelect";
 import type { Transaction, Client, Project } from "@/lib/types";
 
@@ -99,8 +100,40 @@ export default function TransactionForm({
   onClose: () => void;
 }) {
   const [type, setType] = useState<string>(transaction?.description ?? "Retainer");
+  const [isDraft, setIsDraft] = useState(transaction?.status === "draft");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pendingProject, setPendingProject] = useState<{
+    title: string;
+    resolve: (option: { value: string; label: string; rightMeta?: { label: string; logo_url?: string | null } } | null) => void;
+  } | null>(null);
+  const [creatingProject, setCreatingProject] = useState(false);
+
+  function handleCreateProject(title: string) {
+    return new Promise<{ value: string; label: string; rightMeta?: { label: string; logo_url?: string | null } } | null>((resolve) => {
+      setPendingProject({ title, resolve });
+    });
+  }
+
+  async function handlePickClient(clientId: string) {
+    if (!pendingProject || creatingProject) return;
+    setCreatingProject(true);
+    try {
+      const project = await quickCreateProjectAction(pendingProject.title, clientId);
+      const client = clients.find((c) => c.id === clientId);
+      pendingProject.resolve({
+        value: project.id,
+        label: project.title,
+        rightMeta: client ? { label: client.name, logo_url: client.logo_url } : undefined,
+      });
+    } catch (e: any) {
+      setError(e.message ?? "Project aanmaken mislukt.");
+      pendingProject.resolve(null);
+    } finally {
+      setCreatingProject(false);
+      setPendingProject(null);
+    }
+  }
   const action = transaction ? updateTransactionAction : createTransactionAction;
   const today = new Date().toISOString().split("T")[0];
 
@@ -120,6 +153,7 @@ export default function TransactionForm({
   return (
     <form action={handleSubmit} className="space-y-3">
       {transaction && <input type="hidden" name="id" value={transaction.id} />}
+      <input type="hidden" name="status" value={isDraft ? "draft" : "confirmed"} />
 
       <div>
         <label className="block text-xs font-medium mb-2" style={{ color: "var(--text-muted)" }}>
@@ -184,8 +218,75 @@ export default function TransactionForm({
             };
           })}
           defaultValue={transaction?.project_id ?? undefined}
+          onCreateNew={handleCreateProject}
         />
       </div>
+
+      {/* Organisatie kiezen voor nieuw project */}
+      {pendingProject && (
+        <div className="rounded-md p-3 space-y-2" style={{ border: "1px solid var(--text-heading)", background: "var(--bg-secondary)" }}>
+          <p className="text-xs font-medium" style={{ color: "var(--text-heading)" }}>
+            Nieuw project &ldquo;{pendingProject.title}&rdquo; — kies een organisatie:
+          </p>
+          <div className="max-h-40 overflow-y-auto space-y-0.5">
+            {clients.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                disabled={creatingProject}
+                onClick={() => handlePickClient(c.id)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm"
+                style={{ color: "var(--text-heading)", opacity: creatingProject ? 0.6 : 1 }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+              >
+                <span className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
+                  {c.logo_url ? (
+                    /^https?|^\//.test(c.logo_url) ? (
+                      <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
+                    ) : (
+                      <span style={{ fontSize: "10px" }}>{c.logo_url}</span>
+                    )
+                  ) : (
+                    <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>{c.name.charAt(0).toUpperCase()}</span>
+                  )}
+                </span>
+                {c.name}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => { pendingProject.resolve(null); setPendingProject(null); }}
+            className="text-xs px-2 py-1 rounded-md"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Annuleren
+          </button>
+        </div>
+      )}
+
+      {/* Concept toggle */}
+      <label className="flex items-center gap-2.5 cursor-pointer select-none pt-1">
+        <button
+          type="button"
+          onClick={() => setIsDraft((v) => !v)}
+          className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center transition-all"
+          style={{
+            border: `1.5px solid ${isDraft ? "#f97316" : "var(--border)"}`,
+            background: isDraft ? "#fff7ed" : "transparent",
+          }}
+        >
+          {isDraft && (
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <path d="M1 4l2 2 4-4" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
+        <span className="text-sm" style={{ color: isDraft ? "#f97316" : "var(--text-muted)" }}>
+          Concept <span className="text-xs" style={{ color: "var(--text-muted)" }}>(verwachte inkomst)</span>
+        </span>
+      </label>
 
       {error && (
         <p className="text-xs px-3 py-2 rounded-md" style={{ background: "#fef2f2", color: "#e57373" }}>

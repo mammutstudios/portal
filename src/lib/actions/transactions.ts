@@ -21,6 +21,7 @@ export async function createTransactionAction(formData: FormData) {
     client_id,
     project_id,
     date: month.length === 7 ? `${month}-01` : month,
+    status: (formData.get("status") as string) || "confirmed",
   });
 
   if (error) throw new Error(error.message);
@@ -40,6 +41,7 @@ export async function updateTransactionAction(formData: FormData) {
     client_id,
     project_id,
     date: month.length === 7 ? `${month}-01` : month,
+    status: (formData.get("status") as string) || "confirmed",
   }).eq("id", id);
 
   if (error) throw new Error(error.message);

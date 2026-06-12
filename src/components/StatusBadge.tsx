@@ -1,6 +1,7 @@
 import type { ProjectStatus, TaskStatus, ClientTag } from "@/lib/types";
 
 const projectStatusConfig: Record<ProjectStatus, { label: string; bg: string; color: string }> = {
+  upcoming: { label: "Upcoming", bg: "#ffedd5", color: "#9a3412" },
   active: { label: "Actief", bg: "#d3f1e3", color: "#1a6b47" },
   review: { label: "Review", bg: "#fef3c7", color: "#92400e" },
   completed: { label: "Afgerond", bg: "#f1f1ef", color: "#6b6b6b" },

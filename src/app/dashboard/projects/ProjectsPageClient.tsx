@@ -34,13 +34,13 @@ export default function ProjectsPageClient({
 
   const filtered = projects.filter((p) =>
     filter === "all" ? true :
-    filter === "active" ? p.status === "active" :
+    filter === "active" ? (p.status === "active" || p.status === "upcoming") :
     filter === "on_hold" ? p.status === "on_hold" :
     p.status === "completed"
   );
 
   return (
-    <div className="px-10 py-10 max-w-5xl mx-auto">
+    <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
           Projecten <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({filtered.length})</span>
@@ -72,12 +72,13 @@ export default function ProjectsPageClient({
         ))}
       </div>
 
-      <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
         {filtered.length > 0 ? (
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                 <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
+                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
                 <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Klant</th>
                 <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Type</th>
                 <th className="w-8 px-4 py-2.5" />
@@ -94,10 +95,10 @@ export default function ProjectsPageClient({
                   onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                 >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold" style={{ color: "var(--text-heading)" }}>{project.title}</span>
-                      <ProjectStatusBadge status={project.status} />
-                    </div>
+                    <span className="font-semibold" style={{ color: "var(--text-heading)" }}>{project.title}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <ProjectStatusBadge status={project.status} />
                   </td>
                   <td className="px-4 py-3">
                     {project.clients ? (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { updateProjectAction } from "@/lib/actions/projects";
 import SearchSelect from "@/components/SearchSelect";
+import DatePicker from "@/components/DatePicker";
 import type { Project, Client } from "@/lib/types";
 
 const PROJECT_TAGS = ["Branding", "Design", "Development", "Retainer"];
@@ -80,6 +81,7 @@ export default function EditProjectForm({
             className="w-full px-3 py-2 text-sm rounded-md outline-none"
             style={{ border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)" }}
           >
+            <option value="upcoming">Upcoming</option>
             <option value="active">Actief</option>
             <option value="on_hold">On hold</option>
             <option value="completed">Afgerond</option>
@@ -87,13 +89,7 @@ export default function EditProjectForm({
         </div>
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Deadline</label>
-          <input
-            name="deadline"
-            type="date"
-            defaultValue={project.deadline ?? ""}
-            className="w-full px-3 py-2 text-sm rounded-md outline-none"
-            style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
-          />
+          <DatePicker name="deadline" defaultValue={project.deadline ?? undefined} placeholder="— Geen —" />
         </div>
       </div>
 

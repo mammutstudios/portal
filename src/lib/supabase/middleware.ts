@@ -2,6 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
+  // Skip auth in local development
+  if (process.env.NODE_ENV === "development") {
+    const { pathname } = request.nextUrl;
+    if (pathname === "/") return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -79,7 +79,7 @@ export default function ClientDetailClient({
   );
 
   return (
-    <div className="px-10 py-10 max-w-5xl mx-auto">
+    <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
         <Link href="/dashboard/clients" className="hover:underline" style={{ color: "var(--text-muted)" }}>
           Organisaties
@@ -158,7 +158,7 @@ export default function ClientDetailClient({
 
       <div className="rounded-lg overflow-hidden mb-8" style={{ border: "1px solid var(--border)" }}>
         {contacts.length > 0 ? (
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                 <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Naam</th>
@@ -221,9 +221,9 @@ export default function ClientDetailClient({
         Projecten
       </h2>
 
-      <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
         {projects.length > 0 ? (
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                 <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>

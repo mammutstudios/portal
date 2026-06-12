@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { startPreviewAction } from "@/lib/actions/preview";
 import {
@@ -17,6 +17,8 @@ import {
   FolderOpen,
   X,
   GearSix,
+  Clock,
+  List,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -28,7 +30,7 @@ type NavItem = {
   children?: SubItem[];
 };
 
-function NavLink({ item }: { item: NavItem }) {
+function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
   const hasChildren = !!item.children?.length;
   const isChildActive = hasChildren && item.children!.some((c) => pathname === c.href);
@@ -58,7 +60,7 @@ function NavLink({ item }: { item: NavItem }) {
         >
           <Link
             href={item.href}
-            onClick={() => setOpen(true)}
+            onClick={() => { setOpen(true); onNavigate?.(); }}
             className="flex items-center gap-2.5 px-2 py-2.5 text-sm flex-1"
             style={{
               color: (isActive && !isChildActive) || hovered ? "var(--text-heading)" : "var(--text)",
@@ -93,7 +95,7 @@ function NavLink({ item }: { item: NavItem }) {
             {item.children!.map((sub) => {
               const subActive = pathname === sub.href;
               return (
-                <SubNavLink key={sub.href} sub={sub} active={subActive} />
+                <SubNavLink key={sub.href} sub={sub} active={subActive} onNavigate={onNavigate} />
               );
             })}
           </div>
@@ -105,6 +107,7 @@ function NavLink({ item }: { item: NavItem }) {
   return (
     <Link
       href={item.href}
+      onClick={() => onNavigate?.()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="flex items-center gap-2.5 px-2 py-2.5 rounded-md text-sm"
@@ -116,11 +119,12 @@ function NavLink({ item }: { item: NavItem }) {
   );
 }
 
-function SubNavLink({ sub, active }: { sub: { label: string; href: string }; active: boolean }) {
+function SubNavLink({ sub, active, onNavigate }: { sub: { label: string; href: string }; active: boolean; onNavigate?: () => void }) {
   const [hovered, setHovered] = useState(false);
   return (
     <Link
       href={sub.href}
+      onClick={() => onNavigate?.()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="flex items-center px-2 py-1 rounded-md"
@@ -154,9 +158,18 @@ const adminNav: NavItem[] = [
     icon: <Folder size={17} weight="fill" />,
   },
   {
+    label: "Toggl",
+    href: "/dashboard/toggl",
+    icon: <Clock size={17} weight="fill" />,
+  },
+  {
     label: "Finance",
     href: "/dashboard/finance",
     icon: <CurrencyDollar size={17} weight="bold" />,
+    children: [
+      { label: "Overzicht", href: "/dashboard/finance" },
+      { label: "Transacties", href: "/dashboard/finance/transactions" },
+    ],
   },
   {
     label: "CRM",
@@ -181,9 +194,20 @@ type ClientOption = { id: string; name: string; logo_url: string | null };
 
 export default function Sidebar({ role, clients = [] }: { role: "admin" | "client"; clients?: ClientOption[] }) {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
   const navItems = role === "admin" ? adminNav : clientNav;
   const [showClientPicker, setShowClientPicker] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close drawer on route change
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  // Lock body scroll when drawer open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -191,31 +215,58 @@ export default function Sidebar({ role, clients = [] }: { role: "admin" | "clien
   }
 
   return (
-    <aside
-      className="flex flex-col h-screen sticky top-0"
-      style={{
-        width: 260,
-        minWidth: 260,
-        background: "var(--bg-secondary)",
-        borderRight: "1px solid var(--border)",
-      }}
-    >
-      {/* Logo */}
-      <div className="px-4 py-4 flex items-center gap-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
-          <img src="/icon.png" alt="Mammut" className="w-full h-full object-cover" />
+    <>
+      {/* Mobile top bar */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-14"
+        style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
+            <img src="/icon.png" alt="Mammut" className="w-full h-full object-cover" />
+          </div>
+          <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>Mammut Studios</span>
         </div>
-        <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
-          Mammut Studios
-        </span>
+        <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-md" style={{ color: "var(--text-heading)" }} aria-label="Menu">
+          <List size={22} weight="bold" />
+        </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
-        {navItems.map((item) => (
-          <NavLink key={item.href} item={item} />
-        ))}
-      </nav>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.35)" }} onClick={() => setMobileOpen(false)} />
+      )}
+
+      <aside
+        className={`flex flex-col h-screen z-50 md:sticky md:top-0 md:translate-x-0 fixed top-0 left-0 transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        style={{
+          width: 260,
+          minWidth: 260,
+          background: "var(--bg-secondary)",
+          borderRight: "1px solid var(--border)",
+        }}
+      >
+        {/* Logo */}
+        <div className="px-4 py-4 flex items-center justify-between gap-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
+              <img src="/icon.png" alt="Mammut" className="w-full h-full object-cover" />
+            </div>
+            <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
+              Mammut Studios
+            </span>
+          </div>
+          <button onClick={() => setMobileOpen(false)} className="md:hidden p-1 rounded-md" style={{ color: "var(--text-muted)" }} aria-label="Sluiten">
+            <X size={16} weight="bold" />
+          </button>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavLink key={item.href} item={item} onNavigate={() => setMobileOpen(false)} />
+          ))}
+        </nav>
 
       {/* Preview + Sign out */}
       <div className="px-2 py-3 space-y-0.5" style={{ borderTop: "1px solid var(--border)" }}>
@@ -302,6 +353,7 @@ export default function Sidebar({ role, clients = [] }: { role: "admin" | "clien
           Uitloggen
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

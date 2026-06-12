@@ -40,7 +40,7 @@ export default function SettingsPageClient({ profile, email }: { profile: Profil
   const initials = profile?.full_name?.charAt(0).toUpperCase() ?? email.charAt(0).toUpperCase();
 
   return (
-    <div className="px-10 py-10 max-w-xl mx-auto">
+    <div className="px-4 py-6 md:px-10 md:py-10 max-w-xl mx-auto">
       <h1 className="text-3xl font-extrabold mb-8" style={{ color: "var(--text-heading)" }}>
         Instellingen
       </h1>

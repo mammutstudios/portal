@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
-import { ProjectStatusBadge } from "@/components/StatusBadge";
+import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import HoverRow from "@/components/HoverRow";
 import type { Project } from "@/lib/types";
 
@@ -19,12 +19,15 @@ export default async function DashboardPage() {
   const currentMonth = now.getMonth();
 
   const [{ data: projects }, { count: taskCount }, { data: transactions }] = await Promise.all([
-    supabase.from("projects").select("*, clients(name, logo_url)").eq("status", "active").order("created_at", { ascending: false }).limit(10),
+    supabase.from("projects").select("*, clients(name, logo_url)").in("status", ["active", "upcoming"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
-    supabase.from("transactions").select("amount, date"),
+    supabase.from("transactions").select("amount, date, status"),
   ]);
 
-  const activeCount = projects?.filter((p) => p.status === "active").length ?? 0;
+  const isRetainer = (p: Project) => p.tags?.some((t) => t.toLowerCase() === "retainer") ?? false;
+  const sortedProjects = [...((projects ?? []) as Project[])].sort(
+    (a, b) => Number(isRetainer(a)) - Number(isRetainer(b))
+  );
 
   const thisMonthTotal = (transactions ?? [])
     .filter((t) => {
@@ -33,12 +36,26 @@ export default async function DashboardPage() {
     })
     .reduce((sum, t) => sum + t.amount, 0);
 
+  // Forecast volgende maand
+  const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+  const nextMonthYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+  const nextMonthTx = (transactions ?? []).filter((t) => {
+    const d = new Date(t.date);
+    return d.getFullYear() === nextMonthYear && d.getMonth() === nextMonth;
+  });
+  const nextMonthConfirmed = nextMonthTx.filter((t) => t.status !== "draft").reduce((sum, t) => sum + t.amount, 0);
+  const nextMonthDraft = nextMonthTx.filter((t) => t.status === "draft").reduce((sum, t) => sum + t.amount, 0);
+  const nextMonthForecast = nextMonthConfirmed + nextMonthDraft;
+
   const monthLabel = new Date(currentYear, currentMonth)
+    .toLocaleDateString("nl-NL", { month: "long", year: "numeric" })
+    .replace(/^\w/, (c) => c.toUpperCase());
+  const nextMonthLabel = new Date(nextMonthYear, nextMonth)
     .toLocaleDateString("nl-NL", { month: "long", year: "numeric" })
     .replace(/^\w/, (c) => c.toUpperCase());
 
   return (
-    <div className="px-10 py-10 max-w-5xl mx-auto">
+    <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
         Overzicht
       </h1>
@@ -47,7 +64,7 @@ export default async function DashboardPage() {
       </p>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
 
         {/* Omzet deze maand */}
         <Link
@@ -68,21 +85,21 @@ export default async function DashboardPage() {
           <p className="text-sm relative z-10 mt-1" style={{ color: "var(--text-muted)" }}>{monthLabel}</p>
         </Link>
 
-        {/* Actieve projecten */}
+        {/* Forecast volgende maand */}
         <Link
-          href="/dashboard/projects"
+          href="/dashboard/finance"
           className="card-hover rounded-lg p-6 flex flex-col justify-between"
           style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
         >
           <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Projecten
+            Volgende maand
           </p>
           <div>
             <p className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--text-heading)" }}>
-              {activeCount}
+              {fmtFull(nextMonthForecast)}
             </p>
           </div>
-          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>Actieve projecten</p>
+          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{nextMonthLabel}</p>
         </Link>
 
         {/* Openstaande taken */}
@@ -115,9 +132,9 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+        <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
           {projects && projects.length > 0 ? (
-            <table className="w-full">
+            <table className="w-full min-w-[640px]">
               <thead>
                 <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
                   <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
@@ -127,10 +144,10 @@ export default async function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {(projects as Project[]).map((project, i) => (
+                {sortedProjects.map((project, i) => (
                   <HoverRow
                     key={project.id}
-                    style={{ borderBottom: i < projects.length - 1 ? "1px solid var(--border)" : "none" }}
+                    style={{ borderBottom: i < sortedProjects.length - 1 ? "1px solid var(--border)" : "none" }}
                   >
                     <td className="px-4 py-3">
                       <Link href={`/dashboard/projects/${project.id}`} className="text-sm font-semibold after:absolute after:inset-0 after:content-['']" style={{ color: "var(--text-heading)" }}>
@@ -157,9 +174,13 @@ export default async function DashboardPage() {
                             )}
                           </div>
                           <span style={{ color: "var(--text-muted)" }}>{project.clients.name}</span>
+                          {isRetainer(project) && <ProjectTagBadge tag="Retainer" />}
                         </div>
                       ) : (
-                        <span style={{ color: "var(--text-muted)" }}>—</span>
+                        <div className="flex items-center gap-2">
+                          <span style={{ color: "var(--text-muted)" }}>—</span>
+                          {isRetainer(project) && <ProjectTagBadge tag="Retainer" />}
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3">

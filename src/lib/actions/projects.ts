@@ -58,3 +58,21 @@ export async function updateProjectAction(id: string, formData: FormData) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export async function quickCreateProjectAction(title: string, client_id: string) {
+  if (!title?.trim()) throw new Error("Naam is verplicht");
+  if (!client_id) throw new Error("Organisatie is verplicht");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .insert({ title: title.trim(), client_id, status: "active" })
+    .select("id, title, client_id")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard/projects");
+  revalidatePath("/dashboard/finance/transactions");
+  return data;
+}
