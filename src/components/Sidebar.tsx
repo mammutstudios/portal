@@ -178,6 +178,11 @@ const adminNav: NavItem[] = [
     icon: <Clock size={19} weight="fill" />,
   },
   {
+    label: "Analytics",
+    href: "/dashboard/analytics",
+    icon: <ChartBar size={16} weight="fill" />,
+  },
+  {
     label: "Finance",
     href: "/dashboard/finance",
     icon: <CurrencyDollar size={19} weight="bold" />,

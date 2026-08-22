@@ -206,7 +206,7 @@ function Panel({
   );
 }
 
-export default function AnalyticsPageClient({
+export default function SiteAnalytics({
   configured,
   siteName,
   periode,

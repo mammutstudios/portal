@@ -168,3 +168,64 @@ export async function currentVisitors(siteId: string): Promise<number | null> {
   });
   return json?.results?.[0]?.metrics?.[0] ?? null;
 }
+
+export type SiteCard = {
+  siteId: string;
+  /** Bezoekers per uur, 24 punten, gaten aangevuld met nul. */
+  points: number[];
+  visitors: number;
+  /** Verandering ten opzichte van de 24 uur daarvóór, in procenten. */
+  change: number | null;
+};
+
+/**
+ * Cijfers voor één kaart: laatste 24 uur.
+ *
+ * Bewust zónder geïmporteerde data. Die heeft alleen een datum en geen tijdstip,
+ * dus in een venster dat door twee kalenderdagen snijdt zou een heel dagtotaal
+ * meegeteld worden — dat gaf eerder 69 waar er 2 gemeten waren. Deze cijfers
+ * lopen daardoor achter op het Plausible-dashboard zolang de historie nog uit
+ * de import komt, maar ze zijn wel na te rekenen.
+ */
+export async function last24h(siteId: string): Promise<SiteCard | null> {
+  if (!plausibleIsConfigured()) return null;
+
+  const nu = new Date();
+  const uur = (d: Date) => `${d.toISOString().slice(0, 13)}:00:00+00:00`;
+  const min = (h: number) => new Date(nu.getTime() - h * 3_600_000);
+  const sleutel = (v: string) => v.replace(" ", "T").slice(0, 13);
+
+  const totaal = (van: string, tot: string) =>
+    query<{ results?: { metrics: number[] }[] }>({
+      site_id: siteId,
+      metrics: ["visitors"],
+      date_range: [van, tot],
+      include: { imports: false },
+    });
+
+  const [reeks, huidig, vorige] = await Promise.all([
+    query<{ results?: { dimensions: string[]; metrics: number[] }[] }>({
+      site_id: siteId,
+      metrics: ["visitors"],
+      date_range: [uur(min(23)), uur(nu)],
+      dimensions: ["time:hour"],
+      include: { imports: false },
+    }),
+    totaal(uur(min(23)), uur(nu)),
+    totaal(uur(min(47)), uur(min(24))),
+  ]);
+
+  if (!reeks) return null;
+
+  const perUur = new Map<string, number>();
+  for (const r of reeks.results ?? []) perUur.set(sleutel(r.dimensions[0]), r.metrics[0] ?? 0);
+
+  const points: number[] = [];
+  for (let i = 23; i >= 0; i--) points.push(perUur.get(sleutel(min(i).toISOString())) ?? 0);
+
+  const visitors = huidig?.results?.[0]?.metrics?.[0] ?? points.reduce((a, b) => a + b, 0);
+  const eerder = vorige?.results?.[0]?.metrics?.[0] ?? null;
+  const change = eerder && eerder > 0 ? ((visitors - eerder) / eerder) * 100 : null;
+
+  return { siteId, points, visitors, change };
+}
