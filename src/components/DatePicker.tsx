@@ -62,22 +62,22 @@ export default function DatePicker({ name, defaultValue, placeholder = "Kies dat
         style={{ border: `1px solid ${open ? "var(--text-heading)" : "var(--border)"}`, background: "var(--bg)", color: selected ? "var(--text)" : "var(--text-muted)" }}
       >
         <span>{label}</span>
-        <CaretDown size={13} weight="bold" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+        <CaretDown size={14} weight="bold" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
       </button>
 
       {open && (
         <div
           className="absolute z-50 mt-1 rounded-md p-3"
-          style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", width: 260 }}
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgb(20 0 24 / 0.1)", width: 260 }}
         >
           {/* Month nav */}
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={prevMonth} className="p-1 rounded-md hover:bg-[var(--bg-hover)]">
-              <CaretLeft size={13} weight="bold" style={{ color: "var(--text-muted)" }} />
+              <CaretLeft size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
             </button>
             <span className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>{MONTHS_FULL[viewMonth]} {viewYear}</span>
             <button type="button" onClick={nextMonth} className="p-1 rounded-md hover:bg-[var(--bg-hover)]">
-              <CaretRight size={13} weight="bold" style={{ color: "var(--text-muted)" }} />
+              <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
             </button>
           </div>
 

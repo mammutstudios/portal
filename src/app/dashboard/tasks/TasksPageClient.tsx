@@ -30,8 +30,8 @@ function StatusPicker({ task }: { task: Task }) {
         </button>
         {open && (
           <div
-            className="absolute z-10 mt-1 rounded-lg overflow-hidden"
-            style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 140 }}
+            className="absolute z-10 mt-1 squircle overflow-hidden"
+            style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgb(20 0 24 / 0.1)", minWidth: "8.75rem" }}
           >
             {STATUS_ORDER.map((s) => (
               <form key={s} action={updateTaskStatusAction}>
@@ -115,12 +115,12 @@ function TicketDetailModal({ task, onClose, onEdit, onDelete }: {
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-16 px-10"
-      style={{ background: "rgba(0,0,0,0.25)" }}
+      style={{ background: "rgb(20 0 24 / 0.25)" }}
       onClick={onClose}
     >
       <div
         className="w-full max-w-3xl rounded-2xl"
-        style={{ background: "var(--bg)", boxShadow: "0 20px 60px rgba(0,0,0,0.18)" }}
+        style={{ background: "var(--bg)", boxShadow: "0 20px 60px rgb(20 0 24 / 0.18)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar */}
@@ -367,16 +367,16 @@ export default function TasksPageClient({
         </div>
       </div>
 
-      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {filtered.length > 0 ? (
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[40rem]">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Ticket</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Toegewezen</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Deadline</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Ticket</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Toegewezen</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
               </tr>
             </thead>
             <tbody>

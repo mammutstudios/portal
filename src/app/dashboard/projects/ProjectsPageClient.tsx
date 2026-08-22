@@ -9,7 +9,7 @@ import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import type { Project, Client } from "@/lib/types";
 
 const Chevron = () => (
-  <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+  <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
 );
 
 const FILTERS = [
@@ -72,15 +72,15 @@ export default function ProjectsPageClient({
         ))}
       </div>
 
-      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {filtered.length > 0 ? (
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[40rem]">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Klant</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Type</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Type</th>
                 <th className="w-8 px-4 py-2.5" />
               </tr>
             </thead>
@@ -111,10 +111,10 @@ export default function ProjectsPageClient({
                             /^https?|^\//.test(project.clients.logo_url) ? (
                               <img src={project.clients.logo_url} alt={project.clients.name} className="w-full h-full object-contain" />
                             ) : (
-                              <span style={{ fontSize: "11px" }}>{project.clients.logo_url}</span>
+                              <span style={{ fontSize: "0.6875rem" }}>{project.clients.logo_url}</span>
                             )
                           ) : (
-                            <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>
+                            <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "var(--text-muted)" }}>
                               {project.clients.name.charAt(0).toUpperCase()}
                             </span>
                           )}

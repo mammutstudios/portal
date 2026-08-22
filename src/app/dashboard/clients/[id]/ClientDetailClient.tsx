@@ -75,7 +75,7 @@ export default function ClientDetailClient({
   const router = useRouter();
 
   const Chevron = () => (
-    <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+    <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
   );
 
   return (
@@ -84,14 +84,14 @@ export default function ClientDetailClient({
         <Link href="/dashboard/clients" className="hover:underline" style={{ color: "var(--text-muted)" }}>
           Organisaties
         </Link>
-        <CaretRight size={12} weight="bold" />
+        <CaretRight size={13} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{client.name}</span>
       </nav>
 
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-4">
           <div
-            className="w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0"
+            className="w-12 h-12 squircle overflow-hidden flex items-center justify-center flex-shrink-0"
             style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
           >
             {client.logo_url ? (
@@ -156,15 +156,15 @@ export default function ClientDetailClient({
         </div>
       </div>
 
-      <div className="rounded-lg overflow-hidden mb-8" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-hidden mb-8" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {contacts.length > 0 ? (
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[40rem]">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Naam</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Functie</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>E-mail</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Telefoon</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Naam</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Functie</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>E-mail</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Telefoon</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -221,13 +221,13 @@ export default function ClientDetailClient({
         Projecten
       </h2>
 
-      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {projects.length > 0 ? (
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[40rem]">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
                 <th className="w-8 px-4 py-2.5" />
               </tr>
             </thead>

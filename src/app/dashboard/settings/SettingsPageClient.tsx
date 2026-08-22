@@ -71,7 +71,7 @@ export default function SettingsPageClient({ profile, email }: { profile: Profil
               </div>
               <div
                 className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: "rgba(0,0,0,0.4)" }}
+                style={{ background: "rgb(20 0 24 / 0.4)" }}
               >
                 <span className="text-white text-xs font-medium">Wijzig</span>
               </div>

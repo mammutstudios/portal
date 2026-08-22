@@ -39,22 +39,22 @@ function MonthPicker({ name, defaultValue }: { name: string; defaultValue?: stri
         style={{ border: `1px solid ${open ? "var(--text-heading)" : "var(--border)"}`, background: "var(--bg)", color: "var(--text)" }}
       >
         <span>{label}</span>
-        <CaretDown size={13} weight="bold" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+        <CaretDown size={14} weight="bold" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
       </button>
 
       {open && (
         <div
           className="absolute z-50 w-full mt-1 rounded-md p-3"
-          style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgb(20 0 24 / 0.1)" }}
         >
           {/* Year nav */}
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={() => setYear((y) => y - 1)} className="p-1 rounded-md hover:bg-[var(--bg-hover)]">
-              <CaretLeft size={13} weight="bold" style={{ color: "var(--text-muted)" }} />
+              <CaretLeft size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
             </button>
             <span className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>{year}</span>
             <button type="button" onClick={() => setYear((y) => y + 1)} className="p-1 rounded-md hover:bg-[var(--bg-hover)]">
-              <CaretRight size={13} weight="bold" style={{ color: "var(--text-muted)" }} />
+              <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
             </button>
           </div>
 
@@ -245,10 +245,10 @@ export default function TransactionForm({
                     /^https?|^\//.test(c.logo_url) ? (
                       <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
                     ) : (
-                      <span style={{ fontSize: "10px" }}>{c.logo_url}</span>
+                      <span style={{ fontSize: "0.625rem" }}>{c.logo_url}</span>
                     )
                   ) : (
-                    <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>{c.name.charAt(0).toUpperCase()}</span>
+                    <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "var(--text-muted)" }}>{c.name.charAt(0).toUpperCase()}</span>
                   )}
                 </span>
                 {c.name}

@@ -18,6 +18,7 @@ export type Client = {
   slug: string | null;
   logo_url: string | null;
   tag: ClientTag | null;
+  moneybird_contact_id?: string | null;
   created_at: string;
 };
 

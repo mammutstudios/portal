@@ -64,14 +64,14 @@ export default function LinkContactToProject({
         </div>
       )}
 
-      <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {linkedContacts.length > 0 ? (
           <table className="w-full">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Naam</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Functie</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>E-mail</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Naam</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Functie</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>E-mail</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>

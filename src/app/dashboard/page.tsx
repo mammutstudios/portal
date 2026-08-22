@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchInvoicesAsTransactions } from "@/lib/moneybird/asTransactions";
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
@@ -18,10 +19,10 @@ export default async function DashboardPage() {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
 
-  const [{ data: projects }, { count: taskCount }, { data: transactions }] = await Promise.all([
+  const [{ data: projects }, { count: taskCount }, transactions] = await Promise.all([
     supabase.from("projects").select("*, clients(name, logo_url)").in("status", ["active", "upcoming"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
-    supabase.from("transactions").select("amount, date, status"),
+    fetchInvoicesAsTransactions(supabase),
   ]);
 
   const isRetainer = (p: Project) => p.tags?.some((t) => t.toLowerCase() === "retainer") ?? false;
@@ -69,7 +70,7 @@ export default async function DashboardPage() {
         {/* Omzet deze maand */}
         <Link
           href="/dashboard/finance"
-          className="card-hover rounded-lg p-6 flex flex-col justify-between relative overflow-hidden"
+          className="card-hover squircle p-6 flex flex-col justify-between relative overflow-hidden"
           style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
         >
           <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full" style={{ background: "var(--bg-secondary)" }} />
@@ -88,7 +89,7 @@ export default async function DashboardPage() {
         {/* Forecast volgende maand */}
         <Link
           href="/dashboard/finance"
-          className="card-hover rounded-lg p-6 flex flex-col justify-between"
+          className="card-hover squircle p-6 flex flex-col justify-between"
           style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
         >
           <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
@@ -105,7 +106,7 @@ export default async function DashboardPage() {
         {/* Openstaande taken */}
         <Link
           href="/dashboard/tasks"
-          className="card-hover rounded-lg p-6 flex flex-col justify-between"
+          className="card-hover squircle p-6 flex flex-col justify-between"
           style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
         >
           <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
@@ -132,14 +133,14 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+        <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           {projects && projects.length > 0 ? (
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[40rem]">
               <thead>
-                <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Klant</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
+                <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
                   <th />
                 </tr>
               </thead>
@@ -165,10 +166,10 @@ export default async function DashboardPage() {
                               /^https?|^\//.test(project.clients.logo_url) ? (
                                 <img src={project.clients.logo_url} alt={project.clients.name} className="w-full h-full object-contain" />
                               ) : (
-                                <span style={{ fontSize: "11px" }}>{project.clients.logo_url}</span>
+                                <span style={{ fontSize: "0.6875rem" }}>{project.clients.logo_url}</span>
                               )
                             ) : (
-                              <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>
+                              <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "var(--text-muted)" }}>
                                 {project.clients.name.charAt(0).toUpperCase()}
                               </span>
                             )}
@@ -187,7 +188,7 @@ export default async function DashboardPage() {
                       <ProjectStatusBadge status={project.status} />
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+                      <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
                     </td>
                   </HoverRow>
                 ))}

@@ -2,18 +2,27 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectStatusBadge, TaskStatusBadge } from "@/components/StatusBadge";
+import { getPortalContext } from "@/lib/portal";
 
 export default async function PortalProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { clientIds } = await getPortalContext();
   const supabase = await createClient();
 
-  const [{ data: project }, { data: tasks }, { data: files }] = await Promise.all([
-    supabase.from("projects").select("*, clients(name)").eq("id", id).single(),
+  // Eerst eigenaarschap vaststellen, pas daarna de inhoud ophalen. Een project
+  // van een andere klant bestaat voor deze bezoeker simpelweg niet.
+  const { data: project } = await supabase
+    .from("projects")
+    .select("*, clients(name)")
+    .eq("id", id)
+    .single();
+
+  if (!project || !clientIds.includes(project.client_id)) notFound();
+
+  const [{ data: tasks }, { data: files }] = await Promise.all([
     supabase.from("tasks").select("*").eq("project_id", id).order("created_at"),
     supabase.from("files").select("*").eq("project_id", id).order("uploaded_at", { ascending: false }),
   ]);
-
-  if (!project) notFound();
 
   const doneTasks = tasks?.filter((t) => t.status === "done").length ?? 0;
   const totalTasks = tasks?.length ?? 0;
@@ -46,7 +55,7 @@ export default async function PortalProjectDetailPage({ params }: { params: Prom
         <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>
           Taken
         </h2>
-        <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+        <div className="squircle overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           {tasks && tasks.length > 0 ? (
             <div>
               {tasks.map((task, i) => (
@@ -85,7 +94,7 @@ export default async function PortalProjectDetailPage({ params }: { params: Prom
         <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>
           Bestanden
         </h2>
-        <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+        <div className="squircle overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           {files && files.length > 0 ? (
             <div>
               {files.map((file, i) => (

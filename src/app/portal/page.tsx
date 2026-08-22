@@ -1,43 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
+import { getPortalContext } from "@/lib/portal";
+import PortalEmpty from "./PortalEmpty";
 
 export default async function PortalPage() {
+  const { fullName, clientIds, activeClientName } = await getPortalContext();
+
+  if (clientIds.length === 0) return <PortalEmpty />;
+
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const cookieStore = await cookies();
-  const previewClientId = cookieStore.get("preview_client_id")?.value ?? null;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .single();
-
-  let query = supabase.from("projects").select("*, clients(name)").order("created_at", { ascending: false });
-  if (previewClientId) query = query.eq("client_id", previewClientId);
-
-  const { data: projects } = await query;
-
-  // Get the previewed client name for the heading
-  let previewClientName: string | null = null;
-  if (previewClientId) {
-    const { data: c } = await supabase.from("clients").select("name").eq("id", previewClientId).single();
-    previewClientName = c?.name ?? null;
-  }
+  const { data: projects } = await supabase
+    .from("projects")
+    .select("*, clients(name)")
+    .in("client_id", clientIds)
+    .order("created_at", { ascending: false });
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
       <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-        {previewClientName ?? (profile?.full_name ? `Welkom, ${profile.full_name}` : "Mijn projecten")}
+        {activeClientName ?? (fullName ? `Welkom, ${fullName}` : "Mijn projecten")}
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        {previewClientName ? `Projecten van ${previewClientName}` : "Hier zie je de voortgang van je projecten."}
+        {activeClientName ? `Projecten van ${activeClientName}` : "Hier zie je de voortgang van je projecten."}
       </p>
 
       <div className="grid gap-3">

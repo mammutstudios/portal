@@ -92,7 +92,7 @@ export default function ContactDetailClient({
         <Link href="/dashboard/contacts" className="hover:underline" style={{ color: "var(--text-muted)" }}>
           Contactpersonen
         </Link>
-        <CaretRight size={12} weight="bold" />
+        <CaretRight size={13} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{contact.name}</span>
       </nav>
 
@@ -123,10 +123,10 @@ export default function ContactDetailClient({
 
           {/* Contact details */}
           {(contact.email || contact.phone) && (
-            <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+            <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
               {contact.email && (
                 <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: contact.phone ? "1px solid var(--border)" : "none" }}>
-                  <EnvelopeSimple size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                  <EnvelopeSimple size={17} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                   <a href={`mailto:${contact.email}`} className="text-sm truncate hover:underline" style={{ color: "var(--text)" }}>
                     {contact.email}
                   </a>
@@ -134,7 +134,7 @@ export default function ContactDetailClient({
               )}
               {contact.phone && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <Phone size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                  <Phone size={17} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                   <a href={`tel:${contact.phone}`} className="text-sm hover:underline" style={{ color: "var(--text)" }}>
                     {contact.phone}
                   </a>
@@ -146,7 +146,7 @@ export default function ContactDetailClient({
           {/* Organisaties */}
           <div>
             <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Organisaties</h2>
-            <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+            <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
               {linkedClients.length === 0 && (
                 <p className="px-3 py-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>Geen organisaties gekoppeld.</p>
               )}
@@ -169,10 +169,10 @@ export default function ContactDetailClient({
                         /^https?|^\//.test(c.logo_url) ? (
                           <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
                         ) : (
-                          <span style={{ fontSize: "10px" }}>{c.logo_url}</span>
+                          <span style={{ fontSize: "0.625rem" }}>{c.logo_url}</span>
                         )
                       ) : (
-                        <span style={{ fontSize: "8px", fontWeight: 600, color: "var(--text-muted)" }}>
+                        <span style={{ fontSize: "0.5rem", fontWeight: 600, color: "var(--text-muted)" }}>
                           {c.name.charAt(0).toUpperCase()}
                         </span>
                       )}
@@ -185,7 +185,7 @@ export default function ContactDetailClient({
                     style={{ color: "var(--text-muted)" }}
                     title="Ontkoppelen"
                   >
-                    <X size={12} weight="bold" />
+                    <X size={13} weight="bold" />
                   </button>
                 </div>
               ))}
@@ -210,13 +210,13 @@ export default function ContactDetailClient({
         {/* Right: projects */}
         <div className="flex-1">
           <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Projecten</h2>
-          <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+          <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
             {projects.length > 0 ? (
-              <table className="w-full min-w-[640px]">
+              <table className="w-full min-w-[40rem]">
                 <thead>
-                  <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                    <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
-                    <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
+                  <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
                     <th className="w-8 px-4 py-2.5" />
                   </tr>
                 </thead>
@@ -237,7 +237,7 @@ export default function ContactDetailClient({
                         <ProjectStatusBadge status={project.status as any} />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+                        <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
                       </td>
                     </tr>
                   ))}

@@ -31,7 +31,7 @@ export default function ProjectDetailClient({
         <Link href="/dashboard/projects" className="hover:underline" style={{ color: "var(--text-muted)" }}>
           Projecten
         </Link>
-        <CaretRight size={12} weight="bold" />
+        <CaretRight size={13} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{project.title}</span>
       </nav>
 
@@ -68,14 +68,14 @@ export default function ProjectDetailClient({
       {/* Tasks */}
       <section className="mb-10">
         <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Taken</h2>
-        <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+        <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           {tasks.length > 0 ? (
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[40rem]">
               <thead>
-                <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Taak</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Deadline</th>
+                <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Taak</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,15 +107,15 @@ export default function ProjectDetailClient({
             <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>{totalHours.toFixed(2)} uur totaal</span>
           )}
         </div>
-        <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+        <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           {timeEntries.length > 0 ? (
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[40rem]">
               <thead>
-                <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Taak</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Uren</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Datum</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Wie</th>
+                <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Taak</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Uren</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Datum</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Wie</th>
                 </tr>
               </thead>
               <tbody>
