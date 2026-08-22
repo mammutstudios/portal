@@ -4,6 +4,13 @@ import type { Range } from "@/lib/analytics/plausible";
  * De periodes uit het Plausible-dashboard. Ik reken de datums zelf uit in
  * plaats van hun kortschrift te gebruiken, omdat ik daarmee ook de vórige
  * periode van dezelfde lengte kan bepalen — de API kent geen vergelijking.
+ *
+ * De grenzen zijn nagemeten tegen de kortschriften van de API, want ze zijn
+ * niet allemaal even vanzelfsprekend: de rollende periodes (7d/28d/91d)
+ * eindigen gisteren en laten vandaag er dus buiten, terwijl "deze maand" en
+ * "dit jaar" tot en met vandaag lopen. "12mo" is twaalf héle maanden vóór de
+ * huidige. Wijk hier niet van af zonder opnieuw te meten — anders wijken de
+ * cijfers in het portal zichtbaar af van die in Plausible zelf.
  */
 export const PERIODS = [
   { key: "day", label: "Vandaag" },
@@ -55,11 +62,11 @@ export function resolvePeriod(key: PeriodKey, now = new Date()): Resolved {
     case "day":
       return span(today, today);
     case "7d":
-      return span(daysAgo(6), today);
+      return span(daysAgo(7), daysAgo(1));
     case "28d":
-      return span(daysAgo(27), today);
+      return span(daysAgo(28), daysAgo(1));
     case "91d":
-      return span(daysAgo(90), today);
+      return span(daysAgo(91), daysAgo(1));
     case "month":
       return span(new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1)), today);
     case "lastmonth": {
@@ -69,8 +76,11 @@ export function resolvePeriod(key: PeriodKey, now = new Date()): Resolved {
     }
     case "year":
       return span(new Date(Date.UTC(now.getFullYear(), 0, 1)), today);
-    case "12mo":
-      return span(new Date(Date.UTC(now.getFullYear(), now.getMonth() - 11, 1)), today);
+    case "12mo": {
+      const van = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 12, 1));
+      const tot = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 0));
+      return span(van, tot);
+    }
     case "all":
       return {
         // Ruim genomen; Plausible kapt zelf af op de eerste meting.
