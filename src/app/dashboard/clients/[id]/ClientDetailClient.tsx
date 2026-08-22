@@ -7,6 +7,10 @@ import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ClientTagBadge } from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
 import ClientForm from "@/components/ClientForm";
+import MoneybirdLinkSelect, { type MoneybirdContactOption } from "@/components/MoneybirdLinkSelect";
+import DeleteButton from "@/components/DeleteButton";
+import PlausibleSiteField from "@/components/PlausibleSiteField";
+import { deleteClientAction } from "@/lib/actions/clients";
 import ContactForm from "@/components/ContactForm";
 import { unlinkContactFromClientAction, linkContactToClientAction } from "@/lib/actions/contacts";
 import SearchSelect from "@/components/SearchSelect";
@@ -43,7 +47,7 @@ function LinkContactForm({ clientId, allContacts, linkedIds, onClose }: {
       <SearchSelect
         name="contact_id"
         placeholder="Zoek een contactpersoon..."
-        options={available.map((c) => ({ value: c.id, label: c.name, sublabel: c.job_title ?? undefined }))}
+        options={available.map((c) => ({ value: c.id, label: c.name }))}
         required
       />
       <div className="flex justify-end gap-2 pt-1">
@@ -63,11 +67,13 @@ export default function ClientDetailClient({
   projects,
   contacts,
   allContacts,
+  moneybirdContacts = [],
 }: {
   client: Client;
   projects: Project[];
   contacts: Contact[];
   allContacts: Contact[];
+  moneybirdContacts?: MoneybirdContactOption[];
 }) {
   const [showEdit, setShowEdit] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
@@ -133,6 +139,39 @@ export default function ClientDetailClient({
       )}
       <div className="mb-8" />
 
+      {/* Moneybird — eenmalig instellen per organisatie */}
+      {moneybirdContacts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-sm font-medium mb-1" style={{ color: "var(--text-heading)" }}>
+            Moneybird
+          </h2>
+          <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+            Welke relatie in Moneybird hoort bij deze organisatie? Facturen van die
+            relatie komen daarna automatisch bij deze klant terecht.
+          </p>
+          <MoneybirdLinkSelect
+            clientId={client.id}
+            value={client.moneybird_contact_id ?? null}
+            options={moneybirdContacts}
+            onLinked={() => router.refresh()}
+          />
+        </div>
+      )}
+
+      {/* Analytics — eenmalig instellen per organisatie */}
+      <div className="mb-8">
+        <h2 className="text-sm font-medium mb-1" style={{ color: "var(--text-heading)" }}>
+          Analytics
+        </h2>
+        <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+          Het domein zoals het in Plausible staat. De klant ziet die cijfers in het portaal.
+        </p>
+        <PlausibleSiteField
+          clientId={client.id}
+          value={(client as { plausible_site_id?: string | null }).plausible_site_id ?? null}
+        />
+      </div>
+
       {/* Contactpersonen */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
@@ -162,7 +201,6 @@ export default function ClientDetailClient({
             <thead>
               <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Naam</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Functie</th>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>E-mail</th>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Telefoon</th>
                 <th className="px-4 py-2.5" />
@@ -183,9 +221,6 @@ export default function ClientDetailClient({
                     >
                       {contact.name}
                     </button>
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
-                    {contact.job_title ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
                     {contact.email ?? "—"}
@@ -259,6 +294,18 @@ export default function ClientDetailClient({
             Geen projecten voor deze organisatie.
           </p>
         )}
+      </div>
+
+      <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--border)" }}>
+        <DeleteButton
+          label="Organisatie verwijderen"
+          redirectTo="/dashboard/clients"
+          onDelete={async () => {
+            const fd = new FormData();
+            fd.set("id", client.id);
+            return deleteClientAction(fd);
+          }}
+        />
       </div>
 
       {showEdit && (

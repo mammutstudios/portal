@@ -295,7 +295,7 @@ export default function TasksPageClient({
 }: {
   tasks: Task[];
   projects: Pick<Project, "id" | "title">[];
-  contacts: Pick<Contact, "id" | "name" | "job_title">[];
+  contacts: Pick<Contact, "id" | "name">[];
   profiles: Pick<Profile, "id" | "full_name">[];
 }) {
   const [showCreate, setShowCreate] = useState(false);

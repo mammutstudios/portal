@@ -67,7 +67,7 @@ export default function ContactsPageClient({
             <thead>
               <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
                 <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Naam</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klanten</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Organisatie(s)</th>
                 <th className="w-8 px-4 py-2.5" />
               </tr>
             </thead>
@@ -85,7 +85,6 @@ export default function ContactsPageClient({
                   >
                     <td className="px-4 py-3">
                       <p className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>{contact.name}</p>
-                      {contact.job_title && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{contact.job_title}</p>}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {linkedClients.length > 0 ? (

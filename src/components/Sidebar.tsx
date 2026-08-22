@@ -16,6 +16,7 @@ import {
   X,
   Clock,
   List,
+  ChartBar,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -198,14 +199,14 @@ const adminNav: NavItem[] = [
 
 const clientNav: NavItem[] = [
   {
-    label: "Mijn projecten",
-    href: "/portal",
-    icon: <FolderOpen size={19} weight="fill" />,
+    label: "Overzicht",
+    href: "/portal/overzicht",
+    icon: <SquaresFour size={19} weight="fill" />,
   },
   {
-    label: "Uren",
-    href: "/portal/uren",
-    icon: <Clock size={19} weight="fill" />,
+    label: "Analytics",
+    href: "/portal/analytics",
+    icon: <ChartBar size={19} weight="fill" />,
   },
   {
     label: "Facturen",
@@ -214,9 +215,19 @@ const clientNav: NavItem[] = [
   },
 ];
 
-export default function Sidebar({ role }: { role: "admin" | "client" }) {
+export default function Sidebar({
+  role,
+  showAnalytics = true,
+}: {
+  role: "admin" | "client";
+  /** Uit als deze klant geen gekoppelde site heeft; dan is de pagina leeg. */
+  showAnalytics?: boolean;
+}) {
   const pathname = usePathname();
-  const navItems = role === "admin" ? adminNav : clientNav;
+  const navItems =
+    role === "admin"
+      ? adminNav
+      : clientNav.filter((item) => showAnalytics || item.href !== "/portal/analytics");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close drawer on route change
@@ -282,7 +293,7 @@ export default function Sidebar({ role }: { role: "admin" | "client" }) {
           <Link
             href="/dashboard/klantportaal"
             onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm w-full transition-colors hover:bg-[#f1f1ef] hover:text-[var(--text-heading)]"
+            className="flex items-center gap-2.5 px-2 h-10 rounded-md text-sm w-full transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-heading)]"
             style={{ color: "var(--text-muted)" }}
           >
             <Eye size={18} weight="regular" className="opacity-70" />

@@ -35,4 +35,33 @@ export async function updateProfileAction(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
+  revalidatePath("/portal");
+  revalidatePath("/portal/instellingen");
+}
+
+/**
+ * Slaat de meldingsvoorkeuren op. Nog geen verzendkanaal aangesloten; dit legt
+ * alleen vast wat iemand wil ontvangen.
+ */
+export async function updateNotificationPrefsAction(
+  prefs: Record<string, boolean>,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Niet ingelogd" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ notification_prefs: prefs })
+    .eq("id", user.id);
+
+  if (error) {
+    return error.message.includes("notification_prefs")
+      ? { error: "De kolom notification_prefs bestaat nog niet. Draai eerst de migratie." }
+      : { error: error.message };
+  }
+
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/portal/instellingen");
+  return {};
 }

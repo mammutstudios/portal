@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
+import SmoothScroll from "@/components/SmoothScroll";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -17,6 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="app-shell flex flex-col h-screen overflow-hidden">
+      <SmoothScroll />
       <TopBar
         name={profile?.full_name ?? "Account"}
         avatarUrl={profile?.avatar_url ?? null}

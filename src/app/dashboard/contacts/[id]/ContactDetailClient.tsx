@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CaretRight, EnvelopeSimple, Phone, X } from "@phosphor-icons/react";
+import { CaretRight, X } from "@phosphor-icons/react";
 import Modal from "@/components/Modal";
 import ContactForm from "@/components/ContactForm";
+import DeleteButton from "@/components/DeleteButton";
+import { deleteContactAction } from "@/lib/actions/contacts";
 import SearchSelect from "@/components/SearchSelect";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
 import { linkContactToClientAction, unlinkContactFromClientAction } from "@/lib/actions/contacts";
@@ -70,7 +72,6 @@ export default function ContactDetailClient({
   clients: LinkedClient[];
   projects: ProjectRow[];
 }) {
-  const [showEdit, setShowEdit] = useState(false);
   const [showAddClient, setShowAddClient] = useState(false);
   const router = useRouter();
 
@@ -96,23 +97,16 @@ export default function ContactDetailClient({
         <span style={{ color: "var(--text-heading)" }}>{contact.name}</span>
       </nav>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-            {contact.name}
-          </h1>
-          {contact.job_title && (
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>{contact.job_title}</p>
-          )}
-        </div>
-        <button
-          onClick={() => setShowEdit(true)}
-          className="text-sm px-3 py-1.5 rounded-md flex-shrink-0"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
-          Bewerken
-        </button>
+      <h1 className="text-3xl font-extrabold mb-6" style={{ color: "var(--text-heading)" }}>
+        {contact.name}
+      </h1>
+
+      {/* Meteen aanpasbaar: dit is geen overzichtspagina meer. */}
+      <div
+        className="squircle p-5 mb-8"
+        style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+      >
+        <ContactForm contact={contact} columns={2} onClose={() => router.refresh()} />
       </div>
 
       {/* Two-column layout */}
@@ -120,28 +114,6 @@ export default function ContactDetailClient({
 
         {/* Left: info card */}
         <div className="w-64 flex-shrink-0 space-y-4">
-
-          {/* Contact details */}
-          {(contact.email || contact.phone) && (
-            <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
-              {contact.email && (
-                <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: contact.phone ? "1px solid var(--border)" : "none" }}>
-                  <EnvelopeSimple size={17} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                  <a href={`mailto:${contact.email}`} className="text-sm truncate hover:underline" style={{ color: "var(--text)" }}>
-                    {contact.email}
-                  </a>
-                </div>
-              )}
-              {contact.phone && (
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <Phone size={17} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                  <a href={`tel:${contact.phone}`} className="text-sm hover:underline" style={{ color: "var(--text)" }}>
-                    {contact.phone}
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Organisaties */}
           <div>
@@ -252,11 +224,17 @@ export default function ContactDetailClient({
         </div>
       </div>
 
-      {showEdit && (
-        <Modal title="Contactpersoon bewerken" onClose={() => setShowEdit(false)}>
-          <ContactForm contact={contact} onClose={() => setShowEdit(false)} />
-        </Modal>
-      )}
+      <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--border)" }}>
+        <DeleteButton
+          label="Contactpersoon verwijderen"
+          redirectTo="/dashboard/contacts"
+          onDelete={async () => {
+            const fd = new FormData();
+            fd.set("id", contact.id);
+            await deleteContactAction(fd);
+          }}
+        />
+      </div>
 
       {showAddClient && (
         <Modal title="Organisatie koppelen" onClose={() => setShowAddClient(false)}>

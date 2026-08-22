@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { moneybirdDocumentStyleId } from "./client";
 import { contactLabel, toAmount, type MoneybirdSalesInvoice } from "./types";
+import { recipientsForClient } from "@/lib/email/recipients";
+import { newInvoiceMail } from "@/lib/email/templates";
+import { sendMail } from "@/lib/email/send";
 
 /** Hoort deze factuur bij de ingestelde huisstijl? Zonder instelling: alles. */
 export function matchesDocumentStyle(invoice: MoneybirdSalesInvoice): boolean {
@@ -114,8 +117,53 @@ export async function upsertInvoice(
     synced_at: new Date().toISOString(),
   };
 
+  // Wat stond er hiervoor? Bepaalt of dit een verzending is die we melden.
+  const { data: existing } = await supabase
+    .from("moneybird_invoices")
+    .select("state")
+    .eq("moneybird_id", invoice.id)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("moneybird_invoices")
     .upsert(row, { onConflict: "moneybird_id" });
   if (error) throw new Error(error.message);
+
+  // Alleen melden bij de overgang concept -> verstuurd. Een factuur die we voor
+  // het eerst zien melden we nooit: anders zou de eerste import iedereen mailen
+  // over de hele historie.
+  const wasDraft = existing?.state === "draft";
+  const isSent = row.state !== null && row.state !== "draft";
+  if (wasDraft && isSent) {
+    await notifyNewInvoice(supabase, row);
+  }
+}
+
+async function notifyNewInvoice(
+  supabase: SupabaseClient,
+  row: {
+    client_id: string | null;
+    invoice_number: string | null;
+    reference: string | null;
+    total_excl_tax: number | null;
+    invoice_date: string | null;
+    contact_name: string | null;
+  },
+) {
+  try {
+    const to = await recipientsForClient(supabase, row.client_id, "new_invoice");
+    if (to.length === 0) return;
+
+    const { subject, html } = newInvoiceMail({
+      invoiceNumber: row.invoice_number,
+      reference: row.reference,
+      amountExclTax: row.total_excl_tax,
+      invoiceDate: row.invoice_date,
+      clientName: row.contact_name,
+    });
+    await sendMail({ to, subject, html });
+  } catch (e) {
+    // Een mislukte mail mag het inlezen van facturen nooit tegenhouden.
+    console.error("[mail] melding nieuwe factuur mislukt:", e);
+  }
 }

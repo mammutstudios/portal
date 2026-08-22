@@ -108,8 +108,13 @@ export default function InvoiceTable({
                 </td>
               </tr>
             )}
-            {invoices.map((inv) => (
-              <tr key={inv.id} style={{ borderBottom: "1px solid var(--border)" }}>
+            {invoices.map((inv, i) => (
+              <tr
+                key={inv.id}
+                style={{
+                  borderBottom: i < invoices.length - 1 ? "1px solid var(--border)" : "none",
+                }}
+              >
                 <td
                   className="px-4 max-w-[16rem] truncate"
                   style={{ color: "var(--text-muted)" }}

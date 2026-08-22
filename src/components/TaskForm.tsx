@@ -31,7 +31,7 @@ export default function TaskForm({
 }: {
   task?: Task;
   projects: ProjectOption[];
-  contacts: Pick<Contact, "id" | "name" | "job_title">[];
+  contacts: Pick<Contact, "id" | "name">[];
   profiles: Pick<Profile, "id" | "full_name">[];
   defaultProjectId?: string;
   onClose: () => void;
@@ -77,7 +77,7 @@ export default function TaskForm({
   // Combine contacts and profiles into one assignee list
   const assigneeOptions = [
     ...profiles.map((p) => ({ value: `profile:${p.id}`, label: p.full_name ?? "Onbekend", sublabel: "Mammut" })),
-    ...contacts.map((c) => ({ value: `contact:${c.id}`, label: c.name, sublabel: c.job_title ?? "Contact" })),
+    ...contacts.map((c) => ({ value: `contact:${c.id}`, label: c.name, sublabel: "Contact" })),
   ];
 
   return (

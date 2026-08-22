@@ -15,10 +15,13 @@ export default function TopBar({
   name,
   avatarUrl,
   homeHref,
+  settingsHref = "/dashboard/settings",
 }: {
   name: string;
   avatarUrl: string | null;
   homeHref: string;
+  /** Null verbergt het item; het klantportaal heeft nog geen eigen instellingen. */
+  settingsHref?: string | null;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -199,7 +202,7 @@ export default function TopBar({
 
           {menuOpen && (
             <div
-              className="absolute right-0 mt-1 rounded-lg overflow-hidden z-50 py-1"
+              className="absolute right-0 mt-1 rounded-lg overflow-hidden z-50"
               style={{
                 minWidth: 200,
                 background: "var(--bg)",
@@ -207,19 +210,23 @@ export default function TopBar({
                 boxShadow: "0 8px 32px rgb(20 0 24 / 0.12)",
               }}
             >
+              {settingsHref && (
               <Link
-                href="/dashboard/settings"
+                href={settingsHref}
                 onClick={() => setMenuOpen(false)}
-                className="card-hover flex items-center gap-2.5 px-3 py-2 text-sm w-full"
+                className="card-hover flex items-center gap-2.5 px-3 py-2.5 text-sm w-full"
                 style={{ color: "var(--text)" }}
               >
                 <GearSix size={16} className="opacity-70" />
                 Instellingen
               </Link>
-              <div className="my-1" style={{ borderTop: "1px solid var(--border)" }} />
+              )}
+              {settingsHref && (
+                <div className="mx-3" style={{ borderTop: "1px solid var(--border)" }} />
+              )}
               <button
                 onClick={signOut}
-                className="card-hover flex items-center gap-2.5 px-3 py-2 text-sm w-full"
+                className="card-hover flex items-center gap-2.5 px-3 py-2.5 text-sm w-full"
                 style={{ color: "var(--text)" }}
               >
                 <SignOut size={16} className="opacity-70" />

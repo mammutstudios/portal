@@ -5,6 +5,7 @@ export type Profile = {
   role: Role;
   full_name: string | null;
   avatar_url: string | null;
+  notification_prefs: Record<string, boolean> | null;
   created_at: string;
 };
 
@@ -87,7 +88,6 @@ export type Contact = {
   name: string;
   email: string | null;
   phone: string | null;
-  job_title: string | null;
   created_at: string;
   contact_clients?: { clients: Pick<Client, "id" | "name" | "logo_url" | "client_number"> }[];
 };

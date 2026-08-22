@@ -86,7 +86,7 @@ export default function FinancePageClient({
           {payload.map((p: any) => (
             <div key={p.dataKey} className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
               <span className="w-2 h-2 rounded-full inline-block" style={{ background: p.fill }} />
-              {p.dataKey === "confirmed" ? "Bevestigd" : "Concept"}: {fmtFull(p.value)}
+              {p.dataKey === "confirmed" ? "Gefactureerd" : "Concept"}: {fmtFull(p.value)}
             </div>
           ))}
         </div>

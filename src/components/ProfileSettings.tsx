@@ -2,10 +2,32 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { updateProfileAction } from "@/lib/actions/profile";
+import { updateProfileAction, updateNotificationPrefsAction } from "@/lib/actions/profile";
+import { NOTIFICATION_TYPES, isEnabled, type NotificationPrefs } from "@/lib/notifications";
 import type { Profile } from "@/lib/types";
 
-export default function SettingsPageClient({ profile, email }: { profile: Profile | null; email: string }) {
+export default function ProfileSettings({ profile, email }: { profile: Profile | null; email: string }) {
+  const initialPrefs = (profile?.notification_prefs ?? null) as NotificationPrefs | null;
+  const [prefs, setPrefs] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(NOTIFICATION_TYPES.map((t) => [t.key, isEnabled(initialPrefs, t.key)])),
+  );
+  const [prefsSaved, setPrefsSaved] = useState(false);
+  const [prefsError, setPrefsError] = useState<string | null>(null);
+
+  async function togglePref(key: string, value: boolean) {
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    setPrefsSaved(false);
+    setPrefsError(null);
+    const result = await updateNotificationPrefsAction(next);
+    if (result.error) {
+      setPrefsError(result.error);
+      setPrefs(prefs);
+      return;
+    }
+    setPrefsSaved(true);
+  }
+
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -149,6 +171,52 @@ export default function SettingsPageClient({ profile, email }: { profile: Profil
           </button>
         </div>
       </form>
+
+      {/* Meldingen */}
+      <div className="mt-10 pt-8" style={{ borderTop: "1px solid var(--border)" }}>
+        <h2 className="text-lg font-semibold mb-1" style={{ color: "var(--text-heading)" }}>
+          Meldingen
+        </h2>
+        <p className="text-xs mb-5" style={{ color: "var(--text-muted)" }}>
+          Waarover wil je bericht krijgen? Je keuze wordt meteen bewaard. Er wordt
+          op dit moment nog niets verstuurd — dit legt alleen vast wat je wilt
+          ontvangen zodra dat aanstaat.
+        </p>
+
+        <div className="space-y-1">
+          {NOTIFICATION_TYPES.map((type) => (
+            <label
+              key={type.key}
+              className="card-hover flex items-start gap-3 px-3 py-3 rounded-md cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={prefs[type.key] ?? false}
+                onChange={(e) => togglePref(type.key, e.target.checked)}
+                className="mt-0.5 flex-shrink-0"
+                style={{ accentColor: "var(--ink)" }}
+              />
+              <span>
+                <span className="block text-sm" style={{ color: "var(--text-heading)" }}>
+                  {type.label}
+                </span>
+                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
+                  {type.description}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {prefsError && (
+          <p className="text-xs mt-3 px-3 py-2 rounded-md" style={{ background: "#fef2f2", color: "#b0413e" }}>
+            {prefsError}
+          </p>
+        )}
+        {prefsSaved && !prefsError && (
+          <p className="text-xs mt-3" style={{ color: "var(--text-muted)" }}>Opgeslagen.</p>
+        )}
+      </div>
     </div>
   );
 }
