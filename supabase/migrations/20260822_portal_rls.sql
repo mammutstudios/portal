@@ -25,7 +25,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select cm.client_id from client_members cm where cm.profile_id = auth.uid();
+  select cm.client_id from client_members cm where cm.user_id = auth.uid();
 $$;
 
 -- clients
@@ -38,7 +38,7 @@ create policy "clients_portal_read" on clients
 alter table client_members enable row level security;
 drop policy if exists "client_members_own_read" on client_members;
 create policy "client_members_own_read" on client_members
-  for select using (is_admin() or profile_id = auth.uid());
+  for select using (is_admin() or user_id = auth.uid());
 
 -- projects
 alter table projects enable row level security;
@@ -90,7 +90,7 @@ create policy "moneybird_invoices_portal_read" on moneybird_invoices
   );
 
 -- Een portaalgebruiker aan een klant koppelen:
---   insert into client_members (client_id, profile_id) values ('<client-uuid>', '<profile-uuid>');
+--   insert into client_members (client_id, user_id) values ('<client-uuid>', '<profile-uuid>');
 
 -- Controleer welke policies er nu staan (en of er te ruime tussen zitten):
 --   select tablename, policyname, cmd, qual

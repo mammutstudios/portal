@@ -51,10 +51,12 @@ export const getPortalContext = cache(async function getPortalContext(): Promise
     if (!previewClientId) redirect("/dashboard");
     clientIds = [previewClientId];
   } else {
+    // De kolom heet user_id, niet profile_id. Met de verkeerde naam faalt de
+    // query stil en houdt elke klant een leeg portaal over.
     const { data: memberships } = await supabase
       .from("client_members")
       .select("client_id")
-      .eq("profile_id", user.id);
+      .eq("user_id", user.id);
     clientIds = memberships?.map((m) => m.client_id as string) ?? [];
   }
 
