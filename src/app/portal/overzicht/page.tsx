@@ -10,8 +10,32 @@ import {
 } from "@/lib/analytics/plausible";
 import MaandoverzichtClient from "./MaandoverzichtClient";
 
+/**
+ * Ochtend, middag of avond — nadrukkelijk in Nederlandse tijd en niet in die
+ * van de server. Zou de klok van de bezoeker leidend zijn, dan wijkt de eerste
+ * render af van wat de server stuurde en klaagt React over de hydratie.
+ */
+function groet(nu = new Date()): string {
+  const uur = Number(
+    new Intl.DateTimeFormat("nl-NL", {
+      timeZone: "Europe/Amsterdam",
+      hour: "numeric",
+      hour12: false,
+    }).format(nu),
+  );
+  if (uur < 6) return "Goedenacht";
+  if (uur < 12) return "Goedemorgen";
+  if (uur < 18) return "Goedemiddag";
+  return "Goedenavond";
+}
+
+/** Alleen de voornaam; "Daniel Stoopendaal" wordt "Daniel". */
+function voornaam(volledig: string | null): string | null {
+  return volledig?.trim().split(/\s+/)[0] || null;
+}
+
 export default async function PortalOverzichtPage() {
-  const { clientIds } = await getPortalContext();
+  const { clientIds, fullName } = await getPortalContext();
   const supabase = await createClient();
 
   const now = new Date();
@@ -84,6 +108,8 @@ export default async function PortalOverzichtPage() {
 
   return (
     <MaandoverzichtClient
+      groet={groet()}
+      voornaam={voornaam(fullName)}
       stats={stats}
       site={site}
       bezoekers={bezoekersReeks}
