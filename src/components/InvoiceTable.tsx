@@ -119,7 +119,7 @@ export default function InvoiceTable({
                 <th className="px-4 font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
               )}
               <th
-                className={`px-4 whitespace-nowrap font-semibold ${amountAlign === "left" ? "text-left" : "text-right"}`}
+                className={`pl-4 pr-10 whitespace-nowrap font-semibold ${amountAlign === "left" ? "text-left" : "text-right"}`}
                 style={{ color: "var(--ink)" }}
               >
                 {amountLabel}
@@ -199,7 +199,7 @@ export default function InvoiceTable({
                   </td>
                 )}
                 <td
-                  className={`px-4 whitespace-nowrap ${amountAlign === "left" ? "text-left" : "text-right"}`}
+                  className={`pl-4 pr-10 whitespace-nowrap ${amountAlign === "left" ? "text-left" : "text-right"}`}
                   style={{ color: "var(--text-heading)" }}
                 >
                   {bedrag(inv) != null ? euro(bedrag(inv)!) : "—"}
