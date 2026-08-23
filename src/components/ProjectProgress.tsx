@@ -1,4 +1,4 @@
-import { PROJECT_PHASES, PHASE_LABEL, type ProjectPhase } from "@/lib/types";
+import { PHASE_LABEL, phasesForProject, type ProjectPhase } from "@/lib/types";
 
 /**
  * De fases van een project als een rij stappen, met de huidige gemarkeerd.
@@ -9,19 +9,25 @@ import { PROJECT_PHASES, PHASE_LABEL, type ProjectPhase } from "@/lib/types";
  */
 export default function ProjectProgress({
   phase,
+  tags = null,
   progress,
   showPercentage = false,
 }: {
   phase: ProjectPhase | null;
+  /** Bepaalt welke fases dit project kent; zie phasesForProject. */
+  tags?: string[] | null;
   progress?: number | null;
   showPercentage?: boolean;
 }) {
-  const huidige = phase ? PROJECT_PHASES.indexOf(phase) : -1;
+  const fases = phasesForProject(tags, phase);
+  if (fases.length === 0) return null;
+
+  const huidige = phase ? fases.indexOf(phase) : -1;
 
   return (
     <div>
       <div className="flex items-center gap-1.5 flex-wrap">
-        {PROJECT_PHASES.map((f, i) => {
+        {fases.map((f, i) => {
           const gedaan = huidige >= 0 && i < huidige;
           const nu = i === huidige;
           return (

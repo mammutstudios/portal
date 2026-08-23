@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
 import ProjectProgress from "@/components/ProjectProgress";
+import DetailList from "@/components/DetailList";
 import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
 import type { Project, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
 
@@ -46,7 +47,6 @@ export default function ProjectDetailClient({
           <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
             {project.title}
           </h1>
-          <ProjectStatusBadge status={project.status} />
         </div>
         <Link
           href={`/dashboard/projects/${project.id}/bewerken`}
@@ -57,12 +57,6 @@ export default function ProjectDetailClient({
         </Link>
       </div>
 
-      {project.tags && project.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {project.tags.map((tag: string) => <ProjectTagBadge key={tag} tag={tag} />)}
-        </div>
-      )}
-
       {project.description && (
         <p className="text-sm mb-6" style={{ color: "var(--text)" }}>
           {project.description}
@@ -70,7 +64,7 @@ export default function ProjectDetailClient({
       )}
 
       <div className="mb-8">
-        <ProjectProgress phase={project.phase} progress={project.progress} showPercentage />
+        <ProjectProgress phase={project.phase} tags={project.tags} progress={project.progress} showPercentage />
       </div>
 
       {(project.next_step || project.client_action) && (
@@ -96,14 +90,40 @@ export default function ProjectDetailClient({
 
       {/* Budget en uren staan bewust alleen hier: bij een vaste prijs heeft de
           klant er niets aan, en het nodigt uit tot sturen op uren. */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Kengetal label="Budget" waarde={project.budget_amount != null ? euro(project.budget_amount) : "Niet gezet"} />
-        <Kengetal label="Gefactureerd" waarde={euro(gefactureerd)} />
-        <Kengetal
-          label="Nog te gaan"
-          waarde={project.budget_amount != null ? euro(project.budget_amount - gefactureerd) : "—"}
+      <div className="mb-8">
+        <DetailList
+          rows={[
+            { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
+            ...(project.tags && project.tags.length > 0
+              ? [{
+                  label: "Type",
+                  value: (
+                    <span className="flex flex-wrap gap-1.5 justify-end">
+                      {project.tags.map((tag: string) => <ProjectTagBadge key={tag} tag={tag} />)}
+                    </span>
+                  ),
+                }]
+              : []),
+            {
+              label: "Budget",
+              value: project.budget_amount != null ? euro(project.budget_amount) : "Niet gezet",
+            },
+            { label: "Gefactureerd", value: euro(gefactureerd) },
+            {
+              label: "Nog te gaan",
+              value: project.budget_amount != null ? euro(project.budget_amount - gefactureerd) : "—",
+            },
+            { label: "Uren", value: totalHours.toFixed(1) },
+            ...(project.deadline
+              ? [{
+                  label: "Deadline",
+                  value: new Date(project.deadline).toLocaleDateString("nl-NL", {
+                    day: "numeric", month: "long", year: "numeric",
+                  }),
+                }]
+              : []),
+          ]}
         />
-        <Kengetal label="Uren" waarde={`${totalHours.toFixed(1)}`} />
       </div>
 
       {(project.staging_url || project.live_url) && (
@@ -202,17 +222,6 @@ export default function ProjectDetailClient({
         </div>
       </section>
 
-    </div>
-  );
-}
-
-function Kengetal({ label, waarde }: { label: string; waarde: string }) {
-  return (
-    <div className="squircle p-4" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
-      <div className="text-xs uppercase tracking-wide mb-1" style={{ color: "var(--text-muted)" }}>
-        {label}
-      </div>
-      <div className="text-lg font-bold" style={{ color: "var(--text-heading)" }}>{waarde}</div>
     </div>
   );
 }

@@ -43,6 +43,34 @@ export const PHASE_LABEL: Record<ProjectPhase, string> = {
   live: "Live",
 };
 
+/**
+ * Welke fases dit project doorloopt, afgeleid uit zijn type.
+ *
+ * Een project dat alleen development is kent geen ontwerpfase, en die dan toch
+ * tonen suggereert een stap die nooit komt. Bij een retainer is er helemaal
+ * geen traject: die loopt door, dus daar tonen we niets.
+ *
+ * Zonder tags weten we niets en tonen we alles; dat is beter dan iets weglaten
+ * wat er wel bij hoort.
+ */
+export function phasesForProject(tags: string[] | null, huidige?: ProjectPhase | null): ProjectPhase[] {
+  const t = (tags ?? []).map((x) => x.toLowerCase());
+
+  if (t.length === 1 && t[0] === "retainer") return [];
+  if (t.length === 0) return [...PROJECT_PHASES];
+
+  const ontwerp = t.includes("design") || t.includes("branding");
+  const development = t.includes("development");
+  if (!ontwerp && !development) return [...PROJECT_PHASES];
+
+  return PROJECT_PHASES.filter(
+    (f) =>
+      // De huidige fase blijft altijd staan, ook als het type later wijzigt.
+      f === huidige ||
+      (f !== "ontwerp" || ontwerp) && (f !== "development" || development),
+  );
+}
+
 export type Project = {
   id: string;
   client_id: string;

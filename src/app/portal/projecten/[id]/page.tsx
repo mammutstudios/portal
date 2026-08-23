@@ -9,7 +9,7 @@ import type { Project } from "@/lib/types";
 
 /** Zonder budget_amount: dat is een intern getal. Zie de lijstpagina. */
 const KOLOMMEN =
-  "id, client_id, title, description, status, deadline, phase, next_step, client_action, live_url, staging_url";
+  "id, client_id, title, description, status, deadline, tags, phase, next_step, client_action, live_url, staging_url";
 
 export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,7 +48,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
       )}
 
       <div className="mb-8">
-        <ProjectProgress phase={project.phase} />
+        <ProjectProgress phase={project.phase} tags={project.tags} />
         {project.deadline && (
           <p className="text-sm mt-3" style={{ color: "var(--text-muted)" }}>
             Verwachte oplevering: {shortDate(project.deadline)}
