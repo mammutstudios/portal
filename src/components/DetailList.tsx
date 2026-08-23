@@ -12,7 +12,7 @@ export default function DetailList({
   callout,
 }: {
   rows: DetailRow[];
-  /** Blok onderaan in de merkkleur, voor iets dat eruit moet springen. */
+  /** Blok onderaan, ingesprongen, voor iets dat eruit moet springen. */
   callout?: ReactNode;
 }) {
   return (
@@ -37,11 +37,9 @@ export default function DetailList({
         </div>
       ))}
 
-      {callout && (
-        <div className="px-5 py-4" style={{ background: "var(--lavender)" }}>
-          {callout}
-        </div>
-      )}
+      {/* Alleen ruimte; het blok binnenin tekent zijn eigen vlak, zodat het
+          van de randen van de kaart afblijft. */}
+      {callout && <div className="p-4">{callout}</div>}
     </div>
   );
 }

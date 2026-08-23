@@ -1,24 +1,27 @@
 /**
- * Voortgang als balk, bedoeld voor de call-out onderin de gegevenslijst. Hij
- * tekent geen eigen kaart: de achtergrond komt van het blok eromheen.
+ * Voortgang als balk in een donker vlak, bedoeld voor de call-out onderin de
+ * gegevenslijst. Donker met een witte balk, zodat hij opvalt tussen de rustige
+ * regels erboven.
  */
 export default function ProgressBar({ value }: { value: number }) {
   const pct = Math.min(100, Math.max(0, Math.round(value)));
 
   return (
-    <div>
-      <div className="flex items-baseline justify-between mb-2">
-        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--ink)" }}>
+    <div className="squircle px-4 py-3.5" style={{ background: "var(--ink)" }}>
+      <div className="flex items-baseline justify-between mb-2.5">
+        <span
+          className="text-xs font-semibold uppercase tracking-wide"
+          style={{ color: "color-mix(in srgb, var(--white) 65%, transparent)" }}
+        >
           Voortgang
         </span>
-        <span className="text-sm font-bold" style={{ color: "var(--ink)" }}>{pct}%</span>
+        <span className="text-sm font-bold" style={{ color: "var(--white)" }}>{pct}%</span>
       </div>
       <div
         className="w-full rounded-full overflow-hidden"
-        // Lichter dan de lavendel eromheen, zodat de baan zichtbaar blijft.
-        style={{ height: 8, background: "color-mix(in srgb, var(--white) 55%, var(--lavender))" }}
+        style={{ height: 8, background: "color-mix(in srgb, var(--white) 22%, transparent)" }}
       >
-        <div style={{ width: `${pct}%`, height: "100%", background: "var(--ink)" }} />
+        <div style={{ width: `${pct}%`, height: "100%", background: "var(--white)" }} />
       </div>
     </div>
   );
