@@ -15,6 +15,8 @@ export type MoneybirdInvoice = {
   client_id: string | null;
   synced_at: string | null;
   clients?: { id: string; name: string; logo_url: string | null } | null;
+  /** Link naar de factuur bij Moneybird; alleen gevuld in het klantportaal. */
+  external_url?: string | null;
 };
 
 const euro = (n: number) =>
@@ -76,6 +78,10 @@ export default function InvoiceTable({
   dateLabel = "Factuurdatum",
   dateFormat = "full",
   showStatus = true,
+  showClient = true,
+  showNumber = false,
+  amount = "excl",
+  amountLabel = "Bedrag",
 }: {
   invoices: MoneybirdInvoice[];
   emptyLabel?: string;
@@ -85,7 +91,17 @@ export default function InvoiceTable({
   dateFormat?: "full" | "month";
   /** Uit te zetten wanneer alle rijen dezelfde status hebben. */
   showStatus?: boolean;
+  /** Uit te zetten in het klantportaal: daar is elke factuur van dezelfde klant. */
+  showClient?: boolean;
+  /** Het factuurnummer vóór het kenmerk; de klant betaalt daarop. */
+  showNumber?: boolean;
+  /** De klant ziet wat hij betaalt, wij rekenen intern exclusief btw. */
+  amount?: "excl" | "incl";
+  amountLabel?: string;
 }) {
+  const kolommen = 2 + (showClient ? 1 : 0) + 1 + (showStatus ? 1 : 0);
+  const bedrag = (inv: MoneybirdInvoice) =>
+    amount === "incl" ? inv.total_incl_tax : inv.total_excl_tax;
   return (
       <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         <table className="w-full text-left">
@@ -93,8 +109,12 @@ export default function InvoiceTable({
             <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
               <th className="px-4 font-semibold" style={{ color: "var(--ink)" }}>Kenmerk</th>
               <th className="px-4 whitespace-nowrap font-semibold" style={{ color: "var(--ink)" }}>{dateLabel}</th>
-              <th className="px-4 font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
-              <th className="px-4 text-right whitespace-nowrap font-semibold" style={{ color: "var(--ink)" }}>Bedrag</th>
+              {showClient && (
+                <th className="px-4 font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
+              )}
+              <th className="px-4 text-right whitespace-nowrap font-semibold" style={{ color: "var(--ink)" }}>
+                {amountLabel}
+              </th>
               {showStatus && (
                 <th className="pl-4 pr-8 text-left font-semibold" style={{ color: "var(--ink)" }}>Status</th>
               )}
@@ -103,7 +123,7 @@ export default function InvoiceTable({
           <tbody>
             {invoices.length === 0 && (
               <tr>
-                <td colSpan={showStatus ? 5 : 4} className="px-4 text-center" style={{ color: "var(--text-muted)" }}>
+                <td colSpan={kolommen} className="px-4 text-center" style={{ color: "var(--text-muted)" }}>
                   {emptyLabel}
                 </td>
               </tr>
@@ -120,28 +140,46 @@ export default function InvoiceTable({
                   style={{ color: "var(--text-muted)" }}
                   title={inv.reference ?? undefined}
                 >
+                  {showNumber && inv.invoice_number ? `${inv.invoice_number} — ` : ""}
                   {inv.reference ?? "—"}
                 </td>
                 <td className="px-4 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
                   {inv.invoice_date ? (dateFormat === "month" ? fmtMonth(inv.invoice_date) : fmtDate(inv.invoice_date)) : ""}
                 </td>
-                <td className="px-4">
-                  {inv.clients ? (
-                    <span className="flex items-center gap-2.5 whitespace-nowrap">
-                      <ClientLogo logo_url={inv.clients.logo_url} name={inv.clients.name} />
-                      {inv.clients.name}
-                    </span>
-                  ) : (
-                    <span style={{ color: "var(--text-muted)" }}>
-                      {inv.contact_name ?? "niet gekoppeld"}
-                    </span>
-                  )}
-                </td>
+                {showClient && (
+                  <td className="px-4">
+                    {inv.clients ? (
+                      <span className="flex items-center gap-2.5 whitespace-nowrap">
+                        <ClientLogo logo_url={inv.clients.logo_url} name={inv.clients.name} />
+                        {inv.clients.name}
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--text-muted)" }}>
+                        {inv.contact_name ?? "niet gekoppeld"}
+                      </span>
+                    )}
+                  </td>
+                )}
                 <td className="px-4 text-right whitespace-nowrap" style={{ color: "var(--text-heading)" }}>
-                  {inv.total_excl_tax != null ? euro(inv.total_excl_tax) : "—"}
+                  {bedrag(inv) != null ? euro(bedrag(inv)!) : "—"}
                 </td>
                 {showStatus && (
-                  <td className="pl-4 pr-8 text-left"><StateBadge state={inv.state} /></td>
+                  <td className="pl-4 pr-8 text-left">
+                    <span className="flex items-center gap-4">
+                      <StateBadge state={inv.state} />
+                      {inv.external_url && (
+                        <a
+                          href={inv.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium hover:underline whitespace-nowrap"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          Bekijken
+                        </a>
+                      )}
+                    </span>
+                  </td>
                 )}
               </tr>
             ))}
