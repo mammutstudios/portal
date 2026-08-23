@@ -86,6 +86,10 @@ export default function PeriodiekPageClient({
     .filter((r) => r.client)
     .reduce((som, r) => som + r.amount * (PER_JAAR[r.frequencyLabel] ?? 0), 0);
 
+  // Het jaarbedrag uitgesmeerd. Een jaarfactuur valt in werkelijkheid in één
+  // maand, maar als gemiddelde is dit de bruikbare vergelijking.
+  const perMaand = perJaar / 12;
+
   const ongekoppeld = recurring.filter((r) => !r.client).length;
 
   return (
@@ -107,7 +111,7 @@ export default function PeriodiekPageClient({
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="squircle p-6" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
               <div className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--text-muted)" }}>
                 Afspraken
@@ -123,7 +127,18 @@ export default function PeriodiekPageClient({
             </div>
             <div className="squircle p-6" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
               <div className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--text-muted)" }}>
-                Op jaarbasis
+                Per maand
+              </div>
+              <div className="text-3xl font-bold" style={{ color: "var(--text-heading)" }}>
+                {euro(perMaand)}
+              </div>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                gemiddeld
+              </p>
+            </div>
+            <div className="squircle p-6" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
+              <div className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--text-muted)" }}>
+                Per jaar
               </div>
               <div className="text-3xl font-bold" style={{ color: "var(--text-heading)" }}>
                 {euro(perJaar)}
