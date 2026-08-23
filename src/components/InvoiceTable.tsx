@@ -15,7 +15,7 @@ export type MoneybirdInvoice = {
   client_id: string | null;
   synced_at: string | null;
   clients?: { id: string; name: string; logo_url: string | null } | null;
-  /** Zet de "Bekijken"-link aan; alleen gebruikt in het klantportaal. */
+  /** Maakt de rij aanklikbaar naar de PDF; alleen in het klantportaal. */
   has_pdf?: boolean;
 };
 
@@ -128,9 +128,32 @@ export default function InvoiceTable({
                 </td>
               </tr>
             )}
-            {invoices.map((inv, i) => (
+            {invoices.map((inv, i) => {
+              // De hele rij is de knop naar de PDF. Een <a> mag niet om een <tr>
+              // heen, dus het gedrag zit op de rij zelf — inclusief toetsenbord,
+              // want anders is de factuur zonder muis niet te openen.
+              const open = inv.has_pdf
+                ? () => window.open(`/api/facturen/${inv.id}/pdf`, "_blank", "noopener")
+                : undefined;
+
+              return (
               <tr
                 key={inv.id}
+                onClick={open}
+                onKeyDown={
+                  open
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          open();
+                        }
+                      }
+                    : undefined
+                }
+                tabIndex={open ? 0 : undefined}
+                role={open ? "link" : undefined}
+                title={open ? "Factuur openen" : undefined}
+                className={open ? "card-hover cursor-pointer" : undefined}
                 style={{
                   borderBottom: i < invoices.length - 1 ? "1px solid var(--border)" : "none",
                 }}
@@ -167,24 +190,14 @@ export default function InvoiceTable({
                   <td className="pl-4 pr-8">
                     {/* Rechts uitgelijnd: de statuskolom vangt alle overgebleven
                         breedte op, en links uitgelijnd blijft daar een gat achter. */}
-                    <span className="flex items-center justify-end gap-4">
+                    <span className="flex items-center justify-end">
                       <StateBadge state={inv.state} />
-                      {inv.has_pdf && (
-                        <a
-                          href={`/api/facturen/${inv.id}/pdf`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium hover:underline whitespace-nowrap"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          Bekijken
-                        </a>
-                      )}
                     </span>
                   </td>
                 )}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
