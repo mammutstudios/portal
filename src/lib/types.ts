@@ -32,10 +32,11 @@ export type ClientMember = {
 export type ProjectStatus = "upcoming" | "active" | "review" | "completed" | "on_hold";
 
 /** De fases die een project doorloopt; volgorde is die van het echte traject. */
-export const PROJECT_PHASES = ["kickoff", "ontwerp", "development", "review", "live"] as const;
+export const PROJECT_PHASES = ["gereed", "kickoff", "ontwerp", "development", "review", "live"] as const;
 export type ProjectPhase = (typeof PROJECT_PHASES)[number];
 
 export const PHASE_LABEL: Record<ProjectPhase, string> = {
+  gereed: "Klaar voor de start",
   kickoff: "Kickoff",
   ontwerp: "Ontwerp",
   development: "Development",

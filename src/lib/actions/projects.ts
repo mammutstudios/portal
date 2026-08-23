@@ -132,3 +132,36 @@ export async function linkInvoiceToProjectAction(invoiceId: string, projectId: s
   }
   return { success: true };
 }
+
+/** Een bericht bij een project plaatsen. */
+export async function addProjectCommentAction(projectId: string, body: string) {
+  const tekst = body.trim();
+  if (!tekst) return { error: "Bericht is leeg" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Niet ingelogd" };
+
+  const { error } = await supabase
+    .from("project_comments")
+    .insert({ project_id: projectId, profile_id: user.id, body: tekst });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath(`/portal/projecten/${projectId}`);
+  return { success: true };
+}
+
+/** Je eigen bericht weghalen. De databasepolicy bewaakt dat "eigen". */
+export async function deleteProjectCommentAction(commentId: string, projectId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("project_comments").delete().eq("id", commentId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath(`/portal/projecten/${projectId}`);
+  return { success: true };
+}

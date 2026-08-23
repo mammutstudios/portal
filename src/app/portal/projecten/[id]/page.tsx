@@ -4,9 +4,10 @@ import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext, euro, shortDate } from "@/lib/portal";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
-import ProjectProgressCard from "@/components/ProjectProgressCard";
 import DetailList from "@/components/DetailList";
-import { PHASE_LABEL, type Project } from "@/lib/types";
+import ProgressBar from "@/components/ProgressBar";
+import ProjectComments, { type ProjectComment } from "@/components/ProjectComments";
+import { PHASE_LABEL, projectProgressPercentage, type Project } from "@/lib/types";
 
 /** Zonder budget_amount: dat is een intern getal. Zie de lijstpagina. */
 const KOLOMMEN =
@@ -14,7 +15,7 @@ const KOLOMMEN =
 
 export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { clientIds } = await getPortalContext();
+  const { clientIds, userId } = await getPortalContext();
   const supabase = await createClient();
 
   // Eerst eigenaarschap vaststellen, pas daarna de inhoud. Een project van een
@@ -22,6 +23,12 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
   const { data } = await supabase.from("projects").select(KOLOMMEN).eq("id", id).maybeSingle();
   const project = data as unknown as Project | null;
   if (!project || !clientIds.includes(project.client_id)) notFound();
+
+  const { data: comments } = await supabase
+    .from("project_comments")
+    .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
+    .eq("project_id", id)
+    .order("created_at");
 
   const { data: facturen } = await supabase
     .from("moneybird_invoices")
@@ -47,8 +54,9 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
 
       {/* Dezelfde twee kaarten als in het dashboard, maar zonder de regels over
           budget en uren: die zijn intern. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 items-start">
-        <DetailList
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8 items-start">
+        <div className="space-y-4">
+          <DetailList
           rows={[
             { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
             ...(project.tags && project.tags.length > 0
@@ -69,11 +77,18 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
               : []),
           ]}
         />
-        <ProjectProgressCard
-          progress={project.progress ?? null}
-          phase={project.phase}
-          tags={project.tags}
-        />
+          <ProgressBar
+            value={projectProgressPercentage(project.progress, project.phase, project.tags)}
+          />
+        </div>
+
+        <div className="lg:col-span-2">
+          <ProjectComments
+            projectId={project.id}
+            comments={(comments ?? []) as unknown as ProjectComment[]}
+            currentProfileId={userId}
+          />
+        </div>
       </div>
 
       {project.client_action && (

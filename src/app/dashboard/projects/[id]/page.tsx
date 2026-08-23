@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ProjectDetailClient from "./ProjectDetailClient";
+import type { ProjectComment } from "@/components/ProjectComments";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,6 +15,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   ]);
 
   if (!project) notFound();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: comments } = await supabase
+    .from("project_comments")
+    .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
+    .eq("project_id", id)
+    .order("created_at");
 
   // Alle facturen van deze klant: de gekoppelde om te tonen, de losse om te
   // kunnen koppelen. Facturen van een andere klant horen hier nooit bij.
@@ -30,6 +41,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       files={files ?? []}
       timeEntries={timeEntries ?? []}
       invoices={invoices ?? []}
+      comments={(comments ?? []) as unknown as ProjectComment[]}
+      currentProfileId={user?.id ?? null}
     />
   );
 }

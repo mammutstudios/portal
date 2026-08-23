@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
-import ProjectProgressCard from "@/components/ProjectProgressCard";
+import { PHASE_LABEL, projectProgressPercentage } from "@/lib/types";
 import DetailList from "@/components/DetailList";
+import ProgressBar from "@/components/ProgressBar";
+import ProjectComments, { type ProjectComment } from "@/components/ProjectComments";
 import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
 import type { Project, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
 
@@ -17,6 +19,8 @@ export default function ProjectDetailClient({
   files,
   timeEntries,
   invoices = [],
+  comments = [],
+  currentProfileId = null,
 }: {
   project: Project & { clients?: { name: string; id: string } | null };
   tasks: Task[];
@@ -24,6 +28,8 @@ export default function ProjectDetailClient({
   timeEntries: TimeEntry[];
   /** Alle facturen van deze klant; de koppeling per project zit erin. */
   invoices?: KoppelbareFactuur[];
+  comments?: ProjectComment[];
+  currentProfileId?: string | null;
 }) {
   const totalHours = timeEntries.reduce((sum, e) => sum + Number(e.hours), 0);
 
@@ -82,10 +88,12 @@ export default function ProjectDetailClient({
 
       {/* Budget en uren staan bewust alleen hier: bij een vaste prijs heeft de
           klant er niets aan, en het nodigt uit tot sturen op uren. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 items-start">
-        <DetailList
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8 items-start">
+        <div className="space-y-4">
+          <DetailList
           rows={[
-            { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
+              { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
+            ...(project.phase ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }] : []),
             ...(project.tags && project.tags.length > 0
               ? [{
                   label: "Type",
@@ -110,11 +118,18 @@ export default function ProjectDetailClient({
               : []),
           ]}
         />
-        <ProjectProgressCard
-          progress={project.progress}
-          phase={project.phase}
-          tags={project.tags}
-        />
+          <ProgressBar
+            value={projectProgressPercentage(project.progress, project.phase, project.tags)}
+          />
+        </div>
+
+        <div className="lg:col-span-2">
+          <ProjectComments
+            projectId={project.id}
+            comments={comments}
+            currentProfileId={currentProfileId}
+          />
+        </div>
       </div>
 
       {(project.staging_url || project.live_url) && (
