@@ -7,7 +7,7 @@ import {
 import type { Transaction, Client, Project } from "@/lib/types";
 import InvoiceTable, { type MoneybirdInvoice } from "@/components/InvoiceTable";
 
-/** Alle staven in de merkkleur; concept wordt onderscheiden door arcering. */
+/** Alle staven in de merkkleur; verwachte omzet wordt onderscheiden door arcering. */
 const BAR_COLOR = "#140018";
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 const QUARTERS = [
@@ -86,7 +86,7 @@ export default function FinancePageClient({
           {payload.map((p: any) => (
             <div key={p.dataKey} className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
               <span className="w-2 h-2 rounded-full inline-block" style={{ background: p.fill }} />
-              {p.dataKey === "confirmed" ? "Gefactureerd" : "Concept"}: {fmtFull(p.value)}
+              {p.dataKey === "confirmed" ? "Gefactureerd" : "Verwacht"}: {fmtFull(p.value)}
             </div>
           ))}
         </div>
@@ -113,7 +113,7 @@ export default function FinancePageClient({
             <div className="relative z-10">
               <p className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--text-heading)" }}>{fmtFull(thisMonthConfirmed)}</p>
               {thisMonthDraft > 0 && (
-                <p className="text-xs mt-1" style={{ color: "#f97316" }}>+ {fmtFull(thisMonthDraft)} concept</p>
+                <p className="text-xs mt-1" style={{ color: "#f97316" }}>+ {fmtFull(thisMonthDraft)} verwacht</p>
               )}
             </div>
             <p className="text-sm relative z-10 mt-1" style={{ color: "var(--text-muted)" }}>
@@ -144,7 +144,7 @@ export default function FinancePageClient({
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-sm overflow-hidden" style={{ border: `1.5px dashed ${BAR_COLOR}`, background: "repeating-linear-gradient(45deg, rgb(20 0 24 / 0.2), rgb(20 0 24 / 0.2) 2px, transparent 2px, transparent 6px)" }} />
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>Concept</span>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>Verwacht</span>
               </div>
             </div>
           </div>
@@ -197,7 +197,7 @@ export default function FinancePageClient({
             <p className="text-lg font-extrabold" style={{ color: "var(--text-heading)" }}>{fmtFull(q.confirmed)}</p>
             {q.draft > 0 && (
               <p className="text-xs mt-0.5" style={{ color: "#f97316" }}>
-                + {fmtFull(q.draft)} concept
+                + {fmtFull(q.draft)} verwacht
               </p>
             )}
             {q.draft === 0 && q.confirmed === 0 && (

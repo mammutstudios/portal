@@ -54,7 +54,7 @@ export async function deleteInvoice(supabase: SupabaseClient, moneybirdId: strin
  * koppeling, anders op exacte naam. Geen match is geen fout: de factuur komt
  * binnen zonder klant en is in de weergave zichtbaar als "niet gekoppeld".
  */
-async function resolveClientId(
+export async function resolveClientId(
   supabase: SupabaseClient,
   contactMoneybirdId: string | null,
   contactName: string | null,

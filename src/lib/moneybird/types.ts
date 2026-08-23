@@ -50,3 +50,30 @@ export function toAmount(v: string | number | null | undefined): number | null {
   const n = typeof v === "number" ? v : parseFloat(v);
   return Number.isFinite(n) ? n : null;
 }
+
+/**
+ * Periodieke verkoopfactuur. Anders dan een gewone factuur draagt deze géén
+ * document_style_id — de huisstijl wordt pas bepaald zodra Moneybird de factuur
+ * aanmaakt. Filteren op huisstijl kan hier dus niet; zie recurring.ts.
+ */
+export type MoneybirdRecurringSalesInvoice = {
+  id: string;
+  active: boolean;
+  /** De eerstvolgende datum waarop Moneybird een factuur aanmaakt. */
+  invoice_date: string | null;
+  start_date: string | null;
+  last_date: string | null;
+  frequency: number;
+  frequency_type: "day" | "week" | "month" | "quarter" | "year";
+  /** Moneybird levert bedragen als string, bijvoorbeeld "255.0". */
+  total_price_excl_tax: string | null;
+  currency: string | null;
+  reference: string | null;
+  contact_id: string | null;
+  contact: {
+    id?: string;
+    company_name?: string | null;
+    firstname?: string | null;
+    lastname?: string | null;
+  } | null;
+};

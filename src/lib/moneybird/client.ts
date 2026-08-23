@@ -1,4 +1,8 @@
-import type { MoneybirdContact, MoneybirdSalesInvoice } from "./types";
+import type {
+  MoneybirdContact,
+  MoneybirdSalesInvoice,
+  MoneybirdRecurringSalesInvoice,
+} from "./types";
 
 const BASE = "https://moneybird.com/api/v2";
 
@@ -32,7 +36,12 @@ export function isMoneybirdConfigured() {
   return Boolean(process.env.MONEYBIRD_API_TOKEN && process.env.MONEYBIRD_ADMINISTRATION_ID);
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  /** Seconden dat het antwoord hergebruikt mag worden; 0 betekent altijd vers. */
+  revalidate = 0,
+): Promise<T> {
   const { token, administrationId } = moneybirdConfig();
   const res = await fetch(`${BASE}/${administrationId}${path}`, {
     ...init,
@@ -41,7 +50,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       Authorization: `Bearer ${token}`,
       ...(init?.headers ?? {}),
     },
-    cache: "no-store",
+    ...(revalidate > 0 ? { next: { revalidate } } : { cache: "no-store" as const }),
   });
 
   if (!res.ok) {
@@ -77,6 +86,29 @@ export async function listAllContacts(maxPages = 50): Promise<MoneybirdContact[]
   for (let page = 1; page <= maxPages; page++) {
     const batch = await request<MoneybirdContact[]>(
       `/contacts.json?page=${page}&per_page=${perPage}`,
+    );
+    all.push(...batch);
+    if (batch.length < perPage) return all;
+  }
+  return all;
+}
+
+/**
+ * Periodieke verkoopfacturen. Deze staan niet in onze database maar worden
+ * bij het opbouwen van de prognose opgehaald; een uur cache houdt de
+ * financepagina snel zonder dat een wijziging in Moneybird lang blijft hangen.
+ */
+export async function listAllRecurringSalesInvoices(
+  maxPages = 10,
+): Promise<MoneybirdRecurringSalesInvoice[]> {
+  const perPage = 100;
+  const all: MoneybirdRecurringSalesInvoice[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const batch = await request<MoneybirdRecurringSalesInvoice[]>(
+      `/recurring_sales_invoices.json?page=${page}&per_page=${perPage}`,
+      undefined,
+      3600,
     );
     all.push(...batch);
     if (batch.length < perPage) return all;

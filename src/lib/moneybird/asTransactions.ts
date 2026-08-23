@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { fetchRecurringAsForecast } from "./recurring";
 import type { Transaction } from "@/lib/types";
 
 /**
@@ -12,18 +13,23 @@ import type { Transaction } from "@/lib/types";
 export async function fetchInvoicesAsTransactions(
   supabase: SupabaseClient,
 ): Promise<Transaction[]> {
-  const { data, error } = await supabase
-    .from("moneybird_invoices")
-    .select("id, reference, invoice_number, contact_name, total_excl_tax, state, invoice_date, client_id, created_at, clients(id, name, logo_url)")
-    .not("invoice_date", "is", null)
-    .order("invoice_date", { ascending: false });
+  const [{ data, error }, periodiek] = await Promise.all([
+    supabase
+      .from("moneybird_invoices")
+      .select(
+        "id, reference, invoice_number, contact_name, total_excl_tax, state, invoice_date, client_id, created_at, clients(id, name, logo_url)",
+      )
+      .not("invoice_date", "is", null)
+      .order("invoice_date", { ascending: false }),
+    fetchRecurringAsForecast(supabase),
+  ]);
 
   if (error) {
     console.error("[moneybird] facturen ophalen mislukt:", error.message);
-    return [];
+    return periodiek;
   }
 
-  return (data ?? []).map((row) => {
+  const facturen = (data ?? []).map((row) => {
     const r = row as unknown as {
       id: string;
       reference: string | null;
@@ -49,4 +55,6 @@ export async function fetchInvoicesAsTransactions(
       projects: null,
     } satisfies Transaction;
   });
+
+  return [...facturen, ...periodiek];
 }
