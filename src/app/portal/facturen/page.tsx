@@ -34,13 +34,17 @@ export default async function PortalInvoicesPage() {
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-        Facturen
-      </h1>
-      <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        {activeClientName ? `Alle facturen van ${activeClientName}.` : "Al je facturen op één plek."}
-        {open.length > 0 && ` ${open.length} openstaand — ${euro(openTotal)} incl. btw.`}
-      </p>
+      {/* px-4 is de celpadding van de tabel: zo staan titel en ondertitel op
+          één lijn met "Kenmerk" in plaats van tegen de rand van de kaart. */}
+      <div className="px-4">
+        <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
+          Facturen
+        </h1>
+        <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
+          {activeClientName ? `Alle facturen van ${activeClientName}.` : "Al je facturen op één plek."}
+          {open.length > 0 && ` ${open.length} openstaand — ${euro(openTotal)} incl. btw.`}
+        </p>
+      </div>
 
       <InvoiceTable
         invoices={invoices}
