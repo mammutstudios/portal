@@ -21,6 +21,8 @@ export default function ProjectDetailClient({
   invoices = [],
   comments = [],
   currentProfileId = null,
+  currentName = null,
+  currentAvatarUrl = null,
 }: {
   project: Project & { clients?: { name: string; id: string } | null };
   tasks: Task[];
@@ -30,6 +32,8 @@ export default function ProjectDetailClient({
   invoices?: KoppelbareFactuur[];
   comments?: ProjectComment[];
   currentProfileId?: string | null;
+  currentName?: string | null;
+  currentAvatarUrl?: string | null;
 }) {
   const totalHours = timeEntries.reduce((sum, e) => sum + Number(e.hours), 0);
 
@@ -88,7 +92,7 @@ export default function ProjectDetailClient({
 
       {/* Budget en uren staan bewust alleen hier: bij een vaste prijs heeft de
           klant er niets aan, en het nodigt uit tot sturen op uren. */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         <div className="space-y-4">
           <DetailList
           rows={[
@@ -155,6 +159,8 @@ export default function ProjectDetailClient({
             projectId={project.id}
             comments={comments}
             currentProfileId={currentProfileId}
+            currentName={currentName}
+            currentAvatarUrl={currentAvatarUrl}
           />
         </div>
       </div>

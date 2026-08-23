@@ -28,6 +28,12 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
   const project = data as unknown as Project | null;
   if (!project || !clientIds.includes(project.client_id)) notFound();
 
+  const { data: mij } = await supabase
+    .from("profiles")
+    .select("full_name, avatar_url")
+    .eq("id", userId)
+    .maybeSingle();
+
   const { data: comments } = await supabase
     .from("project_comments")
     .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
@@ -58,7 +64,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
 
       {/* Dezelfde twee kaarten als in het dashboard, maar zonder de regels over
           budget en uren: die zijn intern. */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         <div className="space-y-4">
           <DetailList
           rows={[
@@ -118,6 +124,8 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
             projectId={project.id}
             comments={(comments ?? []) as unknown as ProjectComment[]}
             currentProfileId={userId}
+            currentName={mij?.full_name ?? null}
+            currentAvatarUrl={mij?.avatar_url ?? null}
           />
         </div>
       </div>

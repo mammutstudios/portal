@@ -24,6 +24,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: mij } = user
+    ? await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle()
+    : { data: null };
+
   const { data: comments } = await supabase
     .from("project_comments")
     .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
@@ -47,6 +51,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       invoices={invoices ?? []}
       comments={(comments ?? []) as unknown as ProjectComment[]}
       currentProfileId={user?.id ?? null}
+      currentName={mij?.full_name ?? null}
+      currentAvatarUrl={mij?.avatar_url ?? null}
     />
   );
 }
