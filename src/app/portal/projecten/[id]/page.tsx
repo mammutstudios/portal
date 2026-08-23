@@ -105,10 +105,12 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
               ? [{ label: "Verwachte oplevering", value: shortDate(project.deadline) }]
               : []),
           ]}
+          callout={
+            <ProgressBar
+              value={projectProgressPercentage(project.progress, project.phase, project.tags)}
+            />
+          }
         />
-          <ProgressBar
-            value={projectProgressPercentage(project.progress, project.phase, project.tags)}
-          />
         </div>
 
         <div className="lg:col-span-2">

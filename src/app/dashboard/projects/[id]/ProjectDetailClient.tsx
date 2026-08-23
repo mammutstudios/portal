@@ -142,10 +142,12 @@ export default function ProjectDetailClient({
                 }]
               : []),
           ]}
+          callout={
+            <ProgressBar
+              value={projectProgressPercentage(project.progress, project.phase, project.tags)}
+            />
+          }
         />
-          <ProgressBar
-            value={projectProgressPercentage(project.progress, project.phase, project.tags)}
-          />
         </div>
 
         <div className="lg:col-span-2">
