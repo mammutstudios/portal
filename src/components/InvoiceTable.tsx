@@ -50,6 +50,9 @@ const STATE_STYLE: Record<
   paid: { label: "Betaald", bg: "var(--lavender)", fg: "var(--ink)" },
 };
 
+/** Gedeeld door de pil en de kolomkop, zodat die twee blijven uitlijnen. */
+const PIL_BREEDTE = 110;
+
 function StateBadge({ state }: { state: string | null }) {
   if (!state) return <span style={{ color: "var(--text-muted)" }}>—</span>;
   const s = STATE_STYLE[state] ?? { label: state, bg: "var(--bg)", fg: "var(--ink)", border: "var(--border)" };
@@ -57,7 +60,7 @@ function StateBadge({ state }: { state: string | null }) {
     <span
       className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap"
       style={{
-        minWidth: 110,
+        minWidth: PIL_BREEDTE,
         background: s.bg,
         color: s.fg,
         border: `1px solid ${s.border ?? "transparent"}`,
@@ -82,6 +85,7 @@ export default function InvoiceTable({
   showNumber = false,
   amount = "excl",
   amountLabel = "Bedrag",
+  amountAlign = "right",
 }: {
   invoices: MoneybirdInvoice[];
   emptyLabel?: string;
@@ -98,6 +102,8 @@ export default function InvoiceTable({
   /** De klant ziet wat hij betaalt, wij rekenen intern exclusief btw. */
   amount?: "excl" | "incl";
   amountLabel?: string;
+  /** Links wanneer het kopje breder is dan de bedragen, anders steekt het uit. */
+  amountAlign?: "left" | "right";
 }) {
   const kolommen = 2 + (showClient ? 1 : 0) + 1 + (showStatus ? 1 : 0);
   const bedrag = (inv: MoneybirdInvoice) =>
@@ -112,11 +118,20 @@ export default function InvoiceTable({
               {showClient && (
                 <th className="px-4 font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
               )}
-              <th className="px-4 text-right whitespace-nowrap font-semibold" style={{ color: "var(--ink)" }}>
+              <th
+                className={`px-4 whitespace-nowrap font-semibold ${amountAlign === "left" ? "text-left" : "text-right"}`}
+                style={{ color: "var(--ink)" }}
+              >
                 {amountLabel}
               </th>
               {showStatus && (
-                <th className="pl-4 pr-8 text-right font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                <th className="pl-4 pr-8 text-right font-semibold" style={{ color: "var(--ink)" }}>
+                  {/* Even breed als de pil eronder en net zo rechts uitgelijnd,
+                      dus beide linkerranden vallen samen. */}
+                  <span className="inline-block text-left" style={{ minWidth: PIL_BREEDTE }}>
+                    Status
+                  </span>
+                </th>
               )}
             </tr>
           </thead>
@@ -183,7 +198,10 @@ export default function InvoiceTable({
                     )}
                   </td>
                 )}
-                <td className="px-4 text-right whitespace-nowrap" style={{ color: "var(--text-heading)" }}>
+                <td
+                  className={`px-4 whitespace-nowrap ${amountAlign === "left" ? "text-left" : "text-right"}`}
+                  style={{ color: "var(--text-heading)" }}
+                >
                   {bedrag(inv) != null ? euro(bedrag(inv)!) : "—"}
                 </td>
                 {showStatus && (

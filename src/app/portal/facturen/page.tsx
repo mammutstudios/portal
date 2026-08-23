@@ -54,6 +54,8 @@ export default async function PortalInvoicesPage() {
         // De klant ziet wat hij overmaakt; intern rekenen we exclusief btw.
         amount="incl"
         amountLabel="Bedrag incl. btw"
+        // Dat kopje is breder dan de bedragen; rechts uitgelijnd steekt het uit.
+        amountAlign="left"
       />
     </div>
   );
