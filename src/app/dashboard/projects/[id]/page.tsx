@@ -16,6 +16,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   if (!project) notFound();
 
+  // Alle facturen van deze klant: de gekoppelde om te tonen, de losse om te
+  // kunnen koppelen. Facturen van een andere klant horen hier nooit bij.
+  const { data: invoices } = await supabase
+    .from("moneybird_invoices")
+    .select("id, reference, invoice_date, state, total_excl_tax, project_id")
+    .eq("client_id", project.client_id)
+    .order("invoice_date", { ascending: false });
+
   return (
     <ProjectDetailClient
       project={project}
@@ -23,6 +31,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       tasks={tasks ?? []}
       files={files ?? []}
       timeEntries={timeEntries ?? []}
+      invoices={invoices ?? []}
     />
   );
 }

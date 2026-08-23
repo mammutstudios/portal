@@ -210,6 +210,11 @@ const clientNav: NavItem[] = [
     icon: <SquaresFour size={19} weight="fill" />,
   },
   {
+    label: "Projecten",
+    href: "/portal/projecten",
+    icon: <Folder size={19} weight="fill" />,
+  },
+  {
     label: "Analytics",
     href: "/portal/analytics",
     icon: <ChartBar size={19} weight="fill" />,

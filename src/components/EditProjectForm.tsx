@@ -5,6 +5,7 @@ import { updateProjectAction } from "@/lib/actions/projects";
 import SearchSelect from "@/components/SearchSelect";
 import DatePicker from "@/components/DatePicker";
 import Select from "@/components/Select";
+import { PROJECT_PHASES, PHASE_LABEL } from "@/lib/types";
 import type { Project, Client } from "@/lib/types";
 
 const PROJECT_TAGS = ["Branding", "Design", "Development", "Retainer"];
@@ -91,6 +92,112 @@ export default function EditProjectForm({
           <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Deadline</label>
           <DatePicker name="deadline" defaultValue={project.deadline ?? undefined} placeholder="Geen" />
         </div>
+      </div>
+
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Fase</label>
+          <Select
+            name="phase"
+            defaultValue={project.phase ?? undefined}
+            placeholder="Nog niet gezet"
+            options={PROJECT_PHASES.map((f) => ({ value: f, label: PHASE_LABEL[f] }))}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+            Voortgang
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              name="progress"
+              min={0}
+              max={100}
+              defaultValue={project.progress ?? 0}
+              className="w-full px-3 py-2 rounded-md text-sm outline-none"
+              style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+            />
+            <span className="text-sm" style={{ color: "var(--text-muted)" }}>%</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+          Nu aan de beurt
+        </label>
+        <input
+          type="text"
+          name="next_step"
+          defaultValue={project.next_step ?? ""}
+          placeholder="Waar we deze week aan werken"
+          className="w-full px-3 py-2 rounded-md text-sm outline-none"
+          style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+        />
+        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Ziet de klant.</p>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+          Van de klant nodig
+        </label>
+        <input
+          type="text"
+          name="client_action"
+          defaultValue={project.client_action ?? ""}
+          placeholder="Bijvoorbeeld: teksten voor de contactpagina"
+          className="w-full px-3 py-2 rounded-md text-sm outline-none"
+          style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+        />
+        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+          Laat leeg als je niets nodig hebt; het blok verdwijnt dan.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Staging</label>
+          <input
+            type="url"
+            name="staging_url"
+            defaultValue={project.staging_url ?? ""}
+            placeholder="https://"
+            className="w-full px-3 py-2 rounded-md text-sm outline-none"
+            style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Live</label>
+          <input
+            type="url"
+            name="live_url"
+            defaultValue={project.live_url ?? ""}
+            placeholder="https://"
+            className="w-full px-3 py-2 rounded-md text-sm outline-none"
+            style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+          Budget excl. btw
+        </label>
+        <input
+          type="number"
+          name="budget_amount"
+          step="0.01"
+          min={0}
+          defaultValue={project.budget_amount ?? ""}
+          placeholder="0,00"
+          className="w-full px-3 py-2 rounded-md text-sm outline-none"
+          style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+        />
+        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+          Alleen voor jou. Staat niet in het klantportaal.
+        </p>
       </div>
 
       <div>

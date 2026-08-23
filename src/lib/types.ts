@@ -31,6 +31,18 @@ export type ClientMember = {
 
 export type ProjectStatus = "upcoming" | "active" | "review" | "completed" | "on_hold";
 
+/** De fases die een project doorloopt; volgorde is die van het echte traject. */
+export const PROJECT_PHASES = ["kickoff", "ontwerp", "development", "review", "live"] as const;
+export type ProjectPhase = (typeof PROJECT_PHASES)[number];
+
+export const PHASE_LABEL: Record<ProjectPhase, string> = {
+  kickoff: "Kickoff",
+  ontwerp: "Ontwerp",
+  development: "Development",
+  review: "Review",
+  live: "Live",
+};
+
 export type Project = {
   id: string;
   client_id: string;
@@ -41,6 +53,18 @@ export type Project = {
   deadline: string | null;
   tags: string[] | null;
   created_at: string;
+  /** Waar het project staat. Zichtbaar voor de klant. */
+  phase: ProjectPhase | null;
+  /** Eén zin over wat er nu gebeurt. Zichtbaar voor de klant. */
+  next_step: string | null;
+  /** Wat wij van de klant nodig hebben. Zichtbaar voor de klant. */
+  client_action: string | null;
+  live_url: string | null;
+  staging_url: string | null;
+  /** Afgesproken prijs excl. btw. Blijft intern: bij een vaste prijs heeft
+   *  een klant niets aan een budgetstand, en het nodigt uit tot sturen op
+   *  uren in plaats van op resultaat. */
+  budget_amount: number | null;
   clients?: Pick<Client, "id" | "name" | "logo_url"> | null;
 };
 
