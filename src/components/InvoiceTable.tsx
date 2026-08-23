@@ -15,8 +15,8 @@ export type MoneybirdInvoice = {
   client_id: string | null;
   synced_at: string | null;
   clients?: { id: string; name: string; logo_url: string | null } | null;
-  /** Link naar de factuur bij Moneybird; alleen gevuld in het klantportaal. */
-  external_url?: string | null;
+  /** Zet de "Bekijken"-link aan; alleen gebruikt in het klantportaal. */
+  has_pdf?: boolean;
 };
 
 const euro = (n: number) =>
@@ -116,7 +116,7 @@ export default function InvoiceTable({
                 {amountLabel}
               </th>
               {showStatus && (
-                <th className="pl-4 pr-8 text-left font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                <th className="pl-4 pr-8 text-right font-semibold" style={{ color: "var(--ink)" }}>Status</th>
               )}
             </tr>
           </thead>
@@ -164,12 +164,14 @@ export default function InvoiceTable({
                   {bedrag(inv) != null ? euro(bedrag(inv)!) : "—"}
                 </td>
                 {showStatus && (
-                  <td className="pl-4 pr-8 text-left">
-                    <span className="flex items-center gap-4">
+                  <td className="pl-4 pr-8">
+                    {/* Rechts uitgelijnd: de statuskolom vangt alle overgebleven
+                        breedte op, en links uitgelijnd blijft daar een gat achter. */}
+                    <span className="flex items-center justify-end gap-4">
                       <StateBadge state={inv.state} />
-                      {inv.external_url && (
+                      {inv.has_pdf && (
                         <a
-                          href={inv.external_url}
+                          href={`/api/facturen/${inv.id}/pdf`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs font-medium hover:underline whitespace-nowrap"

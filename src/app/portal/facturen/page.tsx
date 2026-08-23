@@ -10,24 +10,24 @@ export default async function PortalInvoicesPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("moneybird_invoices")
-    .select("id, invoice_number, reference, state, invoice_date, total_excl_tax, total_incl_tax, payload")
+    .select("id, invoice_number, reference, state, invoice_date, total_excl_tax, total_incl_tax")
     .in("client_id", clientIds)
     // Concepten zijn intern: die heeft de klant nooit gezien.
     .neq("state", "draft")
     .order("invoice_date", { ascending: false, nullsFirst: false });
 
   // Dezelfde vorm als in het dashboard, zodat beide dezelfde tabel gebruiken.
-  const invoices: MoneybirdInvoice[] = (data ?? []).map((r) => {
-    const { payload, ...rest } = r as typeof r & { payload: { url?: string } | null };
-    return {
-      ...rest,
-      moneybird_id: "",
-      contact_name: null,
-      client_id: null,
-      synced_at: null,
-      external_url: payload?.url ?? null,
-    } as MoneybirdInvoice;
-  });
+  const invoices: MoneybirdInvoice[] = (data ?? []).map(
+    (r) =>
+      ({
+        ...r,
+        moneybird_id: "",
+        contact_name: null,
+        client_id: null,
+        synced_at: null,
+        has_pdf: true,
+      }) as MoneybirdInvoice,
+  );
 
   const open = invoices.filter((i) => i.state !== "paid");
   const openTotal = open.reduce((s, i) => s + (i.total_incl_tax ?? 0), 0);
