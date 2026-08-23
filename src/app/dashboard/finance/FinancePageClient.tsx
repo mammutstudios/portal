@@ -213,7 +213,7 @@ export default function FinancePageClient({
       </h2>
       <InvoiceTable
         invoices={draftInvoices}
-        emptyLabel="Geen concepten open — alles is gefactureerd."
+        emptyLabel="Geen concepten open, alles is gefactureerd."
         dateLabel="Verwacht"
         dateFormat="month"
         showStatus={false}

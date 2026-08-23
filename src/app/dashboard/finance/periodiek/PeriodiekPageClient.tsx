@@ -121,7 +121,7 @@ export default function PeriodiekPageClient({
               </div>
               {ongekoppeld > 0 && (
                 <p className="text-xs mt-1" style={{ color: "#c8901f" }}>
-                  {ongekoppeld} niet gekoppeld — telt niet mee
+                  {ongekoppeld} niet gekoppeld, telt niet mee
                 </p>
               )}
             </div>

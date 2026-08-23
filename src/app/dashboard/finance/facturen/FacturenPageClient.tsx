@@ -66,7 +66,7 @@ function SetupInstructions() {
         Moneybird is nog niet gekoppeld
       </h2>
       <p style={{ color: "var(--text-muted)" }}>
-        Er staan nog geen sleutels in <code>.env.local</code>. Deze drie regels zijn nodig — zet ze er
+        Er staan nog geen sleutels in <code>.env.local</code>. Deze drie regels zijn nodig. Zet ze er
         zelf in, ik raak je tokens niet aan:
       </p>
       <pre
@@ -137,8 +137,8 @@ export default function FacturenPageClient({
         const r = await backfillMoneybirdAction();
         setResult(
           `${r.imported} van ${r.total} facturen ingelezen` +
-            (r.skipped ? ` — ${r.skipped} overgeslagen (andere huisstijl)` : "") +
-            (r.failures.length ? ` — ${r.failures.length} mislukt: ${r.failures[0]}` : ""),
+            (r.skipped ? `, ${r.skipped} overgeslagen (andere huisstijl)` : "") +
+            (r.failures.length ? `, ${r.failures.length} mislukt: ${r.failures[0]}` : ""),
         );
       } catch (e) {
         setResult(`Mislukt: ${(e as Error).message}`);

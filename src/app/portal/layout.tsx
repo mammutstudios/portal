@@ -40,7 +40,7 @@ export default async function PortalLayout({ children }: { children: React.React
             style={{ background: "var(--ink)", color: "#fff" }}
           >
             <span style={{ opacity: 0.75 }}>
-              Preview — je bekijkt het portaal als {activeClientName ?? "klant"}
+              Preview: je bekijkt het portaal als {activeClientName ?? "klant"}
             </span>
             <form action={stopPreviewAction}>
               <button

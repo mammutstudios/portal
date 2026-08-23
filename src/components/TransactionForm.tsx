@@ -208,7 +208,7 @@ export default function TransactionForm({
         </label>
         <SearchSelect
           name="project_id"
-          placeholder="— Geen —"
+          placeholder="Geen"
           options={projects.map((p) => {
             const client = clients.find((c) => c.id === p.client_id);
             return {
@@ -226,7 +226,7 @@ export default function TransactionForm({
       {pendingProject && (
         <div className="rounded-md p-3 space-y-2" style={{ border: "1px solid var(--text-heading)", background: "var(--bg-secondary)" }}>
           <p className="text-xs font-medium" style={{ color: "var(--text-heading)" }}>
-            Nieuw project &ldquo;{pendingProject.title}&rdquo; — kies een organisatie:
+            Nieuw project &ldquo;{pendingProject.title}&rdquo;, kies een organisatie:
           </p>
           <div className="max-h-40 overflow-y-auto space-y-0.5">
             {clients.map((c) => (

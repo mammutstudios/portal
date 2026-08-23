@@ -42,7 +42,7 @@ export default async function PortalInvoicesPage() {
         </h1>
         <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
           {activeClientName ? `Alle facturen van ${activeClientName}.` : "Al je facturen op één plek."}
-          {open.length > 0 && ` ${open.length} openstaand — ${euro(openTotal)} incl. btw.`}
+          {open.length > 0 && ` ${open.length} openstaand, ${euro(openTotal)} incl. btw.`}
         </p>
       </div>
 

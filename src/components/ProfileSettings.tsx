@@ -179,7 +179,7 @@ export default function ProfileSettings({ profile, email }: { profile: Profile |
         </h2>
         <p className="text-xs mb-5" style={{ color: "var(--text-muted)" }}>
           Waarover wil je bericht krijgen? Je keuze wordt meteen bewaard. Er wordt
-          op dit moment nog niets verstuurd — dit legt alleen vast wat je wilt
+          op dit moment nog niets verstuurd. Dit legt alleen vast wat je wilt
           ontvangen zodra dat aanstaat.
         </p>
 

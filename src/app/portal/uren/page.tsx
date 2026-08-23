@@ -50,7 +50,7 @@ export default async function PortalHoursPage() {
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
         {activeClientName ? `Gewerkte uren voor ${activeClientName}` : "De uren die we voor je maakten"}
-        {total > 0 && ` — ${hours(total)} in totaal.`}
+        {total > 0 && `, ${hours(total)} in totaal.`}
       </p>
 
       {perProject.length > 0 && (

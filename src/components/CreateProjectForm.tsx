@@ -121,7 +121,7 @@ export default function CreateProjectForm({
           <label className="block text-sm mb-1.5" style={{ color: "var(--text)" }}>
             Deadline
           </label>
-          <DatePicker name="deadline" placeholder="— Geen —" />
+          <DatePicker name="deadline" placeholder="Geen" />
         </div>
       </div>
 

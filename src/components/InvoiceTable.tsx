@@ -163,7 +163,7 @@ export default function InvoiceTable({
                   style={{ color: "var(--text-muted)" }}
                   title={inv.reference ?? undefined}
                 >
-                  {showNumber && inv.invoice_number ? `${inv.invoice_number} — ` : ""}
+                  {showNumber && inv.invoice_number ? `${inv.invoice_number}: ` : ""}
                   {inv.reference ?? "—"}
                 </td>
                 <td className="px-4 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>

@@ -57,13 +57,16 @@ export default function MaandoverzichtClient({
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
+      {/* Zelfde ritme als het dashboard: mb-1 onder de kop, mb-8 onder de regel. */}
+      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
         {groet}{voornaam ? `, ${voornaam}` : ""}
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        Welkom in je portaal. Hieronder zie je wat er in {monthLabel(current.month).toLowerCase()} is
-        gebeurd — tickets, uren en facturen
-        {site ? ", plus de cijfers van je website" : ""}.
+        {/* Alleen noemen wat er ook echt staat: zonder gekoppelde site is er
+            geen websitecijfer om naar te verwijzen. */}
+        Hier vind je alles rond je lopende projecten:
+        {site ? " de cijfers van je website, je facturen" : " je facturen"} en wat er deze maand is
+        opgepakt.
       </p>
 
       {bezoekers.length > 0 && (

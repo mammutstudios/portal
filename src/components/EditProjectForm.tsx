@@ -89,7 +89,7 @@ export default function EditProjectForm({
         </div>
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Deadline</label>
-          <DatePicker name="deadline" defaultValue={project.deadline ?? undefined} placeholder="— Geen —" />
+          <DatePicker name="deadline" defaultValue={project.deadline ?? undefined} placeholder="Geen" />
         </div>
       </div>
 
