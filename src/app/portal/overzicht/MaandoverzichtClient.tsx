@@ -5,9 +5,6 @@ import type { SiteStats, DailyPoint } from "@/lib/analytics/plausible";
 import CurrentVisitors from "@/components/CurrentVisitors";
 import VisitorsCard from "@/components/analytics/VisitorsCard";
 
-const euro = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
-
 const monthLabel = (key: string) => {
   const l = new Date(`${key}-01`).toLocaleDateString("nl-NL", { month: "long", year: "numeric" });
   return l.charAt(0).toUpperCase() + l.slice(1);
@@ -46,7 +43,6 @@ export default function MaandoverzichtClient({
     { label: "Nieuwe tickets", value: String(current.newTickets) },
     { label: "Afgerond", value: String(current.closedTickets) },
     { label: "Uren", value: uren(current.hours) },
-    { label: "Gefactureerd", value: euro(current.invoiceTotalExclTax) },
     ...(site
       ? [
           { label: "Bezoekers", value: getal(site.visitors) },
@@ -112,7 +108,6 @@ export default function MaandoverzichtClient({
               <th className="px-4 text-right font-semibold" style={{ color: "var(--ink)" }}>Nieuw</th>
               <th className="px-4 text-right font-semibold" style={{ color: "var(--ink)" }}>Afgerond</th>
               <th className="px-4 text-right font-semibold" style={{ color: "var(--ink)" }}>Uren</th>
-              <th className="px-4 text-right font-semibold" style={{ color: "var(--ink)" }}>Gefactureerd</th>
             </tr>
           </thead>
           <tbody>
@@ -125,9 +120,6 @@ export default function MaandoverzichtClient({
                 <td className="px-4 text-right" style={{ color: "var(--text-muted)" }}>{m.newTickets}</td>
                 <td className="px-4 text-right" style={{ color: "var(--text-muted)" }}>{m.closedTickets}</td>
                 <td className="px-4 text-right" style={{ color: "var(--text-muted)" }}>{uren(m.hours)}</td>
-                <td className="px-4 text-right" style={{ color: "var(--text-heading)" }}>
-                  {euro(m.invoiceTotalExclTax)}
-                </td>
               </tr>
             ))}
           </tbody>
