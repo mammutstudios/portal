@@ -30,12 +30,17 @@ export async function loadSiteAnalytics(siteId: string, periode: string | undefi
       lists: {} as Record<string, BreakdownRow[]>, nu: null };
   }
 
+  // Geïmporteerde data uit Plausible Cloud zit op dagniveau. In een venster van
+  // 24 uur telt zo'n hele dag mee alsof hij in dat venster valt, wat de cijfers
+  // fors opblaast. Bij uuremmers laten we imports daarom weg.
+  const metImports = interval !== "time:hour";
+
   const [stats, punten, prevStats, nu, ...lists] = await Promise.all([
-    siteStats(siteId, range),
-    series(siteId, range, interval),
-    previous ? siteStats(siteId, previous) : Promise.resolve(null),
+    siteStats(siteId, range, metImports),
+    series(siteId, range, interval, metImports),
+    previous ? siteStats(siteId, previous, metImports) : Promise.resolve(null),
     currentVisitors(siteId),
-    ...DIMENSIONS.map((d) => breakdown(siteId, range, d)),
+    ...DIMENSIONS.map((d) => breakdown(siteId, range, d, 6, metImports)),
   ]);
 
   const byDimension = Object.fromEntries(

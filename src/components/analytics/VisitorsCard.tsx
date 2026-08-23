@@ -3,7 +3,7 @@
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
-import type { SiteStats, DailyPoint } from "@/lib/analytics/plausible";
+import type { SiteStats, DailyPoint, Interval } from "@/lib/analytics/plausible";
 
 const INK = "#140018";
 
@@ -46,8 +46,14 @@ const hoofdletter = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
  * Plausible sleutelt maanden op de eerste van de maand (2025-08-01), maar niet
  * altijd — vandaar dat we beide vormen aankunnen. Er los "-01" achter plakken
  * levert "2025-08-01-01" op, en dus een Invalid Date op de as.
+ *
+ * Uursleutels (2026-08-23T12:00) staan al in de tijdzone van de site. Die lezen
+ * we als UTC en formatteren we ook als UTC, zodat de browser er niet nóg een
+ * verschuiving overheen legt.
  */
 const datum = (v: string) => new Date(v.length === 7 ? `${v}-01` : v);
+const uurdatum = (v: string) => new Date(`${v}:00Z`);
+const UUR_ZONE = { timeZone: "UTC" } as const;
 
 /**
  * Donkere tooltip in de stijl van Plausible. Recharts levert de gehoverde rij
@@ -111,22 +117,32 @@ export default function VisitorsCard({
   stats: SiteStats | null;
   prevStats?: SiteStats | null;
   series: DailyPoint[];
-  interval?: "time:day" | "time:month";
+  interval?: Interval;
 }) {
   const data = series.map((p) => ({
     punt:
-      interval === "time:month"
-        ? datum(p.date).toLocaleDateString("nl-NL", { month: "short" })
-        : String(datum(p.date).getDate()),
-    // De as toont alleen het dagnummer; de tooltip heeft de hele datum nodig.
+      interval === "time:hour"
+        ? uurdatum(p.date).toLocaleTimeString("nl-NL", { ...UUR_ZONE, hour: "2-digit", minute: "2-digit" })
+        : interval === "time:month"
+          ? datum(p.date).toLocaleDateString("nl-NL", { month: "short" })
+          : String(datum(p.date).getDate()),
+    // De as toont alleen het uur of dagnummer; de tooltip de hele datum.
     volledig:
-      interval === "time:month"
-        ? hoofdletter(datum(p.date).toLocaleDateString("nl-NL", { month: "long", year: "numeric" }))
-        : hoofdletter(
-            datum(p.date).toLocaleDateString("nl-NL", {
-              weekday: "short", day: "numeric", month: "short",
-            }),
-          ),
+      interval === "time:hour"
+        ? hoofdletter(
+            `${uurdatum(p.date).toLocaleDateString("nl-NL", {
+              ...UUR_ZONE, weekday: "short", day: "numeric", month: "short",
+            })} ${uurdatum(p.date).toLocaleTimeString("nl-NL", {
+              ...UUR_ZONE, hour: "2-digit", minute: "2-digit",
+            })}`,
+          )
+        : interval === "time:month"
+          ? hoofdletter(datum(p.date).toLocaleDateString("nl-NL", { month: "long", year: "numeric" }))
+          : hoofdletter(
+              datum(p.date).toLocaleDateString("nl-NL", {
+                weekday: "short", day: "numeric", month: "short",
+              }),
+            ),
     Bezoekers: p.visitors,
   }));
 

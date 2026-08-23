@@ -4,7 +4,7 @@ import { useState } from "react";
 import CurrentVisitors from "@/components/CurrentVisitors";
 import VisitorsCard from "@/components/analytics/VisitorsCard";
 import PeriodPicker from "@/components/analytics/PeriodPicker";
-import type { SiteStats, DailyPoint, BreakdownRow } from "@/lib/analytics/plausible";
+import type { SiteStats, DailyPoint, BreakdownRow, Interval } from "@/lib/analytics/plausible";
 
 const INK = "#140018";
 
@@ -163,7 +163,7 @@ export default function SiteAnalytics({
   siteName: string | null;
   periode: string;
   periodeLabel: string;
-  interval: "time:day" | "time:month";
+  interval: Interval;
   stats: SiteStats | null;
   series: DailyPoint[];
   lists: Record<string, BreakdownRow[]>;

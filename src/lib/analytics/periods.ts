@@ -1,4 +1,4 @@
-import type { Range } from "@/lib/analytics/plausible";
+import type { Range, Interval } from "@/lib/analytics/plausible";
 
 /**
  * De periodes uit het Plausible-dashboard. Ik reken de datums zelf uit in
@@ -13,7 +13,7 @@ import type { Range } from "@/lib/analytics/plausible";
  * cijfers in het portal zichtbaar af van die in Plausible zelf.
  */
 export const PERIODS = [
-  { key: "day", label: "Vandaag" },
+  { key: "day", label: "Laatste 24 uur" },
   { key: "7d", label: "Laatste 7 dagen" },
   { key: "28d", label: "Laatste 28 dagen" },
   { key: "91d", label: "Laatste 91 dagen" },
@@ -37,7 +37,7 @@ export type Resolved = {
   /** Zelfde lengte, direct ervoor. Null bij "alles": daar valt niets mee te vergelijken. */
   previous: Range | null;
   /** Bij lange periodes per maand groeperen, anders wordt de grafiek onleesbaar. */
-  interval: "time:day" | "time:month";
+  interval: Interval;
   label: string;
 };
 
@@ -59,8 +59,21 @@ export function resolvePeriod(key: PeriodKey, now = new Date()): Resolved {
   };
 
   switch (key) {
-    case "day":
-      return span(today, today);
+    case "day": {
+      // De enige periode met uuremmers, en de enige die op het uur begint in
+      // plaats van op middernacht. Het tijdzone-achtervoegsel is nodig: zonder
+      // dat leest Plausible de tijd als lokale tijd van de site.
+      const uur = (d: Date) => `${d.toISOString().slice(0, 13)}:00:00+00:00`;
+      const eind = new Date(now.getTime());
+      const start = new Date(eind.getTime() - 24 * 3_600_000);
+      const ervoor = new Date(start.getTime() - 24 * 3_600_000);
+      return {
+        range: [uur(start), uur(eind)],
+        previous: [uur(ervoor), uur(start)],
+        interval: "time:hour",
+        label,
+      };
+    }
     case "7d":
       return span(daysAgo(7), daysAgo(1));
     case "28d":

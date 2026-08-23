@@ -23,8 +23,15 @@ export function plausibleIsConfigured() {
 /** Een datumbereik als [van, tot], beide als YYYY-MM-DD. */
 export type Range = [string, string];
 
+/** Emmergrootte van een reeks. Uur alleen bij de 24-uursweergave. */
+export type Interval = "time:hour" | "time:day" | "time:month";
+
 /** Kengetallen over een periode. */
-export async function siteStats(siteId: string, range: Range): Promise<SiteStats | null> {
+export async function siteStats(
+  siteId: string,
+  range: Range,
+  imports = true,
+): Promise<SiteStats | null> {
   if (!plausibleIsConfigured()) return null;
 
   const body = {
@@ -33,7 +40,7 @@ export async function siteStats(siteId: string, range: Range): Promise<SiteStats
     date_range: range,
     // Zonder dit telt alleen wat deze instantie zelf heeft gemeten; alles wat
     // uit Plausible Cloud is geïmporteerd valt er dan buiten.
-    include: { imports: true },
+    include: { imports },
   };
 
   try {
@@ -106,25 +113,38 @@ async function query<T = unknown>(body: Record<string, unknown>): Promise<T | nu
 export async function series(
   siteId: string,
   range: Range,
-  interval: "time:day" | "time:month" = "time:day",
+  interval: Interval = "time:day",
+  /** Uurdata kan niet met dag-imports worden aangevuld; zie loadSiteAnalytics. */
+  imports = true,
 ): Promise<DailyPoint[]> {
   const json = await query<{ results?: { dimensions: string[]; metrics: number[] }[] }>({
     site_id: siteId,
     metrics: ["visitors", "pageviews"],
     date_range: range,
     dimensions: [interval],
-    include: { imports: true },
+    include: { imports },
   });
   const gevonden = new Map<string, DailyPoint>();
   for (const r of json?.results ?? []) {
-    gevonden.set(r.dimensions[0], {
-      date: r.dimensions[0],
+    const sleutel = normaliseer(r.dimensions[0], interval);
+    gevonden.set(sleutel, {
+      date: sleutel,
       visitors: r.metrics[0] ?? 0,
       pageviews: r.metrics[1] ?? 0,
     });
   }
 
-  return vulGaten(gevonden, range, interval);
+  return interval === "time:hour"
+    ? vulUren(gevonden, range)
+    : vulGaten(gevonden, range, interval);
+}
+
+/**
+ * Plausible levert uren als "2026-08-23 12:00:00" en dagen als "2026-08-23".
+ * We maken er één vorm van, zodat sleutels en aanvullingen op elkaar passen.
+ */
+function normaliseer(waarde: string, interval: Interval): string {
+  return interval === "time:hour" ? `${waarde.replace(" ", "T").slice(0, 13)}:00` : waarde;
 }
 
 /**
@@ -139,7 +159,7 @@ export async function series(
 function vulGaten(
   gevonden: Map<string, DailyPoint>,
   [van, tot]: Range,
-  interval: "time:day" | "time:month",
+  interval: Interval,
 ): DailyPoint[] {
   const alles: DailyPoint[] = [];
   const eind = new Date(`${tot}T00:00:00Z`);
@@ -160,12 +180,35 @@ function vulGaten(
   return eerste <= 0 ? alles : alles.slice(eerste);
 }
 
+/**
+ * Vierentwintig uuremmers, eindigend op het laatste uur waar iets in zit.
+ *
+ * Anders dan bij dagen kunnen we die emmers niet uit het opgevraagde bereik
+ * afleiden: Plausible antwoordt in de tijdzone van de site en die kent de API
+ * ons niet. Daarom rekenen we terug vanaf de laatste sleutel die we terugkregen
+ * — dat is per definitie de juiste wandklok. Zonder enige meting valt er niets
+ * af te leiden en vallen we terug op UTC; alles staat dan toch op nul.
+ */
+function vulUren(gevonden: Map<string, DailyPoint>, [, tot]: Range): DailyPoint[] {
+  const sleutels = [...gevonden.keys()].sort();
+  const laatste = sleutels.at(-1) ?? `${tot.replace(" ", "T").slice(0, 13)}:00`;
+
+  const eind = new Date(`${laatste}:00Z`);
+  const uren: DailyPoint[] = [];
+  for (let i = 23; i >= 0; i--) {
+    const sleutel = new Date(eind.getTime() - i * 3_600_000).toISOString().slice(0, 16);
+    uren.push(gevonden.get(sleutel) ?? { date: sleutel, visitors: 0, pageviews: 0 });
+  }
+  return uren;
+}
+
 /** Top-lijstje op één dimensie, bijvoorbeeld visit:source of event:page. */
 export async function breakdown(
   siteId: string,
   range: Range,
   dimension: string,
   limit = 6,
+  imports = true,
 ): Promise<BreakdownRow[]> {
   const json = await query<{ results?: { dimensions: string[]; metrics: number[] }[] }>({
     site_id: siteId,
@@ -174,7 +217,7 @@ export async function breakdown(
     dimensions: [dimension],
     order_by: [["visitors", "desc"]],
     pagination: { limit },
-    include: { imports: true },
+    include: { imports },
   });
   return (json?.results ?? []).map((r) => ({
     label: r.dimensions[0] || "Direct / geen",
