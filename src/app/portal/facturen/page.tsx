@@ -47,9 +47,7 @@ export default async function PortalInvoicesPage() {
         emptyLabel="Er zijn nog geen facturen verstuurd."
         // Elke factuur is van dezelfde organisatie, dus die kolom zegt niets.
         showClient={false}
-        // De klant betaalt op factuurnummer en op het bedrag inclusief btw;
-        // intern rekenen we exclusief.
-        showNumber
+        // De klant ziet wat hij overmaakt; intern rekenen we exclusief btw.
         amount="incl"
         amountLabel="Bedrag incl. btw"
       />
