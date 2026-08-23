@@ -118,3 +118,85 @@ export async function fetchRecurringAsForecast(
 
   return rijen;
 }
+
+export type RecurringAgreement = {
+  id: string;
+  description: string;
+  amount: number;
+  frequencyLabel: string;
+  /** De eerstvolgende keer dat Moneybird hier een factuur van maakt. */
+  nextDate: string | null;
+  contactName: string | null;
+  client: { id: string; name: string; logo_url: string | null } | null;
+};
+
+const ENKELVOUD: Record<MoneybirdRecurringSalesInvoice["frequency_type"], string> = {
+  day: "Dagelijks",
+  week: "Wekelijks",
+  month: "Maandelijks",
+  quarter: "Per kwartaal",
+  year: "Jaarlijks",
+};
+
+const MEERVOUD: Record<MoneybirdRecurringSalesInvoice["frequency_type"], string> = {
+  day: "dagen",
+  week: "weken",
+  month: "maanden",
+  quarter: "kwartalen",
+  year: "jaar",
+};
+
+function frequentie(r: MoneybirdRecurringSalesInvoice): string {
+  const n = Math.max(1, r.frequency || 1);
+  return n === 1 ? ENKELVOUD[r.frequency_type] : `Elke ${n} ${MEERVOUD[r.frequency_type]}`;
+}
+
+/**
+ * De periodieke facturen zelf, om te tonen op de facturenpagina. Anders dan
+ * fetchRecurringAsForecast projecteert deze niets vooruit en laat hij ook de
+ * afspraken zien waarvan de relatie nog niet aan een organisatie hangt — die
+ * tellen niet mee in de prognose, en dat hoor je te kunnen zien.
+ */
+export async function fetchRecurringAgreements(
+  supabase: SupabaseClient,
+): Promise<RecurringAgreement[]> {
+  if (!isMoneybirdConfigured()) return [];
+
+  let recurring: MoneybirdRecurringSalesInvoice[];
+  try {
+    recurring = await listAllRecurringSalesInvoices();
+  } catch (e) {
+    console.error("[moneybird] periodieke facturen ophalen mislukt:", (e as Error).message);
+    return [];
+  }
+
+  const rijen: RecurringAgreement[] = [];
+
+  for (const r of recurring.filter((x) => x.active)) {
+    const naam = contactNaam(r);
+    const client_id = await resolveClientId(supabase, r.contact_id, naam);
+
+    let client: RecurringAgreement["client"] = null;
+    if (client_id) {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, name, logo_url")
+        .eq("id", client_id)
+        .maybeSingle();
+      client = (data as RecurringAgreement["client"]) ?? null;
+    }
+
+    rijen.push({
+      id: r.id,
+      description: r.reference || naam || "Periodieke factuur",
+      amount: Number.parseFloat(r.total_price_excl_tax ?? "0") || 0,
+      frequencyLabel: frequentie(r),
+      nextDate: r.invoice_date,
+      contactName: naam,
+      client,
+    });
+  }
+
+  // Eerstvolgende beurt bovenaan.
+  return rijen.sort((a, b) => (a.nextDate ?? "9999").localeCompare(b.nextDate ?? "9999"));
+}
