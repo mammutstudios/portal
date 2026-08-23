@@ -189,6 +189,7 @@ const adminNav: NavItem[] = [
     children: [
       { label: "Overzicht", href: "/dashboard/finance" },
       { label: "Facturen", href: "/dashboard/finance/facturen" },
+      { label: "Periodiek", href: "/dashboard/finance/periodiek" },
     ],
   },
   {

@@ -3,8 +3,6 @@
 import { useEffect, useState, useTransition } from "react";
 import { backfillMoneybirdAction } from "@/lib/actions/moneybird";
 import InvoiceTable, { type MoneybirdInvoice } from "@/components/InvoiceTable";
-import ClientLogo from "@/components/ClientLogo";
-import type { RecurringAgreement } from "@/lib/moneybird/recurring";
 
 const euro = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
@@ -98,73 +96,13 @@ MONEYBIRD_WEBHOOK_SECRET=...`}
   );
 }
 
-/** Datum zonder jaar als hij dit jaar valt: "1 september" tegenover "1 juli 2027". */
-function fmtDatum(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  const ditJaar = d.getFullYear() === new Date().getFullYear();
-  return d.toLocaleDateString("nl-NL", {
-    day: "numeric",
-    month: "long",
-    ...(ditJaar ? {} : { year: "numeric" }),
-  });
-}
-
-/**
- * De periodieke facturen uit Moneybird. Dit zijn geen facturen maar afspraken,
- * dus ze staan bewust in een eigen tabel en niet tussen de verstuurde facturen.
- */
-function RecurringTable({ rows }: { rows: RecurringAgreement[] }) {
-  return (
-    <div className="squircle overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
-      <table className="w-full text-sm">
-        <thead>
-          <tr style={{ borderBottom: "1px solid var(--border)" }}>
-            <th className="text-left font-semibold px-5 py-3" style={{ color: "var(--text-heading)" }}>Kenmerk</th>
-            <th className="text-left font-semibold px-5 py-3" style={{ color: "var(--text-heading)" }}>Frequentie</th>
-            <th className="text-left font-semibold px-5 py-3" style={{ color: "var(--text-heading)" }}>Volgende</th>
-            <th className="text-left font-semibold px-5 py-3" style={{ color: "var(--text-heading)" }}>Klant</th>
-            <th className="text-right font-semibold px-5 py-3" style={{ color: "var(--text-heading)" }}>Bedrag</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={r.id} style={i < rows.length - 1 ? { borderBottom: "1px solid var(--border)" } : undefined}>
-              <td className="px-5 py-3" style={{ color: "var(--text-heading)" }}>{r.description}</td>
-              <td className="px-5 py-3" style={{ color: "var(--text-muted)" }}>{r.frequencyLabel}</td>
-              <td className="px-5 py-3" style={{ color: "var(--text-muted)" }}>{fmtDatum(r.nextDate)}</td>
-              <td className="px-5 py-3">
-                {r.client ? (
-                  <span className="flex items-center gap-2 min-w-0">
-                    <ClientLogo logo_url={r.client.logo_url} name={r.client.name} />
-                    <span className="truncate" style={{ color: "var(--text-heading)" }}>{r.client.name}</span>
-                  </span>
-                ) : (
-                  <span style={{ color: "#c8901f" }} title="Telt niet mee in de prognose">
-                    {r.contactName ?? "—"} · niet gekoppeld
-                  </span>
-                )}
-              </td>
-              <td className="px-5 py-3 text-right tabular-nums" style={{ color: "var(--text-heading)" }}>
-                {euro(r.amount)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export default function FacturenPageClient({
   configured,
   invoices,
-  recurring,
   tableMissing,
 }: {
   configured: boolean;
   invoices: MoneybirdInvoice[];
-  recurring: RecurringAgreement[];
   tableMissing: string | null;
 }) {
   const [pending, startTransition] = useTransition();
@@ -286,18 +224,6 @@ export default function FacturenPageClient({
             </div>
           </div>
 
-
-          {recurring.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--text-heading)" }}>
-                Periodieke facturen
-              </h2>
-              <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
-                Maakt Moneybird zelf aan. De komende beurten tellen mee in de omzetprognose.
-              </p>
-              <RecurringTable rows={recurring} />
-            </div>
-          )}
 
           <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-heading)" }}>
             Facturen
