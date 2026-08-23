@@ -1,35 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
-import Modal from "@/components/Modal";
-import EditProjectForm from "@/components/EditProjectForm";
 import ProjectProgress from "@/components/ProjectProgress";
 import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
-import type { Project, Client, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
+import type { Project, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
 
 const euro = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 export default function ProjectDetailClient({
   project,
-  clients,
   tasks,
   files,
   timeEntries,
   invoices = [],
 }: {
   project: Project & { clients?: { name: string; id: string } | null };
-  clients: Client[];
   tasks: Task[];
   files: ProjectFile[];
   timeEntries: TimeEntry[];
   /** Alle facturen van deze klant; de koppeling per project zit erin. */
   invoices?: KoppelbareFactuur[];
 }) {
-  const [showEdit, setShowEdit] = useState(false);
   const totalHours = timeEntries.reduce((sum, e) => sum + Number(e.hours), 0);
   // Concepten tellen niet mee: die zijn nog niet de deur uit.
   const gefactureerd = invoices
@@ -54,13 +48,13 @@ export default function ProjectDetailClient({
           </h1>
           <ProjectStatusBadge status={project.status} />
         </div>
-        <button
-          onClick={() => setShowEdit(true)}
-          className="text-sm px-3 py-1.5 rounded-md flex-shrink-0"
+        <Link
+          href={`/dashboard/projects/${project.id}/bewerken`}
+          className="card-hover text-sm px-3 py-1.5 rounded-md flex-shrink-0"
           style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
         >
           Bewerken
-        </button>
+        </Link>
       </div>
 
       {project.tags && project.tags.length > 0 && (
@@ -208,11 +202,6 @@ export default function ProjectDetailClient({
         </div>
       </section>
 
-      {showEdit && (
-        <Modal title="Project bewerken" onClose={() => setShowEdit(false)}>
-          <EditProjectForm project={project} clients={clients} onClose={() => setShowEdit(false)} />
-        </Modal>
-      )}
     </div>
   );
 }
