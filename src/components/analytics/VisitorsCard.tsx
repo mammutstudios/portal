@@ -40,6 +40,43 @@ function Change({ pct }: { pct: number | null }) {
   );
 }
 
+const hoofdletter = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
+
+/**
+ * Donkere tooltip in de stijl van Plausible. Recharts levert de gehoverde rij
+ * mee in payload[0].payload, dus daar zit de volledige datum in.
+ */
+function ChartTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: { volledig: string; Bezoekers: number } }[];
+}) {
+  const punt = payload?.[0]?.payload;
+  if (!active || !punt) return null;
+
+  return (
+    <div
+      className="rounded-lg px-4 py-3"
+      style={{ background: INK, color: "var(--white)", boxShadow: "0 8px 24px rgba(20, 0, 24, 0.28)" }}
+    >
+      <div className="text-[11px] font-semibold uppercase tracking-wider mb-2">Bezoekers</div>
+      <div className="flex items-center justify-between gap-8">
+        <span className="flex items-center gap-2 text-sm whitespace-nowrap">
+          <span
+            aria-hidden
+            className="inline-block rounded-full flex-shrink-0"
+            style={{ width: 8, height: 8, background: "var(--lavender)" }}
+          />
+          {punt.volledig}
+        </span>
+        <span className="text-sm font-bold">{getal(punt.Bezoekers)}</span>
+      </div>
+    </div>
+  );
+}
+
 function Metric({ label, value, change }: { label: string; value: string; change?: number | null }) {
   return (
     <div className="px-5 py-4" style={{ borderLeft: "1px solid var(--border)" }}>
@@ -74,6 +111,17 @@ export default function VisitorsCard({
       interval === "time:month"
         ? new Date(`${p.date}-01`).toLocaleDateString("nl-NL", { month: "short" })
         : String(new Date(p.date).getDate()),
+    // De as toont alleen het dagnummer; de tooltip heeft de hele datum nodig.
+    volledig:
+      interval === "time:month"
+        ? hoofdletter(
+            new Date(`${p.date}-01`).toLocaleDateString("nl-NL", { month: "long", year: "numeric" }),
+          )
+        : hoofdletter(
+            new Date(p.date).toLocaleDateString("nl-NL", {
+              weekday: "short", day: "numeric", month: "short",
+            }),
+          ),
     Bezoekers: p.visitors,
   }));
 
@@ -110,11 +158,12 @@ export default function VisitorsCard({
             <CartesianGrid vertical={false} stroke="var(--border)" />
             <XAxis dataKey="punt" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--text-muted)" }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--text-muted)" }} allowDecimals={false} />
-            <Tooltip
-              cursor={{ stroke: "var(--border)" }}
-              contentStyle={{ border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg)" }}
+            <Tooltip cursor={{ stroke: "var(--border)" }} content={<ChartTooltip />} />
+            <Area
+              type="monotone" dataKey="Bezoekers" stroke={INK} strokeWidth={2}
+              fill="url(#vlakBezoekers)" dot={false}
+              activeDot={{ r: 4, fill: INK, stroke: "var(--bg)", strokeWidth: 2 }}
             />
-            <Area type="monotone" dataKey="Bezoekers" stroke={INK} strokeWidth={2} fill="url(#vlakBezoekers)" dot={false} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
