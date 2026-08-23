@@ -6,13 +6,14 @@ import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import HoverRow from "@/components/HoverRow";
 import CurrentVisitors from "@/components/CurrentVisitors";
 import VisitorsCard from "@/components/analytics/VisitorsCard";
+import PeriodPicker from "@/components/analytics/PeriodPicker";
 import {
   plausibleIsConfigured,
   siteStats,
   series as siteSeries,
   currentVisitors,
 } from "@/lib/analytics/plausible";
-import { resolvePeriod } from "@/lib/analytics/periods";
+import { resolvePeriod, isPeriod } from "@/lib/analytics/periods";
 import type { Project } from "@/lib/types";
 
 /**
@@ -27,8 +28,13 @@ function fmtFull(amount: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(amount);
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ periode?: string }>;
+}) {
   const supabase = await createClient();
+  const { periode: gekozen } = await searchParams;
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -41,8 +47,10 @@ export default async function DashboardPage() {
   ]);
 
   // Cijfers van de eigen site, dezelfde kaart als op de analyticspagina en in
-  // het klantportaal. Deze maand, zodat het aansluit op de omzetkaarten hierboven.
-  const periode = resolvePeriod("month", now);
+  // het klantportaal. Standaard deze maand, zodat het aansluit op de
+  // omzetkaarten eronder; via ?periode= is dat aan te passen.
+  const periodeKey = isPeriod(gekozen) ? gekozen : "month";
+  const periode = resolvePeriod(periodeKey, now);
   const [eigenStats, eigenReeks, eigenVorig, eigenNu, eigenClient] = plausibleIsConfigured()
     ? await Promise.all([
         siteStats(EIGEN_SITE, periode.range),
@@ -107,7 +115,10 @@ export default async function DashboardPage() {
             >
               {EIGEN_SITE}
             </Link>
-            <CurrentVisitors siteId={EIGEN_SITE} initial={eigenNu} />
+            <div className="flex items-center gap-4">
+              <CurrentVisitors siteId={EIGEN_SITE} initial={eigenNu} />
+              <PeriodPicker current={periodeKey} />
+            </div>
           </div>
           <VisitorsCard
             stats={eigenStats}

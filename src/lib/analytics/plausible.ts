@@ -115,11 +115,49 @@ export async function series(
     dimensions: [interval],
     include: { imports: true },
   });
-  return (json?.results ?? []).map((r) => ({
-    date: r.dimensions[0],
-    visitors: r.metrics[0] ?? 0,
-    pageviews: r.metrics[1] ?? 0,
-  }));
+  const gevonden = new Map<string, DailyPoint>();
+  for (const r of json?.results ?? []) {
+    gevonden.set(r.dimensions[0], {
+      date: r.dimensions[0],
+      visitors: r.metrics[0] ?? 0,
+      pageviews: r.metrics[1] ?? 0,
+    });
+  }
+
+  return vulGaten(gevonden, range, interval);
+}
+
+/**
+ * Plausible laat lege dagen wég uit het antwoord. Zonder aanvulling loopt de
+ * lijn dwars over stille dagen heen en staan de labels op de as onregelmatig:
+ * juli 2026 gaf 19 punten voor 31 dagen. Daarom vullen we de ontbrekende
+ * emmers hier zelf aan met nul.
+ *
+ * De aanloop knippen we eraf, want bij "alles" begint het bereik in 2015 en
+ * dat zou honderd lege maanden vóór de eerste meting opleveren.
+ */
+function vulGaten(
+  gevonden: Map<string, DailyPoint>,
+  [van, tot]: Range,
+  interval: "time:day" | "time:month",
+): DailyPoint[] {
+  const alles: DailyPoint[] = [];
+  const eind = new Date(`${tot}T00:00:00Z`);
+
+  for (
+    let d = new Date(`${van}T00:00:00Z`);
+    d <= eind;
+    d = interval === "time:month"
+      ? new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1))
+      : new Date(d.getTime() + 86_400_000)
+  ) {
+    // Plausible sleutelt maanden op de eerste van de maand.
+    const sleutel = d.toISOString().slice(0, 10);
+    alles.push(gevonden.get(sleutel) ?? { date: sleutel, visitors: 0, pageviews: 0 });
+  }
+
+  const eerste = alles.findIndex((p) => p.visitors > 0 || p.pageviews > 0);
+  return eerste <= 0 ? alles : alles.slice(eerste);
 }
 
 /** Top-lijstje op één dimensie, bijvoorbeeld visit:source of event:page. */

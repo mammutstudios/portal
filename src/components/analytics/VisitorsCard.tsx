@@ -43,6 +43,13 @@ function Change({ pct }: { pct: number | null }) {
 const hoofdletter = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
 
 /**
+ * Plausible sleutelt maanden op de eerste van de maand (2025-08-01), maar niet
+ * altijd — vandaar dat we beide vormen aankunnen. Er los "-01" achter plakken
+ * levert "2025-08-01-01" op, en dus een Invalid Date op de as.
+ */
+const datum = (v: string) => new Date(v.length === 7 ? `${v}-01` : v);
+
+/**
  * Donkere tooltip in de stijl van Plausible. Recharts levert de gehoverde rij
  * mee in payload[0].payload, dus daar zit de volledige datum in.
  */
@@ -109,16 +116,14 @@ export default function VisitorsCard({
   const data = series.map((p) => ({
     punt:
       interval === "time:month"
-        ? new Date(`${p.date}-01`).toLocaleDateString("nl-NL", { month: "short" })
-        : String(new Date(p.date).getDate()),
+        ? datum(p.date).toLocaleDateString("nl-NL", { month: "short" })
+        : String(datum(p.date).getDate()),
     // De as toont alleen het dagnummer; de tooltip heeft de hele datum nodig.
     volledig:
       interval === "time:month"
-        ? hoofdletter(
-            new Date(`${p.date}-01`).toLocaleDateString("nl-NL", { month: "long", year: "numeric" }),
-          )
+        ? hoofdletter(datum(p.date).toLocaleDateString("nl-NL", { month: "long", year: "numeric" }))
         : hoofdletter(
-            new Date(p.date).toLocaleDateString("nl-NL", {
+            datum(p.date).toLocaleDateString("nl-NL", {
               weekday: "short", day: "numeric", month: "short",
             }),
           ),

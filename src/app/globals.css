@@ -147,3 +147,13 @@ th, td {
     border-right: 1px solid var(--border);
   }
 }
+
+/*
+ * Recharts geeft de grafiek een tabIndex voor toetsenbordbediening, waardoor
+ * een muisklik een blauwe focusring oplevert. Met :focus-visible verdwijnt die
+ * bij de muis maar blijft hij staan bij navigeren met Tab.
+ */
+.recharts-wrapper :focus:not(:focus-visible),
+.recharts-wrapper:focus:not(:focus-visible) {
+  outline: none;
+}
