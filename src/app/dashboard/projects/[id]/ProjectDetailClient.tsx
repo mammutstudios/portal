@@ -26,10 +26,6 @@ export default function ProjectDetailClient({
   invoices?: KoppelbareFactuur[];
 }) {
   const totalHours = timeEntries.reduce((sum, e) => sum + Number(e.hours), 0);
-  // Concepten tellen niet mee: die zijn nog niet de deur uit.
-  const gefactureerd = invoices
-    .filter((i) => i.project_id === project.id && i.state !== "draft")
-    .reduce((som, i) => som + (i.total_excl_tax ?? 0), 0);
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
@@ -104,12 +100,6 @@ export default function ProjectDetailClient({
               label: "Budget",
               value: project.budget_amount != null ? euro(project.budget_amount) : "Niet gezet",
             },
-            { label: "Gefactureerd", value: euro(gefactureerd) },
-            {
-              label: "Nog te gaan",
-              value: project.budget_amount != null ? euro(project.budget_amount - gefactureerd) : "—",
-            },
-            { label: "Uren", value: totalHours.toFixed(1) },
             ...(project.deadline
               ? [{
                   label: "Deadline",
