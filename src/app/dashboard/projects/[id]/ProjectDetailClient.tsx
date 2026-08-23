@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
-import ProjectProgress from "@/components/ProjectProgress";
+import ProjectProgressCard from "@/components/ProjectProgressCard";
 import DetailList from "@/components/DetailList";
 import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
 import type { Project, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
@@ -63,10 +63,6 @@ export default function ProjectDetailClient({
         </p>
       )}
 
-      <div className="mb-8">
-        <ProjectProgress phase={project.phase} tags={project.tags} progress={project.progress} showPercentage />
-      </div>
-
       {(project.next_step || project.client_action) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {project.next_step && (
@@ -90,7 +86,7 @@ export default function ProjectDetailClient({
 
       {/* Budget en uren staan bewust alleen hier: bij een vaste prijs heeft de
           klant er niets aan, en het nodigt uit tot sturen op uren. */}
-      <div className="mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 items-start">
         <DetailList
           rows={[
             { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
@@ -123,6 +119,11 @@ export default function ProjectDetailClient({
                 }]
               : []),
           ]}
+        />
+        <ProjectProgressCard
+          progress={project.progress}
+          phase={project.phase}
+          tags={project.tags}
         />
       </div>
 

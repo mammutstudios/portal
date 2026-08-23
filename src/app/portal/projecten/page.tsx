@@ -13,7 +13,7 @@ import type { Project } from "@/lib/types";
  * budget_amount, en dat is een intern getal dat de klant niet hoort te zien.
  */
 const KOLOMMEN =
-  "id, title, description, status, deadline, tags, phase, next_step, client_action, live_url, staging_url";
+  "id, title, description, status, deadline, tags, progress, phase, next_step, client_action, live_url, staging_url";
 
 export default async function PortalProjectenPage() {
   const { clientIds } = await getPortalContext();

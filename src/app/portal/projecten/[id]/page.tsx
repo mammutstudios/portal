@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext, euro, shortDate } from "@/lib/portal";
-import { ProjectStatusBadge } from "@/components/StatusBadge";
-import ProjectProgress from "@/components/ProjectProgress";
-import type { Project } from "@/lib/types";
+import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
+import ProjectProgressCard from "@/components/ProjectProgressCard";
+import DetailList from "@/components/DetailList";
+import { PHASE_LABEL, type Project } from "@/lib/types";
 
 /** Zonder budget_amount: dat is een intern getal. Zie de lijstpagina. */
 const KOLOMMEN =
-  "id, client_id, title, description, status, deadline, tags, phase, next_step, client_action, live_url, staging_url";
+  "id, client_id, title, description, status, deadline, tags, progress, phase, next_step, client_action, live_url, staging_url";
 
 export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,23 +38,42 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
         <span style={{ color: "var(--text-heading)" }}>{project.title}</span>
       </nav>
 
-      <div className="flex items-center gap-3 flex-wrap mb-1">
-        <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          {project.title}
-        </h1>
-        <ProjectStatusBadge status={project.status} />
-      </div>
+      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
+        {project.title}
+      </h1>
       {project.description && (
         <p className="text-sm mb-6" style={{ color: "var(--text)" }}>{project.description}</p>
       )}
 
-      <div className="mb-8">
-        <ProjectProgress phase={project.phase} tags={project.tags} />
-        {project.deadline && (
-          <p className="text-sm mt-3" style={{ color: "var(--text-muted)" }}>
-            Verwachte oplevering: {shortDate(project.deadline)}
-          </p>
-        )}
+      {/* Dezelfde twee kaarten als in het dashboard, maar zonder de regels over
+          budget en uren: die zijn intern. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 items-start">
+        <DetailList
+          rows={[
+            { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
+            ...(project.tags && project.tags.length > 0
+              ? [{
+                  label: "Type",
+                  value: (
+                    <span className="flex flex-wrap gap-1.5 justify-end">
+                      {project.tags.map((tag: string) => <ProjectTagBadge key={tag} tag={tag} />)}
+                    </span>
+                  ),
+                }]
+              : []),
+            ...(project.phase
+              ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }]
+              : []),
+            ...(project.deadline
+              ? [{ label: "Verwachte oplevering", value: shortDate(project.deadline) }]
+              : []),
+          ]}
+        />
+        <ProjectProgressCard
+          progress={project.progress ?? null}
+          phase={project.phase}
+          tags={project.tags}
+        />
       </div>
 
       {project.client_action && (
