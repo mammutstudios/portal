@@ -4,7 +4,22 @@ import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import HoverRow from "@/components/HoverRow";
+import CurrentVisitors from "@/components/CurrentVisitors";
+import VisitorsCard from "@/components/analytics/VisitorsCard";
+import {
+  plausibleIsConfigured,
+  siteStats,
+  series as siteSeries,
+  currentVisitors,
+} from "@/lib/analytics/plausible";
+import { resolvePeriod } from "@/lib/analytics/periods";
 import type { Project } from "@/lib/types";
+
+/**
+ * Onze eigen website. Bewust een losse instelling in plaats van een klantnaam
+ * uit de database, zodat het overzicht niet stukgaat als die naam wijzigt.
+ */
+const EIGEN_SITE = process.env.PLAUSIBLE_OWN_SITE_ID ?? "mammutstudios.com";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
@@ -24,6 +39,24 @@ export default async function DashboardPage() {
     supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
     fetchInvoicesAsTransactions(supabase),
   ]);
+
+  // Cijfers van de eigen site, dezelfde kaart als op de analyticspagina en in
+  // het klantportaal. Deze maand, zodat het aansluit op de omzetkaarten hierboven.
+  const periode = resolvePeriod("month", now);
+  const [eigenStats, eigenReeks, eigenVorig, eigenNu, eigenClient] = plausibleIsConfigured()
+    ? await Promise.all([
+        siteStats(EIGEN_SITE, periode.range),
+        siteSeries(EIGEN_SITE, periode.range, periode.interval),
+        periode.previous ? siteStats(EIGEN_SITE, periode.previous) : Promise.resolve(null),
+        currentVisitors(EIGEN_SITE),
+        supabase
+          .from("clients")
+          .select("id")
+          .eq("plausible_site_id", EIGEN_SITE)
+          .maybeSingle()
+          .then(({ data }) => data),
+      ])
+    : [null, [], null, null, null];
 
   const isRetainer = (p: Project) => p.tags?.some((t) => t.toLowerCase() === "retainer") ?? false;
   const sortedProjects = [...((projects ?? []) as Project[])].sort(
@@ -63,6 +96,27 @@ export default async function DashboardPage() {
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
         Welkom terug bij Mammut Studios
       </p>
+
+      {eigenReeks.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <Link
+              href={eigenClient ? `/dashboard/analytics/${eigenClient.id}` : "/dashboard/analytics"}
+              className="text-sm font-semibold hover:underline"
+              style={{ color: "var(--text-heading)" }}
+            >
+              {EIGEN_SITE}
+            </Link>
+            <CurrentVisitors siteId={EIGEN_SITE} initial={eigenNu} />
+          </div>
+          <VisitorsCard
+            stats={eigenStats}
+            prevStats={eigenVorig}
+            series={eigenReeks}
+            interval={periode.interval}
+          />
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
