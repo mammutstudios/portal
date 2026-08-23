@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 const PROJECT_TAGS = ["Branding", "Design", "Development", "Retainer"];
 import SearchSelect from "@/components/SearchSelect";
 import DatePicker from "@/components/DatePicker";
+import Select from "@/components/Select";
 import type { Client } from "@/lib/types";
 
 export default function CreateProjectForm({
@@ -105,17 +106,16 @@ export default function CreateProjectForm({
           <label className="block text-sm mb-1.5" style={{ color: "var(--text)" }}>
             Status
           </label>
-          <select
+          <Select
             name="status"
             defaultValue="active"
-            className="w-full px-3 py-2 text-sm rounded-md outline-none"
-            style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text)" }}
-          >
-            <option value="upcoming">Upcoming</option>
-            <option value="active">Actief</option>
-            <option value="on_hold">On hold</option>
-            <option value="completed">Afgerond</option>
-          </select>
+            options={[
+              { value: "upcoming", label: "Upcoming" },
+              { value: "active", label: "Actief" },
+              { value: "on_hold", label: "On hold" },
+              { value: "completed", label: "Afgerond" },
+            ]}
+          />
         </div>
         <div>
           <label className="block text-sm mb-1.5" style={{ color: "var(--text)" }}>

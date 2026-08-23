@@ -4,6 +4,7 @@ import { useState } from "react";
 import { updateProjectAction } from "@/lib/actions/projects";
 import SearchSelect from "@/components/SearchSelect";
 import DatePicker from "@/components/DatePicker";
+import Select from "@/components/Select";
 import type { Project, Client } from "@/lib/types";
 
 const PROJECT_TAGS = ["Branding", "Design", "Development", "Retainer"];
@@ -75,17 +76,16 @@ export default function EditProjectForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Status</label>
-          <select
+          <Select
             name="status"
             defaultValue={project.status}
-            className="w-full px-3 py-2 text-sm rounded-md outline-none"
-            style={{ border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)" }}
-          >
-            <option value="upcoming">Upcoming</option>
-            <option value="active">Actief</option>
-            <option value="on_hold">On hold</option>
-            <option value="completed">Afgerond</option>
-          </select>
+            options={[
+              { value: "upcoming", label: "Upcoming" },
+              { value: "active", label: "Actief" },
+              { value: "on_hold", label: "On hold" },
+              { value: "completed", label: "Afgerond" },
+            ]}
+          />
         </div>
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Deadline</label>
