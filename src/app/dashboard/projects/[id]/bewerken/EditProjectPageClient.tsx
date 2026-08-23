@@ -12,9 +12,11 @@ import type { Project, Client } from "@/lib/types";
 export default function EditProjectPageClient({
   project,
   clients,
+  team,
 }: {
   project: Project;
   clients: Client[];
+  team: { id: string; full_name: string | null }[];
 }) {
   const router = useRouter();
   const terug = `/dashboard/projects/${project.id}`;
@@ -23,6 +25,7 @@ export default function EditProjectPageClient({
     <EditProjectForm
       project={project}
       clients={clients}
+      team={team}
       onClose={() => {
         router.push(terug);
         router.refresh();

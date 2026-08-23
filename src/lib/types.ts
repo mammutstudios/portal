@@ -111,6 +111,9 @@ export type Project = {
   client_action: string | null;
   live_url: string | null;
   staging_url: string | null;
+  /** Teamlid dat dit project trekt. Zichtbaar voor de klant. */
+  lead_profile_id: string | null;
+  lead?: { id: string; full_name: string | null; avatar_url: string | null } | null;
   /** Afgesproken prijs excl. btw. Blijft intern: bij een vaste prijs heeft
    *  een klant niets aan een budgetstand, en het nodigt uit tot sturen op
    *  uren in plaats van op resultaat. */

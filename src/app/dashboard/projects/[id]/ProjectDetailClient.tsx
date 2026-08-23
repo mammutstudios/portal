@@ -94,6 +94,31 @@ export default function ProjectDetailClient({
           rows={[
               { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
             ...(project.phase ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }] : []),
+            ...(project.lead
+              ? [{
+                  label: "Lead",
+                  value: (
+                    <span className="flex items-center gap-2 justify-end">
+                      {project.lead.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={project.lead.avatar_url}
+                          alt=""
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
+                          style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}
+                        >
+                          {(project.lead.full_name ?? "?").trim()[0]?.toUpperCase()}
+                        </span>
+                      )}
+                      {project.lead.full_name ?? "Naamloos"}
+                    </span>
+                  ),
+                }]
+              : []),
             ...(project.tags && project.tags.length > 0
               ? [{
                   label: "Type",

@@ -17,6 +17,7 @@ export async function createProjectAction(formData: FormData) {
   const staging_url = formData.get("staging_url") as string;
   const progress = formData.get("progress") as string;
   const budget_amount = formData.get("budget_amount") as string;
+  const lead_profile_id = formData.get("lead_profile_id") as string;
 
   if (!title?.trim()) return { error: "Naam is verplicht" };
   if (!client_id) return { error: "Organisatie is verplicht" };
@@ -36,6 +37,7 @@ export async function createProjectAction(formData: FormData) {
     staging_url: staging_url?.trim() || null,
     progress: progress === "" || progress == null ? null : Number(progress),
     budget_amount: budget_amount?.trim() ? Number(budget_amount) : null,
+    lead_profile_id: lead_profile_id || null,
   });
 
   if (error) return { error: error.message };
@@ -59,6 +61,7 @@ export async function updateProjectAction(id: string, formData: FormData) {
   const staging_url = formData.get("staging_url") as string;
   const progress = formData.get("progress") as string;
   const budget_amount = formData.get("budget_amount") as string;
+  const lead_profile_id = formData.get("lead_profile_id") as string;
 
   if (!title?.trim()) return { error: "Naam is verplicht" };
 
@@ -77,6 +80,7 @@ export async function updateProjectAction(id: string, formData: FormData) {
     staging_url: staging_url?.trim() || null,
     progress: progress === "" || progress == null ? null : Number(progress),
     budget_amount: budget_amount?.trim() ? Number(budget_amount) : null,
+    lead_profile_id: lead_profile_id || null,
   }).eq("id", id);
 
   if (error) return { error: error.message };

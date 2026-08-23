@@ -8,9 +8,11 @@ export default async function ProjectBewerkenPage({ params }: { params: Promise<
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: project }, { data: clients }] = await Promise.all([
+  const [{ data: project }, { data: clients }, { data: team }] = await Promise.all([
     supabase.from("projects").select("*").eq("id", id).single(),
     supabase.from("clients").select("*").order("name"),
+    // Alleen teamleden kunnen lead zijn, geen klantgebruikers.
+    supabase.from("profiles").select("id, full_name").eq("role", "admin").order("full_name"),
   ]);
 
   if (!project) notFound();
@@ -32,7 +34,7 @@ export default async function ProjectBewerkenPage({ params }: { params: Promise<
         Fase, volgende stap en wat je van de klant nodig hebt zijn zichtbaar in het portaal.
       </p>
 
-      <EditProjectPageClient project={project} clients={clients ?? []} />
+      <EditProjectPageClient project={project} clients={clients ?? []} team={team ?? []} />
     </div>
   );
 }

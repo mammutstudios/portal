@@ -11,7 +11,7 @@ import { PHASE_LABEL, projectProgressPercentage, type Project } from "@/lib/type
 
 /** Zonder budget_amount: dat is een intern getal. Zie de lijstpagina. */
 const KOLOMMEN =
-  "id, client_id, title, description, status, deadline, tags, progress, phase, next_step, client_action, live_url, staging_url";
+  "id, client_id, title, description, status, deadline, tags, progress, phase, lead_profile_id, next_step, client_action, live_url, staging_url";
 
 export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,7 +20,11 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
 
   // Eerst eigenaarschap vaststellen, pas daarna de inhoud. Een project van een
   // andere klant bestaat voor deze bezoeker simpelweg niet.
-  const { data } = await supabase.from("projects").select(KOLOMMEN).eq("id", id).maybeSingle();
+  const { data } = await supabase
+    .from("projects")
+    .select(`${KOLOMMEN}, lead:profiles(id, full_name, avatar_url)`)
+    .eq("id", id)
+    .maybeSingle();
   const project = data as unknown as Project | null;
   if (!project || !clientIds.includes(project.client_id)) notFound();
 
@@ -71,6 +75,31 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
               : []),
             ...(project.phase
               ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }]
+              : []),
+            ...(project.lead
+              ? [{
+                  label: "Lead",
+                  value: (
+                    <span className="flex items-center gap-2 justify-end">
+                      {project.lead.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={project.lead.avatar_url}
+                          alt=""
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
+                          style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}
+                        >
+                          {(project.lead.full_name ?? "?").trim()[0]?.toUpperCase()}
+                        </span>
+                      )}
+                      {project.lead.full_name ?? "Naamloos"}
+                    </span>
+                  ),
+                }]
               : []),
             ...(project.deadline
               ? [{ label: "Verwachte oplevering", value: shortDate(project.deadline) }]

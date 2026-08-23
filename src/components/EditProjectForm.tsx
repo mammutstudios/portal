@@ -13,10 +13,13 @@ const PROJECT_TAGS = ["Branding", "Design", "Development", "Retainer"];
 export default function EditProjectForm({
   project,
   clients,
+  team = [],
   onClose,
 }: {
   project: Project;
   clients: Client[];
+  /** Teamleden die lead kunnen zijn. */
+  team?: { id: string; full_name: string | null }[];
   onClose: () => void;
 }) {
   const [selectedTags, setSelectedTags] = useState<string[]>(project.tags ?? []);
@@ -94,6 +97,19 @@ export default function EditProjectForm({
         </div>
       </div>
 
+
+      <div>
+        <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Lead</label>
+        <Select
+          name="lead_profile_id"
+          defaultValue={project.lead_profile_id ?? undefined}
+          placeholder="Niemand toegewezen"
+          options={team.map((t) => ({ value: t.id, label: t.full_name ?? "Naamloos" }))}
+        />
+        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+          De klant ziet wie het project trekt.
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
