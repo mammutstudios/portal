@@ -14,7 +14,7 @@ export default function ProgressBar({ value }: { value: number }) {
       </div>
       <div
         className="progress-bar w-full overflow-hidden"
-        style={{ height: 10, background: "var(--bg-secondary)" }}
+        style={{ height: 14, background: "var(--bg-secondary)" }}
       >
         <div style={{ width: `${pct}%`, height: "100%", background: "var(--ink)" }} />
       </div>

@@ -8,7 +8,7 @@ import DetailList from "@/components/DetailList";
 import ProjectLeadCard from "@/components/ProjectLeadCard";
 import ProjectInvoiceCard from "@/components/ProjectInvoiceCard";
 import ProgressBar from "@/components/ProgressBar";
-import ProjectComments, { type ProjectComment } from "@/components/ProjectComments";
+import ProjectTimeline, { type TimelineEntry } from "@/components/ProjectTimeline";
 import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
 import type { Project, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
 
@@ -32,7 +32,7 @@ export default function ProjectDetailClient({
   timeEntries: TimeEntry[];
   /** Alle facturen van deze klant; de koppeling per project zit erin. */
   invoices?: KoppelbareFactuur[];
-  comments?: ProjectComment[];
+  comments?: TimelineEntry[];
   currentProfileId?: string | null;
   currentName?: string | null;
   currentAvatarUrl?: string | null;
@@ -96,9 +96,11 @@ export default function ProjectDetailClient({
           klant er niets aan, en het nodigt uit tot sturen op uren. */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         <div className="lg:col-span-2">
-          <ProjectComments
+          <ProjectTimeline
             projectId={project.id}
-            comments={comments}
+            entries={comments}
+            createdAt={project.created_at}
+            tasks={tasks}
             currentProfileId={currentProfileId}
             currentName={currentName}
             currentAvatarUrl={currentAvatarUrl}
@@ -161,40 +163,6 @@ export default function ProjectDetailClient({
           {project.live_url && <LinkKnop href={project.live_url} label="Live" />}
         </div>
       )}
-
-      {/* Tasks */}
-      <section className="mb-10">
-        <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Taken</h2>
-        <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
-          {tasks.length > 0 ? (
-            <table className="w-full min-w-[40rem]">
-              <thead>
-                <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Taak</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tasks.map((task, i) => (
-                  <tr key={task.id} style={{ borderBottom: i < tasks.length - 1 ? "1px solid var(--border)" : "none" }}>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>{task.title}</p>
-                      {task.description && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{task.description}</p>}
-                    </td>
-                    <td className="px-4 py-3"><TaskStatusBadge status={task.status} /></td>
-                    <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
-                      {task.due_date ? new Date(task.due_date).toLocaleDateString("nl-NL") : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="px-4 py-6 text-sm text-center" style={{ color: "var(--text-muted)" }}>Geen taken voor dit project.</p>
-          )}
-        </div>
-      </section>
 
       <ProjectInvoices projectId={project.id} invoices={invoices} />
 

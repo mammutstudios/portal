@@ -120,7 +120,7 @@ export async function upsertInvoice(
   // Wat stond er hiervoor? Bepaalt of dit een verzending is die we melden.
   const { data: existing } = await supabase
     .from("moneybird_invoices")
-    .select("state")
+    .select("state, project_id")
     .eq("moneybird_id", invoice.id)
     .maybeSingle();
 
@@ -136,6 +136,33 @@ export async function upsertInvoice(
   const isSent = row.state !== null && row.state !== "draft";
   if (wasDraft && isSent) {
     await notifyNewInvoice(supabase, row);
+  }
+
+  // Op de tijdlijn van het project, als de factuur daaraan hangt. Alleen bij
+  // een echte overgang, anders schrijft elke synchronisatie opnieuw hetzelfde.
+  if (existing?.project_id && existing.state !== row.state) {
+    const bedrag =
+      row.total_excl_tax != null
+        ? new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(
+            row.total_excl_tax,
+          )
+        : null;
+    const kenmerk = row.reference ?? row.invoice_number ?? "Factuur";
+
+    let tekst: string | null = null;
+    if (wasDraft && isSent) tekst = `Factuur verstuurd: ${kenmerk}${bedrag ? ` (${bedrag})` : ""}`;
+    else if (row.state === "paid") tekst = `Factuur betaald: ${kenmerk}${bedrag ? ` (${bedrag})` : ""}`;
+    else if (row.state === "late") tekst = `Factuur is te laat: ${kenmerk}`;
+
+    if (tekst) {
+      const { error: tijdlijnFout } = await supabase.from("project_comments").insert({
+        project_id: existing.project_id,
+        profile_id: null,
+        kind: "factuur",
+        body: tekst,
+      });
+      if (tijdlijnFout) console.error("[tijdlijn] factuur vastleggen mislukt:", tijdlijnFout.message);
+    }
   }
 }
 
