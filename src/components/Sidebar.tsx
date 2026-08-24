@@ -9,7 +9,8 @@ import {
   CheckSquare,
   Folder,
   CurrencyDollar,
-  Users,
+  Buildings,
+  AddressBook,
   CaretUp,
   Eye,
   FolderOpen,
@@ -17,6 +18,7 @@ import {
   Clock,
   List,
   ChartBar,
+  Palette,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -193,13 +195,14 @@ const adminNav: NavItem[] = [
     ],
   },
   {
-    label: "CRM",
+    label: "Organisaties",
     href: "/dashboard/clients",
-    icon: <Users size={19} weight="fill" />,
-    children: [
-      { label: "Overzicht", href: "/dashboard/clients" },
-      { label: "Contactpersonen", href: "/dashboard/contacts" },
-    ],
+    icon: <Buildings size={19} weight="fill" />,
+  },
+  {
+    label: "Contactpersonen",
+    href: "/dashboard/contacts",
+    icon: <AddressBook size={19} weight="fill" />,
   },
 ];
 
@@ -213,6 +216,11 @@ const clientNav: NavItem[] = [
     label: "Projecten",
     href: "/portal/projecten",
     icon: <Folder size={19} weight="fill" />,
+  },
+  {
+    label: "Huisstijl",
+    href: "/portal/huisstijl",
+    icon: <Palette size={19} weight="fill" />,
   },
   {
     label: "Analytics",
@@ -229,16 +237,22 @@ const clientNav: NavItem[] = [
 export default function Sidebar({
   role,
   showAnalytics = true,
+  showBrand = true,
 }: {
   role: "admin" | "client";
   /** Uit als deze klant geen gekoppelde site heeft; dan is de pagina leeg. */
   showAnalytics?: boolean;
+  /** Uit als er voor deze klant nog geen huisstijlgids bestaat. */
+  showBrand?: boolean;
 }) {
   const pathname = usePathname();
-  const navItems =
-    role === "admin"
-      ? adminNav
-      : clientNav.filter((item) => showAnalytics || item.href !== "/portal/analytics");
+  const verborgen = new Set(
+    [
+      showAnalytics ? null : "/portal/analytics",
+      showBrand ? null : "/portal/huisstijl",
+    ].filter(Boolean) as string[],
+  );
+  const navItems = role === "admin" ? adminNav : clientNav.filter((item) => !verborgen.has(item.href));
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close drawer on route change
