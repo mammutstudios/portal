@@ -43,7 +43,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
       .order("created_at"),
     supabase
       .from("moneybird_invoices")
-      .select("id, reference, invoice_date, state, total_incl_tax, total_excl_tax, sent_at, paid_at")
+      .select("id, reference, invoice_date, state, total_excl_tax, sent_at, paid_at")
       .eq("project_id", id)
       .neq("state", "draft")
       .order("invoice_date", { ascending: false }),
@@ -116,7 +116,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
               reference: f.reference,
               invoice_date: f.invoice_date,
               state: f.state,
-              bedrag: f.total_incl_tax,
+              bedrag: f.total_excl_tax,
             }))}
           />
         </div>
