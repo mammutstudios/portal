@@ -67,10 +67,8 @@ export default function ProjectInvoiceCard({
       {doel > 0 && (
         <div className="px-5 pb-4">
           <div className="flex items-baseline justify-between gap-4 mb-2">
-            <span className="text-sm" style={{ color: "var(--text-heading)" }}>
-              {euro(betaald)} van {euro(doel)} betaald
-            </span>
-            <span className="text-sm" style={{ color: "var(--text-muted)" }}>{deel}%</span>
+            <span className="text-sm" style={{ color: "var(--text-muted)" }}>Betaald</span>
+            <span className="text-sm" style={{ color: "var(--text-heading)" }}>{deel}%</span>
           </div>
           <div
             className="progress-bar w-full overflow-hidden"
