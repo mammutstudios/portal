@@ -7,6 +7,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // api/moneybird/webhook staat er bewust buiten: die wordt door Moneybird
+    // aangeroepen en heeft geen sessie. Ging hij door de middleware, dan kreeg
+    // Moneybird een omleiding naar /login in plaats van een antwoord. De route
+    // bewaakt zichzelf met de handtekening.
+    "/((?!api/moneybird/webhook|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
