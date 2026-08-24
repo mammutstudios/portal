@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MagnifyingGlass, CaretDown, GearSix, SignOut } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
-import MammutLogo from "@/components/MammutLogo";
+import MammutMark from "@/components/MammutMark";
 import ClientLogo from "@/components/ClientLogo";
 import { globalSearchAction, type SearchHit } from "@/lib/actions/search";
 
@@ -100,7 +100,7 @@ export default function TopBar({
         // sidebar, waarvan de rand binnen die breedte valt (border-box).
         style={{ width: "calc(var(--sidebar-width) - 1px)" }}
       >
-        <MammutLogo className="h-5 w-auto flex-shrink-0" style={{ color: "var(--ink)" }} />
+        <MammutMark className="h-7 w-7 flex-shrink-0" />
         <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
           Mammut Studios
         </span>
