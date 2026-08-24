@@ -21,12 +21,6 @@ export type TimelineEntry = {
   profile_id: string | null;
   /** bericht = getypt door een mens; de rest legt het systeem vast. */
   kind: string;
-  /**
-   * Alleen de datum tonen. Moneybird levert bij verstuurd en betaald geen
-   * tijdstip; dat wordt middernacht UTC, en dat leest in Nederlandse tijd als
-   * 02:00. Zo'n tijd suggereert precisie die er niet is.
-   */
-  dateOnly?: boolean;
   profiles?: { full_name: string | null; avatar_url: string | null } | null;
 };
 
@@ -50,7 +44,10 @@ function wanneer(iso: string): string {
   const d = new Date(iso);
   const seconden = (Date.now() - d.getTime()) / 1000;
   if (seconden < 60) return "zojuist";
-  if (seconden < 3600) return `${Math.floor(seconden / 60)} min geleden`;
+  if (seconden < 3600) {
+    const m = Math.floor(seconden / 60);
+    return `${m} ${m === 1 ? "minuut" : "minuten"} geleden`;
+  }
 
   const tijd = d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
   const dag = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
@@ -144,7 +141,6 @@ export default function ProjectTimeline({
         created_at: f.sent_at,
         profile_id: null,
         kind: "factuur",
-        dateOnly: true,
       });
     }
     if (f.paid_at) {
@@ -154,7 +150,6 @@ export default function ProjectTimeline({
         created_at: f.paid_at,
         profile_id: null,
         kind: "factuur",
-        dateOnly: true,
       });
     }
   }
@@ -230,13 +225,21 @@ export default function ProjectTimeline({
                   </div>
 
                   <div className="min-w-0 flex-1 pb-4">
+                    {/* Alleen een bericht heeft een echt tijdstip. Bij de rest
+                        staat er een datum: een gebeurtenis als "factuur betaald"
+                        kent geen uur, en dat dan tonen suggereert precisie die
+                        er niet is. */}
                     <p className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        {e.dateOnly ? opDag(e.created_at) : wanneer(e.created_at)}
-                      </span>
-                      {e.kind === "bericht" && (
-                        <span className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
-                          {e.profiles?.full_name ?? "Onbekend"}
+                      {e.kind === "bericht" ? (
+                        <span className="text-sm" style={{ color: "var(--text-heading)" }}>
+                          <span className="font-semibold">{e.profiles?.full_name ?? "Onbekend"}</span>
+                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            , {wanneer(e.created_at)}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                          {opDag(e.created_at)}
                         </span>
                       )}
                       {e.profile_id && e.profile_id === currentProfileId && (
