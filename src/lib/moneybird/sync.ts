@@ -23,7 +23,7 @@ const LEGAL_SUFFIXES = [
   "inc.", "inc", "ltd.", "ltd", "llc", "gmbh", "holding",
 ];
 
-function normalizeCompanyName(name: string | null): string {
+export function normalizeCompanyName(name: string | null): string {
   if (!name) return "";
   let out = name.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ").trim();
   let changed = true;

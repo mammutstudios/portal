@@ -26,6 +26,14 @@ export type Range = [string, string];
 /** Emmergrootte van een reeks. Uur alleen bij de 24-uursweergave. */
 export type Interval = "time:hour" | "time:day" | "time:month";
 
+/**
+ * Elke vraag aan Plausible kost ruim honderd milliseconden, en een
+ * analyticspagina stelt er vijftien. Bezoekcijfers hoeven niet op de seconde
+ * vers te zijn, dus we hergebruiken een antwoord vijf minuten. Wie het wél
+ * vers wil hebben geeft 0 mee; zie currentVisitors.
+ */
+const VERSHEID = 300;
+
 /** Kengetallen over een periode. */
 export async function siteStats(
   siteId: string,
@@ -51,7 +59,7 @@ export async function siteStats(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      cache: "no-store",
+      next: { revalidate: VERSHEID },
     });
 
     if (!res.ok) {
@@ -86,7 +94,10 @@ export type DailyPoint = { date: string; visitors: number; pageviews: number };
 /** Eén regel in een top-lijstje. */
 export type BreakdownRow = { label: string; visitors: number };
 
-async function query<T = unknown>(body: Record<string, unknown>): Promise<T | null> {
+async function query<T = unknown>(
+  body: Record<string, unknown>,
+  revalidate = VERSHEID,
+): Promise<T | null> {
   if (!plausibleIsConfigured()) return null;
   try {
     const res = await fetch(`${process.env.PLAUSIBLE_BASE_URL}/api/v2/query`, {
@@ -96,7 +107,7 @@ async function query<T = unknown>(body: Record<string, unknown>): Promise<T | nu
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      cache: "no-store",
+      ...(revalidate > 0 ? { next: { revalidate } } : { cache: "no-store" as const }),
     });
     if (!res.ok) {
       console.error(`[plausible] ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -242,11 +253,15 @@ export async function currentVisitors(siteId: string): Promise<number | null> {
   const van = new Date(nu.getTime() - 5 * 60_000);
   const stamp = (d: Date) => d.toISOString().replace(/\.\d+Z$/, "+00:00");
 
-  const json = await query<{ results?: { metrics: number[] }[] }>({
-    site_id: siteId,
-    metrics: ["visitors"],
-    date_range: [stamp(van), stamp(nu)],
-  });
+  // Nul: dit getal staat op het scherm als "nu", dus cache heeft hier geen zin.
+  const json = await query<{ results?: { metrics: number[] }[] }>(
+    {
+      site_id: siteId,
+      metrics: ["visitors"],
+      date_range: [stamp(van), stamp(nu)],
+    },
+    0,
+  );
   return json?.results?.[0]?.metrics?.[0] ?? null;
 }
 
