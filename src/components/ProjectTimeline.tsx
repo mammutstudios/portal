@@ -181,9 +181,9 @@ export default function ProjectTimeline({
       className="squircle p-5 flex flex-col h-full"
       style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
     >
-      {/* -ml-3 heft de padding van de eerste knop op, zodat de T van Tijdlijn
-          op één lijn staat met de tijdlijn eronder. */}
-      <div className="flex items-center gap-1 mb-4 -ml-3">
+      {/* Geen negatieve marge: die trok de pil links buiten de padding van de
+          kaart. De knop houdt zijn eigen ruimte en blijft binnen de rand. */}
+      <div className="flex items-center gap-1 mb-5">
         {([["tijdlijn", "Tijdlijn"], ["taken", "Taken"]] as const).map(([t, label]) => (
           <button
             key={t}
