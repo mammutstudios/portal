@@ -2,6 +2,16 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { PHASE_LABEL, type ProjectPhase } from "@/lib/types";
+
+/** Zoals de statussen in de app heten. */
+const STATUS_LABEL: Record<string, string> = {
+  upcoming: "Upcoming",
+  active: "Actief",
+  on_hold: "On hold",
+  review: "Review",
+  completed: "Afgerond",
+};
 
 export async function createProjectAction(formData: FormData) {
   const title = formData.get("title") as string;
@@ -47,6 +57,23 @@ export async function createProjectAction(formData: FormData) {
   return { success: true };
 }
 
+/**
+ * Een regel op de tijdlijn die niemand heeft getypt. Faalt hij, dan mag dat de
+ * wijziging zelf niet tegenhouden: de tijdlijn is een verslag, geen boekhouding.
+ */
+async function noteerOpTijdlijn(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: string,
+  kind: string,
+  body: string,
+  profileId: string | null,
+) {
+  const { error } = await supabase
+    .from("project_comments")
+    .insert({ project_id: projectId, profile_id: profileId, kind, body });
+  if (error) console.error("[tijdlijn] vastleggen mislukt:", error.message);
+}
+
 export async function updateProjectAction(id: string, formData: FormData) {
   const title = formData.get("title") as string;
   const client_id = formData.get("client_id") as string;
@@ -66,6 +93,17 @@ export async function updateProjectAction(id: string, formData: FormData) {
   if (!title?.trim()) return { error: "Naam is verplicht" };
 
   const supabase = await createClient();
+
+  // Eerst de oude waarden, anders valt achteraf niet te zien wát er wijzigde.
+  const [{ data: vorige }, { data: { user } }] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("status, phase, budget_amount, deadline, lead_profile_id")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase.auth.getUser(),
+  ]);
+
   const { error } = await supabase.from("projects").update({
     title: title.trim(),
     client_id: client_id || undefined,
@@ -84,6 +122,57 @@ export async function updateProjectAction(id: string, formData: FormData) {
   }).eq("id", id);
 
   if (error) return { error: error.message };
+
+  if (vorige) {
+    const wie = user?.id ?? null;
+    const euro = (n: number) =>
+      new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
+    const datum = (d: string) =>
+      new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+
+    if (vorige.status !== status && status) {
+      await noteerOpTijdlijn(supabase, id, "status", `Status gewijzigd naar ${STATUS_LABEL[status] ?? status}`, wie);
+    }
+    if ((vorige.phase ?? null) !== (phase || null) && phase) {
+      await noteerOpTijdlijn(supabase, id, "fase", `Fase gewijzigd naar ${PHASE_LABEL[phase as ProjectPhase] ?? phase}`, wie);
+    }
+
+    const nieuwBudget = budget_amount?.trim() ? Number(budget_amount) : null;
+    if ((vorige.budget_amount ?? null) !== nieuwBudget && nieuwBudget != null) {
+      await noteerOpTijdlijn(
+        supabase,
+        id,
+        "budget",
+        vorige.budget_amount == null
+          ? `Budget vastgesteld op ${euro(nieuwBudget)}`
+          : `Budget gewijzigd naar ${euro(nieuwBudget)}`,
+        wie,
+      );
+    }
+
+    const nieuweDeadline = deadline || null;
+    if ((vorige.deadline ?? null) !== nieuweDeadline && nieuweDeadline) {
+      await noteerOpTijdlijn(
+        supabase,
+        id,
+        "deadline",
+        vorige.deadline == null
+          ? `Opleverdatum gezet op ${datum(nieuweDeadline)}`
+          : `Opleverdatum verzet naar ${datum(nieuweDeadline)}`,
+        wie,
+      );
+    }
+
+    const nieuweLead = lead_profile_id || null;
+    if ((vorige.lead_profile_id ?? null) !== nieuweLead && nieuweLead) {
+      const { data: lead } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", nieuweLead)
+        .maybeSingle();
+      await noteerOpTijdlijn(supabase, id, "lead", `${lead?.full_name ?? "Iemand"} is nu de lead`, wie);
+    }
+  }
 
   revalidatePath("/dashboard/projects");
   revalidatePath(`/dashboard/projects/${id}`);

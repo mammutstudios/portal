@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ProjectDetailClient from "./ProjectDetailClient";
-import type { ProjectComment } from "@/components/ProjectComments";
+import type { TimelineEntry } from "@/components/ProjectTimeline";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,7 +30,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     supabase.from("time_entries").select("*, profiles(id, full_name, avatar_url)").eq("project_id", id).order("date", { ascending: false }),
     supabase
       .from("project_comments")
-      .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
+      .select("id, body, created_at, profile_id, kind, profiles(full_name, avatar_url)")
       .eq("project_id", id)
       .order("created_at"),
     supabase.auth.getUser(),
@@ -45,7 +45,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     // kunnen koppelen. Facturen van een andere klant horen hier nooit bij.
     supabase
       .from("moneybird_invoices")
-      .select("id, reference, invoice_date, state, total_excl_tax, project_id")
+      .select("id, reference, invoice_date, state, total_excl_tax, project_id, sent_at, paid_at")
       .eq("client_id", project.client_id)
       .order("invoice_date", { ascending: false }),
     user
@@ -60,7 +60,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       files={files ?? []}
       timeEntries={timeEntries ?? []}
       invoices={invoices ?? []}
-      comments={(comments ?? []) as unknown as ProjectComment[]}
+      comments={(comments ?? []) as unknown as TimelineEntry[]}
       currentProfileId={user?.id ?? null}
       currentName={mij?.full_name ?? null}
       currentAvatarUrl={mij?.avatar_url ?? null}

@@ -179,12 +179,12 @@ th, td {
  * een pil. Dezelfde smooth corner als de kaarten, alleen kleiner.
  */
 .progress-bar {
-  border-radius: 0.3125rem;
+  border-radius: 0.25rem;
 }
 
 @supports (corner-shape: squircle) {
   .progress-bar {
-    border-radius: 0.5rem;
+    border-radius: 0.4375rem;
     corner-shape: squircle;
   }
 }

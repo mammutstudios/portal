@@ -8,12 +8,12 @@ import DetailList from "@/components/DetailList";
 import ProjectLeadCard from "@/components/ProjectLeadCard";
 import ProjectInvoiceCard from "@/components/ProjectInvoiceCard";
 import ProgressBar from "@/components/ProgressBar";
-import ProjectComments, { type ProjectComment } from "@/components/ProjectComments";
-import { PHASE_LABEL, projectProgressPercentage, type Project } from "@/lib/types";
+import ProjectTimeline, { type TimelineEntry } from "@/components/ProjectTimeline";
+import { PHASE_LABEL, projectProgressPercentage, type Project, type Task } from "@/lib/types";
 
 /** Zonder budget_amount: dat is een intern getal. Zie de lijstpagina. */
 const KOLOMMEN =
-  "id, client_id, title, description, status, deadline, tags, progress, phase, lead_profile_id, next_step, client_action, live_url, staging_url";
+  "id, client_id, title, description, status, deadline, tags, progress, phase, lead_profile_id, created_at, next_step, client_action, live_url, staging_url";
 
 export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,16 +33,17 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
   // De rest in één ronde. De eigenaarscheck hierboven blijft bewust apart:
   // in development draait deze client met de service role, en dan is die
   // check de enige afscherming.
-  const [{ data: mij }, { data: comments }, { data: facturen }] = await Promise.all([
+  const [{ data: mij }, { data: taken }, { data: comments }, { data: facturen }] = await Promise.all([
     supabase.from("profiles").select("full_name, avatar_url").eq("id", userId).maybeSingle(),
+    supabase.from("tasks").select("*").eq("project_id", id).order("created_at"),
     supabase
       .from("project_comments")
-      .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
+      .select("id, body, created_at, profile_id, kind, profiles(full_name, avatar_url)")
       .eq("project_id", id)
       .order("created_at"),
     supabase
       .from("moneybird_invoices")
-      .select("id, reference, invoice_date, state, total_incl_tax")
+      .select("id, reference, invoice_date, state, total_incl_tax, total_excl_tax, sent_at, paid_at")
       .eq("project_id", id)
       .neq("state", "draft")
       .order("invoice_date", { ascending: false }),
@@ -67,9 +68,12 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
           budget en uren: die zijn intern. */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         <div className="lg:col-span-2">
-          <ProjectComments
+          <ProjectTimeline
             projectId={project.id}
-            comments={(comments ?? []) as unknown as ProjectComment[]}
+            entries={(comments ?? []) as unknown as TimelineEntry[]}
+            createdAt={project.created_at}
+            invoices={facturen ?? []}
+            tasks={(taken ?? []) as unknown as Task[]}
             currentProfileId={userId}
             currentName={mij?.full_name ?? null}
             currentAvatarUrl={mij?.avatar_url ?? null}

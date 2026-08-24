@@ -137,7 +137,9 @@ export async function upsertInvoice(
   if (wasDraft && isSent) {
     await notifyNewInvoice(supabase, row);
   }
+
 }
+
 
 async function notifyNewInvoice(
   supabase: SupabaseClient,
