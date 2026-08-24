@@ -65,6 +65,15 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
       {/* Dezelfde twee kaarten als in het dashboard, maar zonder de regels over
           budget en uren: die zijn intern. */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div className="lg:col-span-2">
+          <ProjectComments
+            projectId={project.id}
+            comments={(comments ?? []) as unknown as ProjectComment[]}
+            currentProfileId={userId}
+            currentName={mij?.full_name ?? null}
+            currentAvatarUrl={mij?.avatar_url ?? null}
+          />
+        </div>
         <div className="space-y-4">
           <DetailList
           rows={[
@@ -117,16 +126,6 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
             />
           }
         />
-        </div>
-
-        <div className="lg:col-span-2">
-          <ProjectComments
-            projectId={project.id}
-            comments={(comments ?? []) as unknown as ProjectComment[]}
-            currentProfileId={userId}
-            currentName={mij?.full_name ?? null}
-            currentAvatarUrl={mij?.avatar_url ?? null}
-          />
         </div>
       </div>
 

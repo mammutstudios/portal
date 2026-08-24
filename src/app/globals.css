@@ -173,3 +173,18 @@ th, td {
     corner-shape: squircle;
   }
 }
+
+/*
+ * Voortgangsbalk: hoger dan een streepje zodat hij opvalt, en vierkanter dan
+ * een pil. Dezelfde smooth corner als de kaarten, alleen kleiner.
+ */
+.progress-bar {
+  border-radius: 0.3125rem;
+}
+
+@supports (corner-shape: squircle) {
+  .progress-bar {
+    border-radius: 0.5rem;
+    corner-shape: squircle;
+  }
+}

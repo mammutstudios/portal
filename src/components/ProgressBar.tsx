@@ -13,8 +13,8 @@ export default function ProgressBar({ value }: { value: number }) {
         <span className="text-sm" style={{ color: "var(--text-heading)" }}>{pct}%</span>
       </div>
       <div
-        className="w-full rounded-full overflow-hidden"
-        style={{ height: 6, background: "var(--bg-secondary)" }}
+        className="progress-bar w-full overflow-hidden"
+        style={{ height: 10, background: "var(--bg-secondary)" }}
       >
         <div style={{ width: `${pct}%`, height: "100%", background: "var(--ink)" }} />
       </div>

@@ -93,6 +93,15 @@ export default function ProjectDetailClient({
       {/* Budget en uren staan bewust alleen hier: bij een vaste prijs heeft de
           klant er niets aan, en het nodigt uit tot sturen op uren. */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div className="lg:col-span-2">
+          <ProjectComments
+            projectId={project.id}
+            comments={comments}
+            currentProfileId={currentProfileId}
+            currentName={currentName}
+            currentAvatarUrl={currentAvatarUrl}
+          />
+        </div>
         <div className="space-y-4">
           <DetailList
           rows={[
@@ -152,16 +161,6 @@ export default function ProjectDetailClient({
             />
           }
         />
-        </div>
-
-        <div className="lg:col-span-2">
-          <ProjectComments
-            projectId={project.id}
-            comments={comments}
-            currentProfileId={currentProfileId}
-            currentName={currentName}
-            currentAvatarUrl={currentAvatarUrl}
-          />
         </div>
       </div>
 
