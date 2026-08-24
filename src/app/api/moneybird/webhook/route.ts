@@ -16,6 +16,15 @@ export async function POST(request: NextRequest) {
   // Ruwe body: opnieuw serialiseren breekt de handtekening.
   const rawBody = await request.text();
 
+  // Kip en ei: Moneybird geeft het secret pas ná het aanmaken van de webhook,
+  // maar test bij het aanmaken of de URL 200 teruggeeft. Zolang het secret nog
+  // niet is ingesteld antwoorden we dus bevestigend, maar verwerken we niets.
+  // Er kan in dat venster niets in de database komen.
+  if (!process.env.MONEYBIRD_WEBHOOK_SECRET) {
+    console.warn("[moneybird] webhook ontvangen zonder ingesteld secret; genegeerd");
+    return new Response("secret nog niet ingesteld", { status: 200 });
+  }
+
   const verdict = verifyMoneybirdSignature(
     request.headers.get("Moneybird-Signature"),
     rawBody,
