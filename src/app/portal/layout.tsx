@@ -5,21 +5,23 @@ import { stopPreviewAction } from "@/lib/actions/preview";
 import { getPortalContext } from "@/lib/portal";
 import { createClient } from "@/lib/supabase/server";
 import { plausibleIsConfigured } from "@/lib/analytics/plausible";
+import { hasBrandGuide } from "@/lib/brand";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const { isPreview, activeClientName, fullName, clientIds } = await getPortalContext();
 
-  // Analytics alleen tonen als er ook echt iets te zien is: een werkende
-  // koppeling én een site die aan deze klant hangt.
+  // Twee menu-items uit één ronde. Analytics vraagt om een werkende koppeling
+  // én een site die aan deze klant hangt; huisstijl om een gids die bij de
+  // slug van deze klant hoort. Zonder dat is de pagina leeg en hoort hij niet
+  // in de navigatie te staan.
   let showAnalytics = false;
-  if (plausibleIsConfigured() && clientIds.length > 0) {
+  let showBrand = false;
+  if (clientIds.length > 0) {
     const supabase = await createClient();
-    const { count } = await supabase
-      .from("clients")
-      .select("id", { count: "exact", head: true })
-      .in("id", clientIds)
-      .not("plausible_site_id", "is", null);
-    showAnalytics = (count ?? 0) > 0;
+    const { data } = await supabase.from("clients").select("slug, plausible_site_id").in("id", clientIds);
+    const rows = data ?? [];
+    showAnalytics = plausibleIsConfigured() && rows.some((r) => Boolean(r.plausible_site_id));
+    showBrand = rows.some((r) => hasBrandGuide(r.slug as string | null));
   }
 
   return (
@@ -32,7 +34,7 @@ export default async function PortalLayout({ children }: { children: React.React
         settingsHref="/portal/instellingen"
       />
       <div className="flex flex-1 overflow-hidden">
-      <Sidebar role="client" showAnalytics={showAnalytics} />
+      <Sidebar role="client" showAnalytics={showAnalytics} showBrand={showBrand} />
       <main className="app-main flex-1 overflow-y-auto">
         {isPreview && (
           <div
