@@ -9,8 +9,8 @@ import type { Project } from "@/lib/types";
 /**
  * De projecten van deze klant.
  *
- * Let op de kolomlijst: nooit select("*") hier. Op dezelfde rij staat
- * budget_amount, en dat is een intern getal dat de klant niet hoort te zien.
+ * Let op de kolomlijst: nooit select("*") hier. Deze pagina heeft het budget
+ * niet nodig, dus vragen we het ook niet op.
  */
 const KOLOMMEN =
   "id, title, description, status, deadline, tags, progress, phase, next_step, client_action, live_url, staging_url";

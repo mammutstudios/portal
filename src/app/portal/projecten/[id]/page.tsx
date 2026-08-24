@@ -11,9 +11,12 @@ import ProgressBar from "@/components/ProgressBar";
 import ProjectTimeline, { type TimelineEntry } from "@/components/ProjectTimeline";
 import { PHASE_LABEL, type Project, type Task } from "@/lib/types";
 
-/** Zonder budget_amount: dat is een intern getal. Zie de lijstpagina. */
+/**
+ * budget_amount hoort hier wél bij: de klant kent de afgesproken prijs van zijn
+ * eigen project. Wat intern blijft zijn de uren en wat daar tegenover staat.
+ */
 const KOLOMMEN =
-  "id, client_id, title, description, status, deadline, tags, progress, phase, lead_profile_id, created_at, next_step, client_action, live_url, staging_url";
+  "id, client_id, title, description, status, deadline, tags, progress, phase, lead_profile_id, budget_amount, created_at, next_step, client_action, live_url, staging_url";
 
 export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -96,6 +99,9 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
             ...(project.phase
               ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }]
               : []),
+            ...(project.budget_amount != null
+              ? [{ label: "Projectbedrag", value: euro(project.budget_amount) }]
+              : []),
             ...(project.deadline
               ? [{ label: "Verwachte oplevering", value: shortDate(project.deadline) }]
               : []),
@@ -110,6 +116,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
           {project.lead && <ProjectLeadCard lead={project.lead} />}
 
           <ProjectInvoiceCard
+            budget={project.budget_amount}
             hrefPerFactuur
             invoices={(facturen ?? []).map((f) => ({
               id: f.id,
