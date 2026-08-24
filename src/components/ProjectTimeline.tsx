@@ -95,11 +95,12 @@ function GebeurtenisIcoon({ kind }: { kind: string }) {
  */
 export default function ProjectTimeline({
   projectId,
-  entries: opgeslagen,
+  entries: opgeslagenProp,
   createdAt,
   invoices = [],
   tasks,
   currentProfileId,
+  canManage = false,
   currentAvatarUrl = null,
   currentName = null,
 }: {
@@ -111,6 +112,8 @@ export default function ProjectTimeline({
   invoices?: TimelineInvoice[];
   tasks: Task[];
   currentProfileId: string | null;
+  /** Admins mogen elke regel weghalen, ook die het systeem schreef. */
+  canManage?: boolean;
   currentAvatarUrl?: string | null;
   currentName?: string | null;
 }) {
@@ -156,7 +159,7 @@ export default function ProjectTimeline({
 
   // Nieuwste bovenaan: je wilt zien wat er net gebeurd is, niet wat er een
   // half jaar geleden gebeurde.
-  const entries = [...afgeleid, ...opgeslagen].sort((a, b) =>
+  const entries = [...afgeleid, ...opgeslagenProp].sort((a, b) =>
     b.created_at.localeCompare(a.created_at),
   );
 
@@ -242,7 +245,10 @@ export default function ProjectTimeline({
                           {opDag(e.created_at)}
                         </span>
                       )}
-                      {e.profile_id && e.profile_id === currentProfileId && (
+                      {/* Alleen bij een echte rij: "Project aangemaakt" en de
+                          factuurmomenten zijn afgeleid en bestaan niet als regel. */}
+                      {!e.id.startsWith("aangemaakt") && !e.id.startsWith("factuur-") &&
+                        (canManage || e.profile_id === currentProfileId) && (
                         <button
                           onClick={() =>
                             startTransition(async () => {
