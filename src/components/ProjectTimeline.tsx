@@ -136,8 +136,10 @@ export default function ProjectTimeline({
     }
   }
 
+  // Nieuwste bovenaan: je wilt zien wat er net gebeurd is, niet wat er een
+  // half jaar geleden gebeurde.
   const entries = [...afgeleid, ...opgeslagen].sort((a, b) =>
-    a.created_at.localeCompare(b.created_at),
+    b.created_at.localeCompare(a.created_at),
   );
 
   const [tab, setTab] = useState<"tijdlijn" | "taken">("tijdlijn");
