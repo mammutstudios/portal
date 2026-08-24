@@ -136,6 +136,24 @@ export default function ProfileSettings({ profile, email }: { profile: Profile |
           />
         </div>
 
+        {/* Telefoon */}
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
+            Telefoonnummer
+          </label>
+          <input
+            name="phone"
+            type="tel"
+            defaultValue={profile?.phone ?? ""}
+            placeholder="+31 6 12345678"
+            className="w-full px-3 py-2 rounded-md text-sm outline-none"
+            style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+          />
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+            Klanten zien dit bij projecten waar jij de lead bent.
+          </p>
+        </div>
+
         {/* E-mail (readonly) */}
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>

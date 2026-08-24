@@ -5,6 +5,9 @@ export type Profile = {
   role: Role;
   full_name: string | null;
   avatar_url: string | null;
+  email: string | null;
+  /** Zichtbaar bij de lead van een project, ook in het klantportaal. */
+  phone: string | null;
   notification_prefs: Record<string, boolean> | null;
   created_at: string;
 };
@@ -113,7 +116,13 @@ export type Project = {
   staging_url: string | null;
   /** Teamlid dat dit project trekt. Zichtbaar voor de klant. */
   lead_profile_id: string | null;
-  lead?: { id: string; full_name: string | null; avatar_url: string | null } | null;
+  lead?: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
   /** Afgesproken prijs excl. btw. Blijft intern: bij een vaste prijs heeft
    *  een klant niets aan een budgetstand, en het nodigt uit tot sturen op
    *  uren in plaats van op resultaat. */

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext, euro, shortDate } from "@/lib/portal";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import DetailList from "@/components/DetailList";
+import ProjectLeadCard from "@/components/ProjectLeadCard";
+import ProjectInvoiceCard from "@/components/ProjectInvoiceCard";
 import ProgressBar from "@/components/ProgressBar";
 import ProjectComments, { type ProjectComment } from "@/components/ProjectComments";
 import { PHASE_LABEL, projectProgressPercentage, type Project } from "@/lib/types";
@@ -22,7 +24,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
   // andere klant bestaat voor deze bezoeker simpelweg niet.
   const { data } = await supabase
     .from("projects")
-    .select(`${KOLOMMEN}, lead:profiles(id, full_name, avatar_url)`)
+    .select(`${KOLOMMEN}, lead:profiles(id, full_name, avatar_url, email, phone)`)
     .eq("id", id)
     .maybeSingle();
   const project = data as unknown as Project | null;
@@ -90,31 +92,6 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
             ...(project.phase
               ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }]
               : []),
-            ...(project.lead
-              ? [{
-                  label: "Lead",
-                  value: (
-                    <span className="flex items-center gap-2 justify-end">
-                      {project.lead.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={project.lead.avatar_url}
-                          alt=""
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
-                          style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}
-                        >
-                          {(project.lead.full_name ?? "?").trim()[0]?.toUpperCase()}
-                        </span>
-                      )}
-                      {project.lead.full_name ?? "Naamloos"}
-                    </span>
-                  ),
-                }]
-              : []),
             ...(project.deadline
               ? [{ label: "Verwachte oplevering", value: shortDate(project.deadline) }]
               : []),
@@ -161,37 +138,6 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
         </section>
       )}
 
-      {facturen && facturen.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-heading)" }}>
-            Facturen van dit project
-          </h2>
-          <div
-            className="squircle overflow-hidden"
-            style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
-          >
-            {facturen.map((f, i) => (
-              <div
-                key={f.id}
-                className="flex items-center justify-between px-4 py-3 gap-4"
-                style={{ borderBottom: i < facturen.length - 1 ? "1px solid var(--border)" : "none" }}
-              >
-                <span className="text-sm truncate" style={{ color: "var(--text-heading)" }}>
-                  {f.reference ?? "Factuur"}
-                </span>
-                <span className="flex items-center gap-4 flex-shrink-0">
-                  <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                    {shortDate(f.invoice_date)}
-                  </span>
-                  <span className="text-sm tabular-nums" style={{ color: "var(--text-heading)" }}>
-                    {f.total_incl_tax != null ? euro(f.total_incl_tax) : "—"}
-                  </span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

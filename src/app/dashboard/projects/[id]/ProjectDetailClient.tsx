@@ -5,6 +5,8 @@ import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
 import { PHASE_LABEL, projectProgressPercentage } from "@/lib/types";
 import DetailList from "@/components/DetailList";
+import ProjectLeadCard from "@/components/ProjectLeadCard";
+import ProjectInvoiceCard from "@/components/ProjectInvoiceCard";
 import ProgressBar from "@/components/ProgressBar";
 import ProjectComments, { type ProjectComment } from "@/components/ProjectComments";
 import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
@@ -107,31 +109,6 @@ export default function ProjectDetailClient({
           rows={[
               { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
             ...(project.phase ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }] : []),
-            ...(project.lead
-              ? [{
-                  label: "Lead",
-                  value: (
-                    <span className="flex items-center gap-2 justify-end">
-                      {project.lead.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={project.lead.avatar_url}
-                          alt=""
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
-                          style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}
-                        >
-                          {(project.lead.full_name ?? "?").trim()[0]?.toUpperCase()}
-                        </span>
-                      )}
-                      {project.lead.full_name ?? "Naamloos"}
-                    </span>
-                  ),
-                }]
-              : []),
             ...(project.tags && project.tags.length > 0
               ? [{
                   label: "Type",
