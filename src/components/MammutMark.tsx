@@ -8,18 +8,22 @@
  * squircle-vorm krijgt als de kaarten in plaats van een gewone ronde hoek.
  */
 export default function MammutMark({
+  size = 28,
   className,
   style,
 }: {
+  /** In pixels. Bewust hier en niet via een klasse: dan kan hij nooit
+   *  uitdijen als de stylesheet achterloopt of een maat vergeten wordt. */
+  size?: number;
   className?: string;
   style?: React.CSSProperties;
 }) {
   return (
     <span
-      className={`squircle-icon inline-flex overflow-hidden ${className ?? ""}`}
-      style={{ background: "#140018", ...style }}
+      className={`squircle-icon inline-flex overflow-hidden flex-shrink-0 ${className ?? ""}`}
+      style={{ width: size, height: size, background: "#140018", ...style }}
     >
-      <svg viewBox="0 0 1020 1020" role="img" aria-label="Mammut Studios" className="w-full h-full">
+      <svg viewBox="0 0 1020 1020" role="img" aria-label="Mammut Studios" style={{ width: "100%", height: "100%" }}>
         <path d="M781.451 509.54C815.621 415.202 826.335 332.341 814.241 285.26C807.606 259.154 793.927 244.05 773.407 244.05H771.088V244.109C751.038 245.201 727.319 260.127 702.69 285.26C691.154 297.03 679.411 311.042 667.757 326.913C649.322 352.016 631.092 381.81 614.213 414.73C599.124 444.17 585.122 476.147 572.998 509.54H558.32C592.49 415.202 603.175 332.341 591.11 285.26C584.447 259.154 570.766 244.05 550.247 244.05C529.728 244.05 505.128 259.154 479.559 285.26C433.383 332.341 384.066 415.202 349.896 509.54H335.219C369.388 415.202 380.074 332.341 368.009 285.26C361.345 259.154 347.665 244.05 327.146 244.05C269.639 244.05 179.928 362.901 126.824 509.54H238.375C204.205 603.877 193.52 686.738 205.585 733.819C212.248 759.925 225.928 775.029 246.448 775.029C266.967 775.029 291.567 759.925 317.135 733.819C363.312 686.738 412.629 603.877 446.799 509.54H461.476C427.307 603.877 416.621 686.738 428.686 733.819C435.35 759.925 449.03 775.029 469.549 775.029C490.069 775.029 514.669 759.925 540.237 733.819C563.809 709.777 588.204 676.415 610.954 636.974C632.795 599.128 653.167 555.735 669.9 509.54H684.578C650.408 603.877 639.722 686.738 651.788 733.819C658.451 759.925 672.101 775.029 692.621 775.029C713.14 775.029 737.77 759.925 763.339 733.819C809.514 686.738 858.831 603.877 893.001 509.54H781.451Z" fill="#DBE8FB" />
       </svg>
     </span>
