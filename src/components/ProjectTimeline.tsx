@@ -21,8 +21,29 @@ export type TimelineEntry = {
   profile_id: string | null;
   /** bericht = getypt door een mens; de rest legt het systeem vast. */
   kind: string;
+  /**
+   * Alleen de datum tonen. Moneybird levert bij verstuurd en betaald geen
+   * tijdstip; dat wordt middernacht UTC, en dat leest in Nederlandse tijd als
+   * 02:00. Zo'n tijd suggereert precisie die er niet is.
+   */
+  dateOnly?: boolean;
   profiles?: { full_name: string | null; avatar_url: string | null } | null;
 };
+
+/** "vandaag", "gisteren", "1 juli 2026". Zonder tijd, want die is er niet. */
+function opDag(iso: string): string {
+  const d = new Date(iso);
+  const dag = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const verschil = Math.round((dag(new Date()) - dag(d)) / 86_400_000);
+
+  if (verschil === 0) return "vandaag";
+  if (verschil === 1) return "gisteren";
+  return d.toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "long",
+    ...(d.getFullYear() === new Date().getFullYear() ? {} : { year: "numeric" }),
+  });
+}
 
 /** "zojuist", "12 min geleden", "vandaag om 14:03", "12 aug om 14:03". */
 function wanneer(iso: string): string {
@@ -123,6 +144,7 @@ export default function ProjectTimeline({
         created_at: f.sent_at,
         profile_id: null,
         kind: "factuur",
+        dateOnly: true,
       });
     }
     if (f.paid_at) {
@@ -132,6 +154,7 @@ export default function ProjectTimeline({
         created_at: f.paid_at,
         profile_id: null,
         kind: "factuur",
+        dateOnly: true,
       });
     }
   }
@@ -209,7 +232,7 @@ export default function ProjectTimeline({
                   <div className="min-w-0 flex-1 pb-4">
                     <p className="flex items-baseline gap-2 flex-wrap">
                       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        {wanneer(e.created_at)}
+                        {e.dateOnly ? opDag(e.created_at) : wanneer(e.created_at)}
                       </span>
                       {e.kind === "bericht" && (
                         <span className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
