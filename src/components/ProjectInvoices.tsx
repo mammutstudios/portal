@@ -34,14 +34,17 @@ export default function ProjectInvoices({
 }) {
   const [pending, startTransition] = useTransition();
   const [bezig, setBezig] = useState<string | null>(null);
+  const [fout, setFout] = useState<string | null>(null);
 
   const gekoppeld = invoices.filter((i) => i.project_id === projectId);
   const los = invoices.filter((i) => i.project_id === null);
 
   function zet(id: string, naar: string | null) {
     setBezig(id);
+    setFout(null);
     startTransition(async () => {
-      await linkInvoiceToProjectAction(id, naar);
+      const r = await linkInvoiceToProjectAction(id, naar);
+      if (r?.error) setFout(r.error);
       setBezig(null);
     });
   }
@@ -79,6 +82,15 @@ export default function ProjectInvoices({
   return (
     <section className="mb-10">
       <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Facturen</h2>
+
+      {fout && (
+        <p
+          className="squircle px-4 py-3 mb-3 text-sm"
+          style={{ border: "1px solid #fecaca", background: "#fef2f2", color: "#c0392b" }}
+        >
+          {fout}
+        </p>
+      )}
 
       <div
         className="squircle overflow-hidden mb-4 [&>*:last-child]:border-b-0"

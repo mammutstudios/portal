@@ -211,12 +211,19 @@ export async function quickCreateProjectAction(title: string, client_id: string)
 export async function linkInvoiceToProjectAction(invoiceId: string, projectId: string | null) {
   const supabase = await createClient();
 
-  const { error } = await supabase
+  // select() erachter, zodat we zien of er werkelijk iets is bijgewerkt. Zonder
+  // dat komt een update die door row level security wordt tegengehouden terug
+  // als een succes, en meldt de knop niets terwijl er niets gebeurde.
+  const { data, error } = await supabase
     .from("moneybird_invoices")
     .update({ project_id: projectId })
-    .eq("id", invoiceId);
+    .eq("id", invoiceId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "Koppelen lukte niet: geen rechten of factuur niet gevonden" };
+  }
 
   revalidatePath("/dashboard/projects");
   if (projectId) {
