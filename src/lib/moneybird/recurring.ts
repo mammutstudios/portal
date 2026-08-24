@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isMoneybirdConfigured, listAllRecurringSalesInvoices } from "./client";
-import { resolveClientId } from "./sync";
+import { normalizeCompanyName } from "./sync";
 import type { MoneybirdRecurringSalesInvoice } from "./types";
 import type { Transaction } from "@/lib/types";
 
@@ -16,6 +16,48 @@ const STAP: Record<MoneybirdRecurringSalesInvoice["frequency_type"], { dagen?: n
 };
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+type KlantRij = {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  moneybird_contact_id: string | null;
+};
+
+/**
+ * Alle klanten in één keer, om ze daarna in het geheugen te matchen.
+ *
+ * Eerder bevroegen we per periodieke factuur de database, en dat waren met vijf
+ * afspraken al een stuk of vijftien losse heen-en-weertjes achter elkaar: goed
+ * voor een seconde op elke pagina die dit gebruikt.
+ */
+async function alleKlanten(supabase: SupabaseClient): Promise<KlantRij[]> {
+  const { data } = await supabase
+    .from("clients")
+    .select("id, name, logo_url, moneybird_contact_id");
+  return (data ?? []) as KlantRij[];
+}
+
+/**
+ * Dezelfde volgorde als resolveClientId in sync.ts: eerst het contactnummer,
+ * dan de naam precies, dan de naam zonder rechtsvorm en alleen bij één treffer.
+ * Nooit gokken.
+ */
+function zoekKlant(klanten: KlantRij[], contactId: string | null, naam: string | null): KlantRij | null {
+  if (contactId) {
+    const opNummer = klanten.find((c) => c.moneybird_contact_id === contactId);
+    if (opNummer) return opNummer;
+  }
+  if (!naam) return null;
+
+  const exact = klanten.find((c) => c.name.toLowerCase() === naam.toLowerCase());
+  if (exact) return exact;
+
+  const doel = normalizeCompanyName(naam);
+  if (!doel) return null;
+  const treffers = klanten.filter((c) => normalizeCompanyName(c.name) === doel);
+  return treffers.length === 1 ? treffers[0] : null;
+}
 
 function contactNaam(r: MoneybirdRecurringSalesInvoice): string | null {
   const c = r.contact;
@@ -84,21 +126,16 @@ export async function fetchRecurringAsForecast(
   }
 
   const vandaag = new Date(Date.UTC(nu.getUTCFullYear(), nu.getUTCMonth(), nu.getUTCDate()));
+  const klanten = await alleKlanten(supabase);
   const rijen: Transaction[] = [];
 
   for (const r of recurring) {
     const naam = contactNaam(r);
-    const client_id = await resolveClientId(supabase, r.contact_id, naam);
-    if (!client_id) continue;
+    const klant = zoekKlant(klanten, r.contact_id, naam);
+    if (!klant) continue;
 
     const bedrag = Number.parseFloat(r.total_price_excl_tax ?? "0");
     if (!Number.isFinite(bedrag) || bedrag === 0) continue;
-
-    const { data: klant } = await supabase
-      .from("clients")
-      .select("id, name, logo_url")
-      .eq("id", client_id)
-      .maybeSingle();
 
     for (const datum of komendeDatums(r, vandaag)) {
       rijen.push({
@@ -106,11 +143,11 @@ export async function fetchRecurringAsForecast(
         description: r.reference || naam || "Periodieke factuur",
         amount: bedrag,
         status: "draft",
-        client_id,
+        client_id: klant.id,
         project_id: null,
         date: datum,
         created_at: datum,
-        clients: (klant as { id: string; name: string; logo_url: string | null } | null) ?? null,
+        clients: { id: klant.id, name: klant.name, logo_url: klant.logo_url },
         projects: null,
       });
     }
@@ -170,21 +207,13 @@ export async function fetchRecurringAgreements(
     return [];
   }
 
+  const klanten = await alleKlanten(supabase);
   const rijen: RecurringAgreement[] = [];
 
   for (const r of recurring.filter((x) => x.active)) {
     const naam = contactNaam(r);
-    const client_id = await resolveClientId(supabase, r.contact_id, naam);
-
-    let client: RecurringAgreement["client"] = null;
-    if (client_id) {
-      const { data } = await supabase
-        .from("clients")
-        .select("id, name, logo_url")
-        .eq("id", client_id)
-        .maybeSingle();
-      client = (data as RecurringAgreement["client"]) ?? null;
-    }
+    const klant = zoekKlant(klanten, r.contact_id, naam);
+    const client = klant ? { id: klant.id, name: klant.name, logo_url: klant.logo_url } : null;
 
     rijen.push({
       id: r.id,
