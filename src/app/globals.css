@@ -157,3 +157,19 @@ th, td {
 .recharts-wrapper:focus:not(:focus-visible) {
   outline: none;
 }
+
+/*
+ * Vierkant app-icoon met dezelfde squircle-techniek als de kaarten, maar met
+ * een verhoudingsgewijze straal in plaats van een vaste: op 28 pixels zou de
+ * straal van een kaart bijna een cirkel opleveren.
+ */
+.squircle-icon {
+  border-radius: 26%;
+}
+
+@supports (corner-shape: squircle) {
+  .squircle-icon {
+    border-radius: 34%;
+    corner-shape: squircle;
+  }
+}

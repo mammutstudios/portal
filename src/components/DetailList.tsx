@@ -12,7 +12,7 @@ export default function DetailList({
   callout,
 }: {
   rows: DetailRow[];
-  /** Blok onderaan, ingesprongen, voor iets dat eruit moet springen. */
+  /** Extra blok onderaan, in dezelfde opmaak als de regels erboven. */
   callout?: ReactNode;
 }) {
   return (
@@ -37,9 +37,9 @@ export default function DetailList({
         </div>
       ))}
 
-      {/* Alleen ruimte; het blok binnenin tekent zijn eigen vlak, zodat het
-          van de randen van de kaart afblijft. */}
-      {callout && <div className="p-4">{callout}</div>}
+      {/* Het blok zorgt zelf voor zijn ruimte, zodat het als gewone regel in
+          de lijst leest. */}
+      {callout}
     </div>
   );
 }
