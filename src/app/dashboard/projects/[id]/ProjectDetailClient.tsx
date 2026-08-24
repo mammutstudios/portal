@@ -100,6 +100,7 @@ export default function ProjectDetailClient({
             projectId={project.id}
             entries={comments}
             createdAt={project.created_at}
+            invoices={invoices.filter((i) => i.project_id === project.id)}
             tasks={tasks}
             currentProfileId={currentProfileId}
             currentName={currentName}

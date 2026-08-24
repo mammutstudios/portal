@@ -45,7 +45,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     // kunnen koppelen. Facturen van een andere klant horen hier nooit bij.
     supabase
       .from("moneybird_invoices")
-      .select("id, reference, invoice_date, state, total_excl_tax, project_id")
+      .select("id, reference, invoice_date, state, total_excl_tax, project_id, sent_at, paid_at")
       .eq("client_id", project.client_id)
       .order("invoice_date", { ascending: false }),
     user

@@ -16,6 +16,8 @@ export type KoppelbareFactuur = {
   state: string | null;
   total_excl_tax: number | null;
   project_id: string | null;
+  sent_at?: string | null;
+  paid_at?: string | null;
 };
 
 /**

@@ -6,6 +6,14 @@ import { addProjectCommentAction, deleteProjectCommentAction } from "@/lib/actio
 import { TaskStatusBadge } from "@/components/StatusBadge";
 import type { Task } from "@/lib/types";
 
+export type TimelineInvoice = {
+  id: string;
+  reference: string | null;
+  total_excl_tax?: number | null;
+  sent_at?: string | null;
+  paid_at?: string | null;
+};
+
 export type TimelineEntry = {
   id: string;
   body: string;
@@ -71,6 +79,7 @@ export default function ProjectTimeline({
   projectId,
   entries: opgeslagen,
   createdAt,
+  invoices = [],
   tasks,
   currentProfileId,
   currentAvatarUrl = null,
@@ -80,14 +89,18 @@ export default function ProjectTimeline({
   entries: TimelineEntry[];
   /** Aanmaakdatum van het project; wordt de eerste regel op de tijdlijn. */
   createdAt: string;
+  /** Facturen van dit project; hun momenten komen als regels op de tijdlijn. */
+  invoices?: TimelineInvoice[];
   tasks: Task[];
   currentProfileId: string | null;
   currentAvatarUrl?: string | null;
   currentName?: string | null;
 }) {
-  // "Project aangemaakt" leiden we af uit de aanmaakdatum in plaats van hem op
-  // te slaan: zo staat hij ook op projecten van vóór de tijdlijn.
-  const entries: TimelineEntry[] = [
+  // Wat je uit de gegevens kunt aflezen, leiden we af in plaats van het op te
+  // slaan. Zo staan die regels ook op projecten en facturen van vóór de
+  // tijdlijn, en kan er geen dubbele of ontbrekende regel ontstaan doordat een
+  // wijziging net buiten een webhook viel.
+  const afgeleid: TimelineEntry[] = [
     {
       id: "aangemaakt",
       body: "Project aangemaakt",
@@ -95,8 +108,37 @@ export default function ProjectTimeline({
       profile_id: null,
       kind: "project",
     },
-    ...opgeslagen,
   ];
+
+  for (const f of invoices) {
+    const kenmerk = f.reference ?? "Factuur";
+    const bedrag =
+      f.total_excl_tax != null
+        ? ` (${new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(f.total_excl_tax)})`
+        : "";
+    if (f.sent_at) {
+      afgeleid.push({
+        id: `factuur-verstuurd-${f.id}`,
+        body: `Factuur verstuurd: ${kenmerk}${bedrag}`,
+        created_at: f.sent_at,
+        profile_id: null,
+        kind: "factuur",
+      });
+    }
+    if (f.paid_at) {
+      afgeleid.push({
+        id: `factuur-betaald-${f.id}`,
+        body: `Factuur betaald: ${kenmerk}${bedrag}`,
+        created_at: f.paid_at,
+        profile_id: null,
+        kind: "factuur",
+      });
+    }
+  }
+
+  const entries = [...afgeleid, ...opgeslagen].sort((a, b) =>
+    a.created_at.localeCompare(b.created_at),
+  );
 
   const [tab, setTab] = useState<"tijdlijn" | "taken">("tijdlijn");
   const [tekst, setTekst] = useState("");
