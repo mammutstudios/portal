@@ -9,6 +9,7 @@ export async function updateProfileAction(formData: FormData) {
   if (!user) throw new Error("Niet ingelogd");
 
   const full_name = formData.get("full_name") as string;
+  const phone = formData.get("phone") as string;
   const avatarFile = formData.get("avatar") as File | null;
 
   let avatar_url: string | undefined;
@@ -27,7 +28,7 @@ export async function updateProfileAction(formData: FormData) {
     avatar_url = publicUrl;
   }
 
-  const update: Record<string, string> = { full_name };
+  const update: Record<string, string | null> = { full_name, phone: phone?.trim() || null };
   if (avatar_url) update.avatar_url = avatar_url;
 
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
@@ -37,6 +38,9 @@ export async function updateProfileAction(formData: FormData) {
   revalidatePath("/dashboard/settings");
   revalidatePath("/portal");
   revalidatePath("/portal/instellingen");
+  // De lead staat op elke projectpagina.
+  revalidatePath("/dashboard/projects", "layout");
+  revalidatePath("/portal/projecten", "layout");
 }
 
 /**
@@ -63,5 +67,8 @@ export async function updateNotificationPrefsAction(
 
   revalidatePath("/dashboard/settings");
   revalidatePath("/portal/instellingen");
+  // De lead staat op elke projectpagina.
+  revalidatePath("/dashboard/projects", "layout");
+  revalidatePath("/portal/projecten", "layout");
   return {};
 }

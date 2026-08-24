@@ -22,7 +22,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   ] = await Promise.all([
     supabase
       .from("projects")
-      .select("*, clients(name, id), lead:profiles(id, full_name, avatar_url)")
+      .select("*, clients(name, id), lead:profiles(id, full_name, avatar_url, email, phone)")
       .eq("id", id)
       .single(),
     supabase.from("tasks").select("*").eq("project_id", id).order("created_at"),
