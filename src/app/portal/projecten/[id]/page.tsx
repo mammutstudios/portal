@@ -9,7 +9,7 @@ import ProjectLeadCard from "@/components/ProjectLeadCard";
 import ProjectInvoiceCard from "@/components/ProjectInvoiceCard";
 import ProgressBar from "@/components/ProgressBar";
 import ProjectTimeline, { type TimelineEntry } from "@/components/ProjectTimeline";
-import { PHASE_LABEL, projectProgressPercentage, type Project, type Task } from "@/lib/types";
+import { PHASE_LABEL, type Project, type Task } from "@/lib/types";
 
 /** Zonder budget_amount: dat is een intern getal. Zie de lijstpagina. */
 const KOLOMMEN =
@@ -102,7 +102,7 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
           ]}
           callout={
             <ProgressBar
-              value={projectProgressPercentage(project.progress, project.phase, project.tags)}
+              value={project.progress ?? 0}
             />
           }
         />

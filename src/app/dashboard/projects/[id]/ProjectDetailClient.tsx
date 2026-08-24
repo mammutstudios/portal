@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
-import { PHASE_LABEL, projectProgressPercentage } from "@/lib/types";
+import { PHASE_LABEL } from "@/lib/types";
 import DetailList from "@/components/DetailList";
 import ProjectLeadCard from "@/components/ProjectLeadCard";
 import ProjectInvoiceCard from "@/components/ProjectInvoiceCard";
@@ -137,7 +137,7 @@ export default function ProjectDetailClient({
           ]}
           callout={
             <ProgressBar
-              value={projectProgressPercentage(project.progress, project.phase, project.tags)}
+              value={project.progress ?? 0}
             />
           }
         />

@@ -75,27 +75,6 @@ export function phasesForProject(tags: string[] | null, huidige?: ProjectPhase |
   );
 }
 
-/**
- * Het percentage voor de voortgangsring.
- *
- * Een handmatig gezet percentage wint altijd. Staat het op nul terwijl er wel
- * een fase is gekozen, dan leiden we het af uit die fase: anders staat de ring
- * op nul bij een project dat allang loopt, en dat leest als kapot.
- */
-export function projectProgressPercentage(
-  progress: number | null,
-  phase: ProjectPhase | null,
-  tags: string[] | null,
-): number {
-  if (progress != null && progress > 0) return Math.min(100, progress);
-  if (!phase) return 0;
-
-  const fases = phasesForProject(tags, phase);
-  const i = fases.indexOf(phase);
-  if (i < 0 || fases.length < 2) return 0;
-  return Math.round((i / (fases.length - 1)) * 100);
-}
-
 export type Project = {
   id: string;
   client_id: string;
