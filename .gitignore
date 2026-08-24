@@ -42,3 +42,6 @@ next-env.d.ts
 
 # ShipStudio metadata
 .shipstudio/
+
+# Bouwmap voor controles naast een draaiende dev-server
+.next-build
