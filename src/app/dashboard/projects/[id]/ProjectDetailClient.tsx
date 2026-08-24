@@ -138,6 +138,20 @@ export default function ProjectDetailClient({
             />
           }
         />
+
+          {project.lead && <ProjectLeadCard lead={project.lead} />}
+
+          <ProjectInvoiceCard
+            invoices={invoices
+              .filter((i) => i.project_id === project.id)
+              .map((i) => ({
+                id: i.id,
+                reference: i.reference,
+                invoice_date: i.invoice_date,
+                state: i.state,
+                bedrag: i.total_excl_tax,
+              }))}
+          />
         </div>
       </div>
 

@@ -102,6 +102,19 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
             />
           }
         />
+
+          {project.lead && <ProjectLeadCard lead={project.lead} />}
+
+          <ProjectInvoiceCard
+            hrefPerFactuur
+            invoices={(facturen ?? []).map((f) => ({
+              id: f.id,
+              reference: f.reference,
+              invoice_date: f.invoice_date,
+              state: f.state,
+              bedrag: f.total_incl_tax,
+            }))}
+          />
         </div>
       </div>
 
