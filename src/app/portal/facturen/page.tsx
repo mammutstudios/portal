@@ -30,7 +30,7 @@ export default async function PortalInvoicesPage() {
   );
 
   const open = invoices.filter((i) => i.state !== "paid");
-  const openTotal = open.reduce((s, i) => s + (i.total_incl_tax ?? 0), 0);
+  const openTotal = open.reduce((s, i) => s + (i.total_excl_tax ?? 0), 0);
 
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto">
@@ -42,7 +42,7 @@ export default async function PortalInvoicesPage() {
         </h1>
         <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
           {activeClientName ? `Alle facturen van ${activeClientName}.` : "Al je facturen op één plek."}
-          {open.length > 0 && ` ${open.length} openstaand, ${euro(openTotal)} incl. btw.`}
+          {open.length > 0 && ` ${open.length} openstaand, ${euro(openTotal)}.`}
         </p>
       </div>
 
@@ -51,11 +51,7 @@ export default async function PortalInvoicesPage() {
         emptyLabel="Er zijn nog geen facturen verstuurd."
         // Elke factuur is van dezelfde organisatie, dus die kolom zegt niets.
         showClient={false}
-        // De klant ziet wat hij overmaakt; intern rekenen we exclusief btw.
-        amount="incl"
-        amountLabel="Bedrag incl. btw"
-        // Dat kopje is breder dan de bedragen; rechts uitgelijnd steekt het uit.
-        amountAlign="left"
+        amountLabel="Bedrag"
       />
     </div>
   );

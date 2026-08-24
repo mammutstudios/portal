@@ -30,13 +30,30 @@ export type ProjectInvoice = {
  */
 export default function ProjectInvoiceCard({
   invoices,
+  budget = null,
   hrefPerFactuur = false,
 }: {
   invoices: ProjectInvoice[];
+  /**
+   * Waar het betaalde tegen wordt afgezet. Zonder budget nemen we het totaal
+   * van de facturen: dan lees je hoeveel van wat er is gefactureerd al binnen
+   * is, en dat is het enige wat je dan weet.
+   */
+  budget?: number | null;
   /** In het portaal opent een regel de PDF; in het dashboard niet. */
   hrefPerFactuur?: boolean;
 }) {
   if (invoices.length === 0) return null;
+
+  const betaald = invoices
+    .filter((f) => f.state === "paid")
+    .reduce((som, f) => som + (f.bedrag ?? 0), 0);
+  const gefactureerd = invoices
+    .filter((f) => f.state !== "draft")
+    .reduce((som, f) => som + (f.bedrag ?? 0), 0);
+
+  const doel = budget ?? gefactureerd;
+  const deel = doel > 0 ? Math.min(100, Math.round((betaald / doel) * 100)) : 0;
 
   return (
     <div
@@ -46,6 +63,23 @@ export default function ProjectInvoiceCard({
       <div className="px-5 pt-5 pb-3 text-xs uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
         Facturen
       </div>
+
+      {doel > 0 && (
+        <div className="px-5 pb-4">
+          <div className="flex items-baseline justify-between gap-4 mb-2">
+            <span className="text-sm" style={{ color: "var(--text-heading)" }}>
+              {euro(betaald)} van {euro(doel)} betaald
+            </span>
+            <span className="text-sm" style={{ color: "var(--text-muted)" }}>{deel}%</span>
+          </div>
+          <div
+            className="progress-bar w-full overflow-hidden"
+            style={{ height: 10, background: "var(--bg-secondary)" }}
+          >
+            <div style={{ width: `${deel}%`, height: "100%", background: "var(--ink)" }} />
+          </div>
+        </div>
+      )}
 
       {invoices.map((f, i) => {
         const s = STATE[f.state ?? ""] ?? {
@@ -85,6 +119,7 @@ export default function ProjectInvoiceCard({
 
         const klassen = "flex items-start justify-between gap-4 px-5 py-3";
         const rand = { borderTop: "1px solid var(--border)" } as const;
+        // De eerste regel krijgt wél een lijn zodra er een samenvatting boven staat.
 
         return hrefPerFactuur ? (
           <a
@@ -93,12 +128,12 @@ export default function ProjectInvoiceCard({
             target="_blank"
             rel="noopener noreferrer"
             className={`card-hover cursor-pointer ${klassen}`}
-            style={i === 0 ? undefined : rand}
+            style={i === 0 && doel === 0 ? undefined : rand}
           >
             {inhoud}
           </a>
         ) : (
-          <div key={f.id} className={klassen} style={i === 0 ? undefined : rand}>
+          <div key={f.id} className={klassen} style={i === 0 && doel === 0 ? undefined : rand}>
             {inhoud}
           </div>
         );
