@@ -28,24 +28,23 @@ export default async function PortalProjectPage({ params }: { params: Promise<{ 
   const project = data as unknown as Project | null;
   if (!project || !clientIds.includes(project.client_id)) notFound();
 
-  const { data: mij } = await supabase
-    .from("profiles")
-    .select("full_name, avatar_url")
-    .eq("id", userId)
-    .maybeSingle();
-
-  const { data: comments } = await supabase
-    .from("project_comments")
-    .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
-    .eq("project_id", id)
-    .order("created_at");
-
-  const { data: facturen } = await supabase
-    .from("moneybird_invoices")
-    .select("id, reference, invoice_date, state, total_incl_tax")
-    .eq("project_id", id)
-    .neq("state", "draft")
-    .order("invoice_date", { ascending: false });
+  // De rest in één ronde. De eigenaarscheck hierboven blijft bewust apart:
+  // in development draait deze client met de service role, en dan is die
+  // check de enige afscherming.
+  const [{ data: mij }, { data: comments }, { data: facturen }] = await Promise.all([
+    supabase.from("profiles").select("full_name, avatar_url").eq("id", userId).maybeSingle(),
+    supabase
+      .from("project_comments")
+      .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
+      .eq("project_id", id)
+      .order("created_at"),
+    supabase
+      .from("moneybird_invoices")
+      .select("id, reference, invoice_date, state, total_incl_tax")
+      .eq("project_id", id)
+      .neq("state", "draft")
+      .order("invoice_date", { ascending: false }),
+  ]);
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">

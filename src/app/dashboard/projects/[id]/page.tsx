@@ -7,7 +7,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: project }, { data: tasks }, { data: files }, { data: timeEntries }] = await Promise.all([
+  // Alles wat alleen het project-id nodig heeft gaat in één ronde. Elke vraag
+  // aan Supabase kost ruim honderd milliseconden, dus achter elkaar wachten
+  // telt hard aan: dit waren vijf rondes.
+  const [
+    { data: project },
+    { data: tasks },
+    { data: files },
+    { data: timeEntries },
+    { data: comments },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
     supabase
       .from("projects")
       .select("*, clients(name, id), lead:profiles(id, full_name, avatar_url)")
@@ -16,31 +28,30 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     supabase.from("tasks").select("*").eq("project_id", id).order("created_at"),
     supabase.from("files").select("*").eq("project_id", id).order("uploaded_at", { ascending: false }),
     supabase.from("time_entries").select("*, profiles(id, full_name, avatar_url)").eq("project_id", id).order("date", { ascending: false }),
+    supabase
+      .from("project_comments")
+      .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
+      .eq("project_id", id)
+      .order("created_at"),
+    supabase.auth.getUser(),
   ]);
 
   if (!project) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: mij } = user
-    ? await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle()
-    : { data: null };
-
-  const { data: comments } = await supabase
-    .from("project_comments")
-    .select("id, body, created_at, profile_id, profiles(full_name, avatar_url)")
-    .eq("project_id", id)
-    .order("created_at");
-
-  // Alle facturen van deze klant: de gekoppelde om te tonen, de losse om te
-  // kunnen koppelen. Facturen van een andere klant horen hier nooit bij.
-  const { data: invoices } = await supabase
-    .from("moneybird_invoices")
-    .select("id, reference, invoice_date, state, total_excl_tax, project_id")
-    .eq("client_id", project.client_id)
-    .order("invoice_date", { ascending: false });
+  // Deze twee konden niet mee: de een heeft de klant van het project nodig,
+  // de ander de ingelogde gebruiker.
+  const [{ data: invoices }, { data: mij }] = await Promise.all([
+    // Alle facturen van deze klant: de gekoppelde om te tonen, de losse om te
+    // kunnen koppelen. Facturen van een andere klant horen hier nooit bij.
+    supabase
+      .from("moneybird_invoices")
+      .select("id, reference, invoice_date, state, total_excl_tax, project_id")
+      .eq("client_id", project.client_id)
+      .order("invoice_date", { ascending: false }),
+    user
+      ? supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
   return (
     <ProjectDetailClient
