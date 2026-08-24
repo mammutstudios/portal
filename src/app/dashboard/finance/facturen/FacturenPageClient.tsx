@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { backfillMoneybirdAction } from "@/lib/actions/moneybird";
+import { useEffect, useState } from "react";
 import InvoiceTable, { type MoneybirdInvoice } from "@/components/InvoiceTable";
 
 const euro = (n: number) =>
@@ -105,8 +104,6 @@ export default function FacturenPageClient({
   invoices: MoneybirdInvoice[];
   tableMissing: string | null;
 }) {
-  const [pending, startTransition] = useTransition();
-  const [result, setResult] = useState<string | null>(null);
 
   // Laatste keer dat er daadwerkelijk is opgehaald — geen belofte over hoe vaak.
   // Pas na mount berekend: "vandaag" hoort de tijdzone van de kijker te volgen,
@@ -130,58 +127,18 @@ export default function FacturenPageClient({
     .filter((i) => i.state === "draft")
     .reduce((sum, i) => sum + (i.total_excl_tax ?? 0), 0);
 
-  function sync() {
-    setResult(null);
-    startTransition(async () => {
-      try {
-        const r = await backfillMoneybirdAction();
-        setResult(
-          `${r.imported} van ${r.total} facturen ingelezen` +
-            (r.skipped ? `, ${r.skipped} overgeslagen (andere huisstijl)` : "") +
-            (r.failures.length ? `, ${r.failures.length} mislukt: ${r.failures[0]}` : ""),
-        );
-      } catch (e) {
-        setResult(`Mislukt: ${(e as Error).message}`);
-      }
-    });
-  }
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          Facturen
-        </h1>
-        {configured && (
-          <button
-            onClick={sync}
-            disabled={pending}
-            className="squircle px-4 py-2 text-sm font-medium"
-            style={{
-              background: "var(--accent)",
-              color: "var(--white)",
-              opacity: pending ? 0.6 : 1,
-            }}
-          >
-            {pending ? "Bezig…" : "Nu inlezen"}
-          </button>
-        )}
-      </div>
+      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
+        Facturen
+      </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        Je verkoopfacturen uit Moneybird.
+        Je verkoopfacturen uit Moneybird, bijgewerkt zodra er iets wijzigt.
         {lastSynced && (
-          <> Laatst opgehaald {lastSynced}.</>
+          <> Laatst binnengekomen {lastSynced}.</>
         )}
       </p>
-
-      {result && (
-        <div
-          className="squircle p-4 mb-6 text-sm"
-          style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
-        >
-          {result}
-        </div>
-      )}
 
       {tableMissing && (
         <div
