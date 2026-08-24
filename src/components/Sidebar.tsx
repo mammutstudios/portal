@@ -30,8 +30,23 @@ type NavItem = {
   children?: SubItem[];
 };
 
-function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
-  const pathname = usePathname();
+/**
+ * Het pad komt als prop binnen en niet uit usePathname().
+ *
+ * Op een route met een [id] is het pad pas op verzoektijd bekend, dus die hook
+ * laat het menu wachten en daarmee de hele pagina. Zo kan dezelfde markup ook
+ * zonder pad gerenderd worden, en dat is precies wat de statische schil nodig
+ * heeft: het menu staat er meteen, alleen de markering volgt.
+ */
+function NavLink({
+  item,
+  pathname,
+  onNavigate,
+}: {
+  item: NavItem;
+  pathname: string | null;
+  onNavigate?: () => void;
+}) {
   const hasChildren = !!item.children?.length;
   const isChildActive = hasChildren && item.children!.some((c) => pathname === c.href);
   const isActive = pathname === item.href;
@@ -234,25 +249,68 @@ const clientNav: NavItem[] = [
   },
 ];
 
-export default function Sidebar({
-  role,
-  showAnalytics = true,
-  showBrand = true,
-}: {
+/** De twee klant-items die pas te tonen zijn als we weten wie er kijkt. */
+const OPTIONEEL = new Set(["/portal/huisstijl", "/portal/analytics"]);
+
+/**
+ * Een item dat zijn plek bezet houdt zolang we nog niet weten of het er hoort.
+ * Zonder dit verspringt het menu zodra de klantgegevens binnenstromen.
+ */
+function NavSkeleton() {
+  return (
+    <div className="flex items-center gap-2.5 px-2 h-10" aria-hidden>
+      <span className="w-4 h-4 rounded flex-shrink-0" style={{ background: "var(--border)" }} />
+      <span className="h-3 rounded" style={{ width: 72, background: "var(--border)" }} />
+    </div>
+  );
+}
+
+type SidebarProps = {
   role: "admin" | "client";
   /** Uit als deze klant geen gekoppelde site heeft; dan is de pagina leeg. */
   showAnalytics?: boolean;
   /** Uit als er voor deze klant nog geen huisstijlgids bestaat. */
   showBrand?: boolean;
-}) {
+  /**
+   * De klantgegevens zijn nog onderweg. Het menu staat er al, met een balkje
+   * op de plek van de twee items waarvan we het antwoord nog niet hebben.
+   */
+  pending?: boolean;
+};
+
+/**
+ * Het menu zoals het in de statische schil staat: dezelfde markup, maar zonder
+ * te weten op welke pagina je bent. Hoort in de fallback van de <Suspense> om
+ * <Sidebar> heen, zodat het menu er staat vóórdat de server iets teruggeeft.
+ */
+export function SidebarFallback(props: SidebarProps) {
+  return <SidebarBody {...props} pathname={null} />;
+}
+
+export default function Sidebar(props: SidebarProps) {
   const pathname = usePathname();
+  return <SidebarBody {...props} pathname={pathname} />;
+}
+
+function SidebarBody({
+  role,
+  showAnalytics = true,
+  showBrand = true,
+  pending = false,
+  pathname,
+}: SidebarProps & { pathname: string | null }) {
   const verborgen = new Set(
     [
       showAnalytics ? null : "/portal/analytics",
       showBrand ? null : "/portal/huisstijl",
     ].filter(Boolean) as string[],
   );
-  const navItems = role === "admin" ? adminNav : clientNav.filter((item) => !verborgen.has(item.href));
+  const navItems =
+    role === "admin"
+      ? adminNav
+      : pending
+        ? clientNav
+        : clientNav.filter((item) => !verborgen.has(item.href));
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close drawer on route change
@@ -307,9 +365,18 @@ export default function Sidebar({
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink key={item.href} item={item} onNavigate={() => setMobileOpen(false)} />
-          ))}
+          {navItems.map((item) =>
+            pending && OPTIONEEL.has(item.href) ? (
+              <NavSkeleton key={item.href} />
+            ) : (
+              <NavLink
+                key={item.href}
+                item={item}
+                pathname={pathname}
+                onNavigate={() => setMobileOpen(false)}
+              />
+            ),
+          )}
         </nav>
 
       {/* Preview + Sign out */}

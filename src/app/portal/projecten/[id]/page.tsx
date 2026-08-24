@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
@@ -10,6 +11,7 @@ import ProjectInvoiceCard from "@/components/ProjectInvoiceCard";
 import ProgressBar from "@/components/ProgressBar";
 import ProjectTimeline, { type TimelineEntry } from "@/components/ProjectTimeline";
 import { PHASE_LABEL, type Project, type Task } from "@/lib/types";
+import PageSkeleton from "@/components/PageSkeleton";
 
 /**
  * budget_amount hoort hier wél bij: de klant kent de afgesproken prijs van zijn
@@ -18,7 +20,20 @@ import { PHASE_LABEL, type Project, type Task } from "@/lib/types";
 const KOLOMMEN =
   "id, client_id, title, description, status, deadline, tags, progress, phase, lead_profile_id, budget_amount, created_at, next_step, client_action, live_url, staging_url";
 
-export default async function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * Het id staat in de URL en is dus pas op verzoektijd bekend: erop wachten in
+ * de pagina zelf houdt de hele route tegen. Achter deze <Suspense> staat het
+ * kader er meteen en volgt de inhoud zodra de database antwoordt.
+ */
+export default function PortalProjectPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<PageSkeleton rijen={4} />}>
+      <Projectpagina params={params} />
+    </Suspense>
+  );
+}
+
+async function Projectpagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { clientIds, userId } = await getPortalContext();
   const supabase = await createClient();

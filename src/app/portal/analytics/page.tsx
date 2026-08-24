@@ -1,25 +1,32 @@
-import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
 import { getPortalContext } from "@/lib/portal";
 import { loadSiteAnalytics } from "@/lib/analytics/load";
 import SiteAnalytics from "@/components/analytics/SiteAnalytics";
+import PageSkeleton from "@/components/PageSkeleton";
 
-export default async function PortalAnalyticsPage({
+/**
+ * Deze pagina stelt vijftien vragen aan Plausible en leest de gekozen periode
+ * uit de URL. Beide zijn pas op verzoektijd bekend, dus alles zit achter één
+ * <Suspense>: de schil eromheen staat er meteen, de cijfers stromen erin.
+ */
+export default function PortalAnalyticsPage({
   searchParams,
 }: {
   searchParams: Promise<{ periode?: string }>;
 }) {
-  const { periode } = await searchParams;
-  const { clientIds } = await getPortalContext();
-  const supabase = await createClient();
+  return (
+    <Suspense fallback={<PageSkeleton breed rijen={4} />}>
+      <Cijfers searchParams={searchParams} />
+    </Suspense>
+  );
+}
 
-  const { data: rows } = await supabase
-    .from("clients")
-    .select("plausible_site_id")
-    .in("id", clientIds.length ? clientIds : ["00000000-0000-0000-0000-000000000000"])
-    .not("plausible_site_id", "is", null)
-    .limit(1);
+async function Cijfers({ searchParams }: { searchParams: Promise<{ periode?: string }> }) {
+  const [{ periode }, { clients }] = await Promise.all([searchParams, getPortalContext()]);
 
-  const siteId = (rows?.[0]?.plausible_site_id as string) ?? null;
+  // De gekoppelde site komt uit de context; dat scheelt een eigen query naar
+  // clients die hier eerder bij elk bezoek stond.
+  const siteId = clients.find((c) => c.plausible_site_id)?.plausible_site_id ?? null;
   const data = siteId ? await loadSiteAnalytics(siteId, periode) : null;
 
   return (

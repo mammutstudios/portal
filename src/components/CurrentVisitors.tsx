@@ -19,6 +19,10 @@ export default function CurrentVisitors({
       const n = await currentVisitorsAction(siteId);
       if (!gestopt && n !== null) setAantal(n);
     };
+    // Meteen één keer, niet pas na de eerste dertig seconden. Zo hoeft de
+    // server dit getal niet vooraf op te halen: dat was de enige vraag aan
+    // Plausible die niet gecachet mocht worden, en die hield de hele pagina op.
+    tik();
     const id = setInterval(tik, 30_000);
     return () => { gestopt = true; clearInterval(id); };
   }, [siteId]);

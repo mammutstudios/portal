@@ -1,4 +1,6 @@
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 
 export type MonthStats = {
   /** Eerste dag van de maand, als YYYY-MM. */
@@ -16,31 +18,36 @@ function monthBounds(year: number, monthIndex: number) {
   return { from: from.toISOString(), to: to.toISOString(), key: from.toISOString().slice(0, 7) };
 }
 
+const leegteVoor = (key: string): MonthStats => ({
+  month: key,
+  newTickets: 0,
+  closedTickets: 0,
+  hours: 0,
+  invoiceCount: 0,
+  invoiceTotalExclTax: 0,
+});
+
 /**
- * Cijfers over één maand, eventueel beperkt tot een set klanten.
+ * Cijfers over één maand.
+ *
+ * De projecten binnen scope komen als argument binnen en worden hier niet meer
+ * zelf opgehaald: het overzicht vraagt zes maanden tegelijk op, en dat waren
+ * zes keer dezelfde projectquery vóór er ook maar iets geteld kon worden.
  *
  * Let op bij "afgerond": dat leunt op tasks.completed_at, en dat veld wordt pas
  * gevuld sinds die kolom bestaat. Tickets die daarvóór zijn afgerond tellen
- * nergens mee — hun afrondmoment is niet meer te achterhalen.
+ * nergens mee, hun afrondmoment is niet meer te achterhalen.
  */
-export async function monthStats(
+async function monthStats(
   supabase: SupabaseClient,
   year: number,
   monthIndex: number,
+  projectIds: string[] | null,
   clientIds?: string[],
 ): Promise<MonthStats> {
   const { from, to, key } = monthBounds(year, monthIndex);
-  const scoped = clientIds !== undefined;
 
-  // Projecten binnen scope; tickets en uren hangen aan projecten, niet aan klanten.
-  let projectIds: string[] | null = null;
-  if (scoped) {
-    if (clientIds.length === 0) {
-      return { month: key, newTickets: 0, closedTickets: 0, hours: 0, invoiceCount: 0, invoiceTotalExclTax: 0 };
-    }
-    const { data } = await supabase.from("projects").select("id").in("client_id", clientIds);
-    projectIds = (data ?? []).map((p) => p.id as string);
-  }
+  if (clientIds !== undefined && clientIds.length === 0) return leegteVoor(key);
 
   // Expliciet in plaats van een generieke helper: de query-builder van Supabase
   // laat zich slecht doorgeven zonder de typing te verliezen.
@@ -97,3 +104,36 @@ export async function monthStats(
     invoiceTotalExclTax: invoices.reduce((s, i) => s + (Number(i.total_excl_tax) || 0), 0),
   };
 }
+
+/**
+ * De laatste maanden voor een set klanten, nieuwste eerst.
+ *
+ * In cache() verpakt zodat de kaarten bovenaan het overzicht en de tabel
+ * eronder dezelfde cijfers delen: ze staan in aparte <Suspense>-blokken, maar
+ * halen ze samen één keer op.
+ */
+export const maandCijfers = cache(async function maandCijfers(
+  clientIds: string[],
+  aantal = 6,
+): Promise<MonthStats[]> {
+  const nu = new Date();
+  const maanden = Array.from({ length: aantal }, (_, i) => {
+    const d = new Date(nu.getFullYear(), nu.getMonth() - i, 1);
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+
+  if (clientIds.length === 0) {
+    return maanden.map((m) => leegteVoor(monthBounds(m.year, m.month).key));
+  }
+
+  const supabase = await createClient();
+
+  // Tickets en uren hangen aan projecten, niet aan klanten. Deze vraag stond
+  // eerder in monthStats en ging dus zes keer over de lijn.
+  const { data } = await supabase.from("projects").select("id").in("client_id", clientIds);
+  const projectIds = (data ?? []).map((p) => p.id as string);
+
+  return Promise.all(
+    maanden.map((m) => monthStats(supabase, m.year, m.month, projectIds, clientIds)),
+  );
+});

@@ -30,13 +30,25 @@ export async function createClient() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     );
-    // Monkey-patch getUser to return the dev user
+    // Monkey-patch getUser to return the dev user. getClaims hoort er sinds
+    // kort bij: de portaalcode vraagt daar als eerste naar, en zonder deze
+    // regel ziet dev geen sessie en stuurt elke pagina door naar /login.
     const devUserId = process.env.DEV_USER_ID;
     const origAuth = client.auth;
     (client as any).auth = new Proxy(origAuth, {
       get(target, prop) {
         if (prop === "getUser") {
           return async () => ({ data: { user: { id: devUserId, email: "dev@local" } as any }, error: null });
+        }
+        if (prop === "getClaims") {
+          return async () => ({
+            data: {
+              claims: { sub: devUserId, email: "dev@local" },
+              header: {},
+              signature: new Uint8Array(),
+            },
+            error: null,
+          });
         }
         return (target as any)[prop];
       },

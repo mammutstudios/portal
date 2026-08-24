@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
+
   /*
    * next dev en next build delen standaard dezelfde .next-map en overschrijven
    * elkaars staat: een build naast een draaiende dev-server levert 404's op

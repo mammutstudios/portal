@@ -17,7 +17,11 @@ export default function TopBar({
   homeHref,
   settingsHref = "/dashboard/settings",
 }: {
-  name: string;
+  /**
+   * Null betekent: de naam is nog onderweg. De balk staat er dan al, met een
+   * balkje op de plek van het account, zodat de schil niet verspringt.
+   */
+  name: string | null;
   avatarUrl: string | null;
   homeHref: string;
   /** Null verbergt het item; het klantportaal heeft nog geen eigen instellingen. */
@@ -187,8 +191,21 @@ export default function TopBar({
             onClick={() => setMenuOpen((o) => !o)}
             className="flex items-center gap-2 px-2 py-1.5 rounded-md card-hover"
           >
-            <ClientLogo logo_url={avatarUrl} name={name} />
-            <span className="text-sm" style={{ color: "var(--text-heading)" }}>{name}</span>
+            {name === null ? (
+              <>
+                <span
+                  aria-hidden
+                  className="w-6 h-6 rounded flex-shrink-0"
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+                />
+                <span aria-hidden className="h-3 rounded" style={{ width: 84, background: "var(--border)" }} />
+              </>
+            ) : (
+              <>
+                <ClientLogo logo_url={avatarUrl} name={name} />
+                <span className="text-sm" style={{ color: "var(--text-heading)" }}>{name}</span>
+              </>
+            )}
             <CaretDown
               size={12}
               weight="bold"
