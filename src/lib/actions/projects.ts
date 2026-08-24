@@ -10,6 +10,14 @@ export async function createProjectAction(formData: FormData) {
   const status = formData.get("status") as string;
   const deadline = formData.get("deadline") as string;
   const tags = formData.getAll("tags") as string[];
+  const phase = formData.get("phase") as string;
+  const next_step = formData.get("next_step") as string;
+  const client_action = formData.get("client_action") as string;
+  const live_url = formData.get("live_url") as string;
+  const staging_url = formData.get("staging_url") as string;
+  const progress = formData.get("progress") as string;
+  const budget_amount = formData.get("budget_amount") as string;
+  const lead_profile_id = formData.get("lead_profile_id") as string;
 
   if (!title?.trim()) return { error: "Naam is verplicht" };
   if (!client_id) return { error: "Organisatie is verplicht" };
@@ -22,6 +30,14 @@ export async function createProjectAction(formData: FormData) {
     status: status || "active",
     deadline: deadline || null,
     tags: tags.length > 0 ? tags : [],
+    phase: phase || null,
+    next_step: next_step?.trim() || null,
+    client_action: client_action?.trim() || null,
+    live_url: live_url?.trim() || null,
+    staging_url: staging_url?.trim() || null,
+    progress: progress === "" || progress == null ? null : Number(progress),
+    budget_amount: budget_amount?.trim() ? Number(budget_amount) : null,
+    lead_profile_id: lead_profile_id || null,
   });
 
   if (error) return { error: error.message };
@@ -38,6 +54,14 @@ export async function updateProjectAction(id: string, formData: FormData) {
   const status = formData.get("status") as string;
   const deadline = formData.get("deadline") as string;
   const tags = formData.getAll("tags") as string[];
+  const phase = formData.get("phase") as string;
+  const next_step = formData.get("next_step") as string;
+  const client_action = formData.get("client_action") as string;
+  const live_url = formData.get("live_url") as string;
+  const staging_url = formData.get("staging_url") as string;
+  const progress = formData.get("progress") as string;
+  const budget_amount = formData.get("budget_amount") as string;
+  const lead_profile_id = formData.get("lead_profile_id") as string;
 
   if (!title?.trim()) return { error: "Naam is verplicht" };
 
@@ -49,6 +73,14 @@ export async function updateProjectAction(id: string, formData: FormData) {
     status: status || "active",
     deadline: deadline || null,
     tags: tags,
+    phase: phase || null,
+    next_step: next_step?.trim() || null,
+    client_action: client_action?.trim() || null,
+    live_url: live_url?.trim() || null,
+    staging_url: staging_url?.trim() || null,
+    progress: progress === "" || progress == null ? null : Number(progress),
+    budget_amount: budget_amount?.trim() ? Number(budget_amount) : null,
+    lead_profile_id: lead_profile_id || null,
   }).eq("id", id);
 
   if (error) return { error: error.message };
@@ -56,6 +88,9 @@ export async function updateProjectAction(id: string, formData: FormData) {
   revalidatePath("/dashboard/projects");
   revalidatePath(`/dashboard/projects/${id}`);
   revalidatePath("/dashboard");
+  // De klant ziet dezelfde velden in het portaal.
+  revalidatePath("/portal/projecten");
+  revalidatePath(`/portal/projecten/${id}`);
   return { success: true };
 }
 
@@ -75,4 +110,62 @@ export async function quickCreateProjectAction(title: string, client_id: string)
   revalidatePath("/dashboard/projects");
   revalidatePath("/dashboard/finance/transactions");
   return data;
+}
+
+/**
+ * Een factuur aan een project hangen, of er weer los van maken.
+ *
+ * Facturen blijven altijd aan een klant gekoppeld; dit is een extra verfijning
+ * zodat een projectpagina zijn eigen facturen kan tonen. Moneybird kent geen
+ * projecten, dus deze koppeling leggen we zelf.
+ */
+export async function linkInvoiceToProjectAction(invoiceId: string, projectId: string | null) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("moneybird_invoices")
+    .update({ project_id: projectId })
+    .eq("id", invoiceId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/projects");
+  if (projectId) {
+    revalidatePath(`/dashboard/projects/${projectId}`);
+    revalidatePath(`/portal/projecten/${projectId}`);
+  }
+  return { success: true };
+}
+
+/** Een bericht bij een project plaatsen. */
+export async function addProjectCommentAction(projectId: string, body: string) {
+  const tekst = body.trim();
+  if (!tekst) return { error: "Bericht is leeg" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Niet ingelogd" };
+
+  const { error } = await supabase
+    .from("project_comments")
+    .insert({ project_id: projectId, profile_id: user.id, body: tekst });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath(`/portal/projecten/${projectId}`);
+  return { success: true };
+}
+
+/** Je eigen bericht weghalen. De databasepolicy bewaakt dat "eigen". */
+export async function deleteProjectCommentAction(commentId: string, projectId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("project_comments").delete().eq("id", commentId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath(`/portal/projecten/${projectId}`);
+  return { success: true };
 }

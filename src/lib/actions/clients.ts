@@ -113,3 +113,70 @@ export async function updateClientAction(id: string, formData: FormData) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+/**
+ * Verwijdert een organisatie.
+ *
+ * Weigert zolang er nog projecten aan hangen. Dat is bewust: afhankelijk van de
+ * foreign key zou verwijderen die projecten meeslepen — inclusief hun tickets en
+ * uren — en dat is niet iets om per ongeluk te doen. Facturen blijven bestaan en
+ * raken alleen hun klantkoppeling kwijt.
+ */
+export async function deleteClientAction(formData: FormData): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const id = formData.get("id") as string;
+  if (!id) return { error: "Geen organisatie opgegeven" };
+
+  const { count } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true })
+    .eq("client_id", id);
+
+  if (count && count > 0) {
+    return {
+      error: `Er ${count === 1 ? "hangt nog 1 project" : `hangen nog ${count} projecten`} aan deze organisatie. Verplaats of verwijder die eerst.`,
+    };
+  }
+
+  // Facturen laten we staan; ze verliezen alleen hun koppeling.
+  await supabase.from("moneybird_invoices").update({ client_id: null }).eq("client_id", id);
+  await supabase.from("contact_clients").delete().eq("client_id", id);
+
+  const { error } = await supabase.from("clients").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/clients");
+  return {};
+}
+
+/**
+ * Koppelt een organisatie aan een site in Plausible. De waarde is het domein
+ * zoals het daar staat, bijvoorbeeld "mammutstudios.com" — zonder https of www.
+ */
+export async function linkPlausibleSiteAction(formData: FormData): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const id = formData.get("id") as string;
+  const raw = ((formData.get("plausible_site_id") as string) || "").trim();
+
+  // Mensen plakken hier een volledige URL; dat accepteren we en strippen we.
+  const domain = raw
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/.*$/, "")
+    .toLowerCase();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ plausible_site_id: domain || null })
+    .eq("id", id);
+
+  if (error) {
+    return error.message.includes("plausible_site_id")
+      ? { error: "De kolom plausible_site_id bestaat nog niet. Draai eerst de migratie." }
+      : { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/clients/${id}`);
+  revalidatePath("/portal/analytics");
+  return {};
+}

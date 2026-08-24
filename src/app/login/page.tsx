@@ -72,7 +72,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="rounded-lg p-6" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+        <div className="squircle p-6" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
           {step === "email" ? (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>

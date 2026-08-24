@@ -12,7 +12,6 @@ export async function createContactAction(formData: FormData) {
     name: formData.get("name") as string,
     email: (formData.get("email") as string) || null,
     phone: (formData.get("phone") as string) || null,
-    job_title: (formData.get("job_title") as string) || null,
   }).select().single();
 
   if (contact && client_id) {
@@ -36,7 +35,6 @@ export async function updateContactAction(formData: FormData) {
     name: formData.get("name") as string,
     email: (formData.get("email") as string) || null,
     phone: (formData.get("phone") as string) || null,
-    job_title: (formData.get("job_title") as string) || null,
   }).eq("id", id);
 
   revalidatePath(`/dashboard/contacts/${id}`);

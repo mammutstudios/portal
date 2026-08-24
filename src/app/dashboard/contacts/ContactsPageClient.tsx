@@ -22,10 +22,10 @@ function ClientPill({ c }: { c: Pick<Client, "id" | "name" | "logo_url"> }) {
           /^https?|^\//.test(c.logo_url) ? (
             <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
           ) : (
-            <span style={{ fontSize: "9px" }}>{c.logo_url}</span>
+            <span style={{ fontSize: "0.5625rem" }}>{c.logo_url}</span>
           )
         ) : (
-          <span style={{ fontSize: "8px", fontWeight: 600, color: "var(--text-muted)" }}>
+          <span style={{ fontSize: "0.5rem", fontWeight: 600, color: "var(--text-muted)" }}>
             {c.name.charAt(0).toUpperCase()}
           </span>
         )}
@@ -61,13 +61,13 @@ export default function ContactsPageClient({
       </div>
       <div className="mb-8" />
 
-      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {contacts.length > 0 ? (
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[40rem]">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Naam</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Klanten</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Naam</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Organisatie(s)</th>
                 <th className="w-8 px-4 py-2.5" />
               </tr>
             </thead>
@@ -85,7 +85,6 @@ export default function ContactsPageClient({
                   >
                     <td className="px-4 py-3">
                       <p className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>{contact.name}</p>
-                      {contact.job_title && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{contact.job_title}</p>}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {linkedClients.length > 0 ? (
@@ -97,7 +96,7 @@ export default function ContactsPageClient({
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+                      <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
                     </td>
                   </tr>
                 );

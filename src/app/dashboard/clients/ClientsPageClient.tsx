@@ -29,14 +29,14 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
       </div>
       <div className="mb-8" />
 
-      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {clients.length > 0 ? (
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[40rem]">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
                 <th className="w-20 px-4 py-2.5" />
-                <th className="text-left pl-2 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Naam</th>
-                <th className="text-left px-6 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Type</th>
+                <th className="text-left pl-2 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Naam</th>
+                <th className="text-left px-6 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Type</th>
                 <th className="w-10 px-4 py-2.5" />
               </tr>
             </thead>
@@ -50,7 +50,7 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
                 >
                   <td className="px-4 py-3.5">
                     <div
-                      className="w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0"
+                      className="w-12 h-12 squircle overflow-hidden flex items-center justify-center flex-shrink-0"
                       style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
                     >
                       {client.logo_url ? (
@@ -73,7 +73,7 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
                     {client.tag && <ClientTagBadge tag={client.tag} />}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+                    <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
                   </td>
                 </tr>
               ))}

@@ -1,0 +1,5 @@
+# Caddy regelt automatisch een Let's Encrypt-certificaat.
+# Vervang het domein als je iets anders gebruikt dan analytics.mammutstudios.com.
+analytics.mammutstudios.com {
+	reverse_proxy plausible:8000
+}

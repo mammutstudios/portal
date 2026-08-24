@@ -19,10 +19,10 @@ function ClientLogo({ logo_url, name }: { logo_url: string | null; name: string 
         /^https?|^\//.test(logo_url) ? (
           <img src={logo_url} alt={name} className="w-full h-full object-contain" />
         ) : (
-          <span style={{ fontSize: "11px" }}>{logo_url}</span>
+          <span style={{ fontSize: "0.6875rem" }}>{logo_url}</span>
         )
       ) : (
-        <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--text-muted)" }}>{name.charAt(0).toUpperCase()}</span>
+        <span style={{ fontSize: "0.5625rem", fontWeight: 600, color: "var(--text-muted)" }}>{name.charAt(0).toUpperCase()}</span>
       )}
     </div>
   );
@@ -60,16 +60,16 @@ export default function TogglPageClient({
       </div>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Urenregistratie</p>
 
-      <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {entries.length > 0 ? (
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[40rem]">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Taak</th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Uren</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Datum</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Wie</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Taak</th>
+                <th className="text-right px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Uren</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Datum</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Wie</th>
                 <th className="w-8 px-4 py-2.5" />
               </tr>
             </thead>

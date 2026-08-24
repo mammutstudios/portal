@@ -84,7 +84,7 @@ export default function TimeEntryForm({
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Project</label>
         <SearchSelect
           name="project_id"
-          placeholder="— Geen —"
+          placeholder="Geen"
           options={projects.map((p) => ({
             value: p.id,
             label: p.title,
@@ -99,7 +99,7 @@ export default function TimeEntryForm({
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Wie</label>
         <SearchSelect
           name="profile_id"
-          placeholder="— Niemand —"
+          placeholder="Niemand"
           subtle
           showAvatars
           options={profiles.map((p) => ({ value: p.id, label: p.full_name ?? "Onbekend", avatar: p.avatar_url }))}

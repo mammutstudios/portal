@@ -31,7 +31,7 @@ export default function TaskForm({
 }: {
   task?: Task;
   projects: ProjectOption[];
-  contacts: Pick<Contact, "id" | "name" | "job_title">[];
+  contacts: Pick<Contact, "id" | "name">[];
   profiles: Pick<Profile, "id" | "full_name">[];
   defaultProjectId?: string;
   onClose: () => void;
@@ -77,7 +77,7 @@ export default function TaskForm({
   // Combine contacts and profiles into one assignee list
   const assigneeOptions = [
     ...profiles.map((p) => ({ value: `profile:${p.id}`, label: p.full_name ?? "Onbekend", sublabel: "Mammut" })),
-    ...contacts.map((c) => ({ value: `contact:${c.id}`, label: c.name, sublabel: c.job_title ?? "Contact" })),
+    ...contacts.map((c) => ({ value: `contact:${c.id}`, label: c.name, sublabel: "Contact" })),
   ];
 
   return (
@@ -166,7 +166,7 @@ export default function TaskForm({
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Project</label>
         <SearchSelect
           name="project_id"
-          placeholder="— Geen —"
+          placeholder="Geen"
           options={projects.map((p) => ({
             value: p.id,
             label: p.title,
@@ -179,7 +179,7 @@ export default function TaskForm({
       {/* Deadline */}
       <div>
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Deadline</label>
-        <DatePicker name="due_date" defaultValue={task?.due_date?.slice(0, 10)} placeholder="— Geen —" />
+        <DatePicker name="due_date" defaultValue={task?.due_date?.slice(0, 10)} placeholder="Geen" />
       </div>
 
       {/* Toewijzen */}
@@ -187,7 +187,7 @@ export default function TaskForm({
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Toewijzen aan</label>
         <SearchSelect
           name="assignee"
-          placeholder="— Niemand —"
+          placeholder="Niemand"
           options={assigneeOptions}
           defaultValue={assignee}
           onChange={(val) => setAssignee(val)}

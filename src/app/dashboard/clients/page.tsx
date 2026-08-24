@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import ClientsPageClient from "./ClientsPageClient";
 
 export default async function ClientsPage() {

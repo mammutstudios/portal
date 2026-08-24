@@ -5,6 +5,7 @@ export type Profile = {
   role: Role;
   full_name: string | null;
   avatar_url: string | null;
+  notification_prefs: Record<string, boolean> | null;
   created_at: string;
 };
 
@@ -18,6 +19,7 @@ export type Client = {
   slug: string | null;
   logo_url: string | null;
   tag: ClientTag | null;
+  moneybird_contact_id?: string | null;
   created_at: string;
 };
 
@@ -29,6 +31,68 @@ export type ClientMember = {
 
 export type ProjectStatus = "upcoming" | "active" | "review" | "completed" | "on_hold";
 
+/** De fases die een project doorloopt; volgorde is die van het echte traject. */
+export const PROJECT_PHASES = ["gereed", "kickoff", "ontwerp", "development", "review", "live"] as const;
+export type ProjectPhase = (typeof PROJECT_PHASES)[number];
+
+export const PHASE_LABEL: Record<ProjectPhase, string> = {
+  gereed: "Klaar voor de start",
+  kickoff: "Kickoff",
+  ontwerp: "Ontwerp",
+  development: "Development",
+  review: "Review",
+  live: "Live",
+};
+
+/**
+ * Welke fases dit project doorloopt, afgeleid uit zijn type.
+ *
+ * Een project dat alleen development is kent geen ontwerpfase, en die dan toch
+ * tonen suggereert een stap die nooit komt. Bij een retainer is er helemaal
+ * geen traject: die loopt door, dus daar tonen we niets.
+ *
+ * Zonder tags weten we niets en tonen we alles; dat is beter dan iets weglaten
+ * wat er wel bij hoort.
+ */
+export function phasesForProject(tags: string[] | null, huidige?: ProjectPhase | null): ProjectPhase[] {
+  const t = (tags ?? []).map((x) => x.toLowerCase());
+
+  if (t.length === 1 && t[0] === "retainer") return [];
+  if (t.length === 0) return [...PROJECT_PHASES];
+
+  const ontwerp = t.includes("design") || t.includes("branding");
+  const development = t.includes("development");
+  if (!ontwerp && !development) return [...PROJECT_PHASES];
+
+  return PROJECT_PHASES.filter(
+    (f) =>
+      // De huidige fase blijft altijd staan, ook als het type later wijzigt.
+      f === huidige ||
+      (f !== "ontwerp" || ontwerp) && (f !== "development" || development),
+  );
+}
+
+/**
+ * Het percentage voor de voortgangsring.
+ *
+ * Een handmatig gezet percentage wint altijd. Staat het op nul terwijl er wel
+ * een fase is gekozen, dan leiden we het af uit die fase: anders staat de ring
+ * op nul bij een project dat allang loopt, en dat leest als kapot.
+ */
+export function projectProgressPercentage(
+  progress: number | null,
+  phase: ProjectPhase | null,
+  tags: string[] | null,
+): number {
+  if (progress != null && progress > 0) return Math.min(100, progress);
+  if (!phase) return 0;
+
+  const fases = phasesForProject(tags, phase);
+  const i = fases.indexOf(phase);
+  if (i < 0 || fases.length < 2) return 0;
+  return Math.round((i / (fases.length - 1)) * 100);
+}
+
 export type Project = {
   id: string;
   client_id: string;
@@ -39,6 +103,21 @@ export type Project = {
   deadline: string | null;
   tags: string[] | null;
   created_at: string;
+  /** Waar het project staat. Zichtbaar voor de klant. */
+  phase: ProjectPhase | null;
+  /** Eén zin over wat er nu gebeurt. Zichtbaar voor de klant. */
+  next_step: string | null;
+  /** Wat wij van de klant nodig hebben. Zichtbaar voor de klant. */
+  client_action: string | null;
+  live_url: string | null;
+  staging_url: string | null;
+  /** Teamlid dat dit project trekt. Zichtbaar voor de klant. */
+  lead_profile_id: string | null;
+  lead?: { id: string; full_name: string | null; avatar_url: string | null } | null;
+  /** Afgesproken prijs excl. btw. Blijft intern: bij een vaste prijs heeft
+   *  een klant niets aan een budgetstand, en het nodigt uit tot sturen op
+   *  uren in plaats van op resultaat. */
+  budget_amount: number | null;
   clients?: Pick<Client, "id" | "name" | "logo_url"> | null;
 };
 
@@ -86,7 +165,6 @@ export type Contact = {
   name: string;
   email: string | null;
   phone: string | null;
-  job_title: string | null;
   created_at: string;
   contact_clients?: { clients: Pick<Client, "id" | "name" | "logo_url" | "client_number"> }[];
 };

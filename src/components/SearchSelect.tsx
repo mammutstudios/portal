@@ -126,14 +126,14 @@ export default function SearchSelect({
           {showAvatars && selected && <Avatar url={selected.avatar} label={selected.label} />}
           {selected ? selected.label : placeholder}
         </span>
-        <CaretDown size={14} weight="bold" className="flex-shrink-0 ml-2" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+        <CaretDown size={15} weight="bold" className="flex-shrink-0 ml-2" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
       </button>
 
       {/* Dropdown */}
       {open && (
         <div
           className="absolute z-50 w-full mt-1 rounded-md overflow-hidden"
-          style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgb(20 0 24 / 0.1)" }}
         >
           {/* Search input */}
           <div className="p-2" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -180,10 +180,10 @@ export default function SearchSelect({
                         /^https?|^\//.test(option.rightMeta.logo_url) ? (
                           <img src={option.rightMeta.logo_url} alt={option.rightMeta.label} className="w-full h-full object-contain" />
                         ) : (
-                          <span style={{ fontSize: "9px" }}>{option.rightMeta.logo_url}</span>
+                          <span style={{ fontSize: "0.5625rem" }}>{option.rightMeta.logo_url}</span>
                         )
                       ) : (
-                        <span style={{ fontSize: "8px", color: "var(--text-muted)", fontWeight: 600 }}>
+                        <span style={{ fontSize: "0.5rem", color: "var(--text-muted)", fontWeight: 600 }}>
                           {option.rightMeta.label.charAt(0).toUpperCase()}
                         </span>
                       )}

@@ -53,25 +53,19 @@ export default function LinkContactToProject({
                 onClick={() => setShowPicker(false)}
               >
                 <span className="font-medium">{contact.name}</span>
-                {contact.job_title && (
-                  <span className="ml-1.5 text-xs" style={{ color: "var(--text-muted)" }}>
-                    {contact.job_title}
-                  </span>
-                )}
               </button>
             </form>
           ))}
         </div>
       )}
 
-      <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="squircle overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {linkedContacts.length > 0 ? (
           <table className="w-full">
             <thead>
-              <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Naam</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Functie</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>E-mail</th>
+              <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Naam</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>E-mail</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -80,9 +74,6 @@ export default function LinkContactToProject({
                 <tr key={lc.id} style={{ borderBottom: i < linkedContacts.length - 1 ? "1px solid var(--border)" : "none" }}>
                   <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--text-heading)" }}>
                     {lc.contacts?.name}
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
-                    {lc.contacts?.job_title ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
                     {lc.contacts?.email ?? "—"}

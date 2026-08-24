@@ -28,13 +28,42 @@
 }
 
 :root {
-  --bg: #ffffff;
-  --bg-secondary: #f7f7f5;
-  --bg-hover: #f1f1ef;
-  --border: #e9e9e7;
-  --text: #37352f;
-  --text-muted: #9b9a97;
-  --text-heading: #1a1a1a;
+  /* Merkkleuren — 1:1 uit mammutstudios.com */
+  --ink: #140018;
+  --lavender: #dbe8fb;
+  --lighter: #e7f0fd;
+  --lightest: #f4f8fe;
+  --white: #ffffff;
+  --muted: #645d73;
+  --ease-osmo: cubic-bezier(0.625, 0.05, 0, 1);
+
+  /* Portal-tokens, afgeleid van bovenstaande */
+  --bg: var(--white);
+  --bg-secondary: color-mix(in srgb, var(--ink) 5%, var(--white));
+  --bg-hover: color-mix(in srgb, var(--ink) 9%, var(--white));
+  --border: color-mix(in srgb, var(--ink) 14%, var(--white));
+  --text: var(--ink);
+  --text-heading: var(--ink);
+  --text-muted: var(--muted);
+  --accent: var(--ink);
+
+  /* Werkblad achter de kaarten. Bewust warmer dan de site-tinten: het koele
+     blauw van --lightest werkte niet als groot vlak in de app. */
+  --canvas: #fafaf9;
+
+  /* Breedte van het zijmenu. Topbar en sidebar delen deze waarde, anders
+     loopt het streepje boven niet meer gelijk met de rand eronder. */
+  --sidebar-width: 15.5rem;
+
+  /* Sidebar — ink op lage dekking (Figma: fill 4%, stroke 2%) */
+  --sidebar-bg: color-mix(in srgb, var(--ink) 4%, transparent);
+  --sidebar-border: color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+/* Basisschaal: 110% — alsof de browser op 110% zoomt.
+   Alles in rem (incl. Tailwind's spacing/text/size-schaal) schaalt mee. */
+html {
+  font-size: 110%;
 }
 
 body {
@@ -55,7 +84,7 @@ button {
 }
 
 .card-hover {
-  transition: background 150ms;
+  transition: background 150ms var(--ease-osmo);
 }
 
 .card-hover:hover {
@@ -63,7 +92,68 @@ button {
 }
 
 th, td {
-  padding-top: 14px;
-  padding-bottom: 14px;
+  padding-top: 0.875rem;
+  padding-bottom: 0.875rem;
   font-size: 0.875rem;
+}
+
+/* Vloeiende hoeken — zelfde techniek als mammutstudios.com:
+   gewone radius als fallback, ruimere radius + squircle waar het kan. */
+.squircle {
+  border-radius: 0.75rem;
+}
+
+@supports (corner-shape: squircle) {
+  .squircle {
+    border-radius: 1.0625rem;
+    corner-shape: squircle;
+  }
+}
+
+/* App-shell: getinte sidebar strak tegen de rand, wit contentvlak */
+.app-shell {
+  background: var(--bg);
+}
+
+.app-sidebar {
+  height: 100vh;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+.app-main {
+  background: var(--canvas);
+}
+
+/* Het zijmenu scrollt wel, maar zonder zichtbare balk: die kwam pal op de rand
+   te liggen en oogde veel zwaarder dan het streepje in de topbar erboven. */
+.app-sidebar nav {
+  scrollbar-width: none;
+}
+
+.app-sidebar nav::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .app-sidebar {
+    /* Zit onder de topbar, dus vult de rij in plaats van het hele scherm.
+       De rand loopt door vanaf het streepje in de topbar. */
+    height: auto;
+    align-self: stretch;
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    border-right: 1px solid var(--border);
+  }
+}
+
+/*
+ * Recharts geeft de grafiek een tabIndex voor toetsenbordbediening, waardoor
+ * een muisklik een blauwe focusring oplevert. Met :focus-visible verdwijnt die
+ * bij de muis maar blijft hij staan bij navigeren met Tab.
+ */
+.recharts-wrapper :focus:not(:focus-visible),
+.recharts-wrapper:focus:not(:focus-visible) {
+  outline: none;
 }

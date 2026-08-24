@@ -8,10 +8,13 @@ export default function ContactForm({
   contact,
   initialClientId,
   onClose,
+  columns = 1,
 }: {
   contact?: Contact;
   initialClientId?: string;
   onClose: () => void;
+  /** Twee kolommen alleen waar het breed genoeg is; in een modal blijft 1 beter. */
+  columns?: 1 | 2;
 }) {
   const ref = useRef<HTMLFormElement>(null);
   const action = contact ? updateContactAction : createContactAction;
@@ -26,6 +29,7 @@ export default function ContactForm({
       {contact && <input type="hidden" name="id" value={contact.id} />}
       {initialClientId && <input type="hidden" name="client_id" value={initialClientId} />}
 
+      <div className={columns === 2 ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "space-y-3"}>
       <div>
         <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
           Naam *
@@ -34,18 +38,6 @@ export default function ContactForm({
           name="name"
           required
           defaultValue={contact?.name}
-          className="w-full px-3 py-2 rounded-md text-sm outline-none"
-          style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
-          Functietitel
-        </label>
-        <input
-          name="job_title"
-          defaultValue={contact?.job_title ?? ""}
           className="w-full px-3 py-2 rounded-md text-sm outline-none"
           style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
         />
@@ -74,6 +66,8 @@ export default function ContactForm({
           className="w-full px-3 py-2 rounded-md text-sm outline-none"
           style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
         />
+      </div>
+
       </div>
 
       <div className="flex justify-end gap-2 pt-1">

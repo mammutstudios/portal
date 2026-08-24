@@ -1,27 +1,40 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
-import Modal from "@/components/Modal";
-import EditProjectForm from "@/components/EditProjectForm";
-import type { Project, Client, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
+import { PHASE_LABEL, projectProgressPercentage } from "@/lib/types";
+import DetailList from "@/components/DetailList";
+import ProgressBar from "@/components/ProgressBar";
+import ProjectComments, { type ProjectComment } from "@/components/ProjectComments";
+import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
+import type { Project, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
+
+const euro = (n: number) =>
+  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 export default function ProjectDetailClient({
   project,
-  clients,
   tasks,
   files,
   timeEntries,
+  invoices = [],
+  comments = [],
+  currentProfileId = null,
+  currentName = null,
+  currentAvatarUrl = null,
 }: {
   project: Project & { clients?: { name: string; id: string } | null };
-  clients: Client[];
   tasks: Task[];
   files: ProjectFile[];
   timeEntries: TimeEntry[];
+  /** Alle facturen van deze klant; de koppeling per project zit erin. */
+  invoices?: KoppelbareFactuur[];
+  comments?: ProjectComment[];
+  currentProfileId?: string | null;
+  currentName?: string | null;
+  currentAvatarUrl?: string | null;
 }) {
-  const [showEdit, setShowEdit] = useState(false);
   const totalHours = timeEntries.reduce((sum, e) => sum + Number(e.hours), 0);
 
   return (
@@ -31,7 +44,7 @@ export default function ProjectDetailClient({
         <Link href="/dashboard/projects" className="hover:underline" style={{ color: "var(--text-muted)" }}>
           Projecten
         </Link>
-        <CaretRight size={12} weight="bold" />
+        <CaretRight size={13} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{project.title}</span>
       </nav>
 
@@ -40,42 +53,136 @@ export default function ProjectDetailClient({
           <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
             {project.title}
           </h1>
-          <ProjectStatusBadge status={project.status} />
         </div>
-        <button
-          onClick={() => setShowEdit(true)}
-          className="text-sm px-3 py-1.5 rounded-md flex-shrink-0"
+        <Link
+          href={`/dashboard/projects/${project.id}/bewerken`}
+          className="card-hover text-sm px-3 py-1.5 rounded-md flex-shrink-0"
           style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
         >
           Bewerken
-        </button>
+        </Link>
       </div>
 
-      {project.tags && project.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {project.tags.map((tag: string) => <ProjectTagBadge key={tag} tag={tag} />)}
-        </div>
-      )}
-
       {project.description && (
-        <p className="text-sm mb-8" style={{ color: "var(--text)" }}>
+        <p className="text-sm mb-6" style={{ color: "var(--text)" }}>
           {project.description}
         </p>
       )}
 
-      <div className="mb-8" />
+      {(project.next_step || project.client_action) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          {project.next_step && (
+            <div className="squircle p-5" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
+              <div className="text-xs uppercase tracking-wide mb-1.5" style={{ color: "var(--text-muted)" }}>
+                Nu aan de beurt
+              </div>
+              <p className="text-sm" style={{ color: "var(--text-heading)" }}>{project.next_step}</p>
+            </div>
+          )}
+          {project.client_action && (
+            <div className="squircle p-5" style={{ border: "1px solid #fde68a", background: "#fefce8" }}>
+              <div className="text-xs uppercase tracking-wide mb-1.5" style={{ color: "#92400e" }}>
+                Van de klant nodig
+              </div>
+              <p className="text-sm" style={{ color: "#92400e" }}>{project.client_action}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Budget en uren staan bewust alleen hier: bij een vaste prijs heeft de
+          klant er niets aan, en het nodigt uit tot sturen op uren. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div className="space-y-4">
+          <DetailList
+          rows={[
+              { label: "Status", value: <ProjectStatusBadge status={project.status} /> },
+            ...(project.phase ? [{ label: "Fase", value: PHASE_LABEL[project.phase] }] : []),
+            ...(project.lead
+              ? [{
+                  label: "Lead",
+                  value: (
+                    <span className="flex items-center gap-2 justify-end">
+                      {project.lead.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={project.lead.avatar_url}
+                          alt=""
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
+                          style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}
+                        >
+                          {(project.lead.full_name ?? "?").trim()[0]?.toUpperCase()}
+                        </span>
+                      )}
+                      {project.lead.full_name ?? "Naamloos"}
+                    </span>
+                  ),
+                }]
+              : []),
+            ...(project.tags && project.tags.length > 0
+              ? [{
+                  label: "Type",
+                  value: (
+                    <span className="flex flex-wrap gap-1.5 justify-end">
+                      {project.tags.map((tag: string) => <ProjectTagBadge key={tag} tag={tag} />)}
+                    </span>
+                  ),
+                }]
+              : []),
+            {
+              label: "Budget",
+              value: project.budget_amount != null ? euro(project.budget_amount) : "Niet gezet",
+            },
+            ...(project.deadline
+              ? [{
+                  label: "Deadline",
+                  value: new Date(project.deadline).toLocaleDateString("nl-NL", {
+                    day: "numeric", month: "long", year: "numeric",
+                  }),
+                }]
+              : []),
+          ]}
+          callout={
+            <ProgressBar
+              value={projectProgressPercentage(project.progress, project.phase, project.tags)}
+            />
+          }
+        />
+        </div>
+
+        <div className="lg:col-span-2">
+          <ProjectComments
+            projectId={project.id}
+            comments={comments}
+            currentProfileId={currentProfileId}
+            currentName={currentName}
+            currentAvatarUrl={currentAvatarUrl}
+          />
+        </div>
+      </div>
+
+      {(project.staging_url || project.live_url) && (
+        <div className="flex flex-wrap gap-2 mb-8">
+          {project.staging_url && <LinkKnop href={project.staging_url} label="Staging" />}
+          {project.live_url && <LinkKnop href={project.live_url} label="Live" />}
+        </div>
+      )}
 
       {/* Tasks */}
       <section className="mb-10">
         <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Taken</h2>
-        <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+        <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           {tasks.length > 0 ? (
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[40rem]">
               <thead>
-                <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Taak</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Deadline</th>
+                <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Taak</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,6 +206,8 @@ export default function ProjectDetailClient({
         </div>
       </section>
 
+      <ProjectInvoices projectId={project.id} invoices={invoices} />
+
       {/* Uren */}
       <section className="mb-10">
         <div className="flex items-center justify-between mb-3">
@@ -107,15 +216,15 @@ export default function ProjectDetailClient({
             <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>{totalHours.toFixed(2)} uur totaal</span>
           )}
         </div>
-        <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+        <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           {timeEntries.length > 0 ? (
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[40rem]">
               <thead>
-                <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Taak</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Uren</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Datum</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Wie</th>
+                <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Taak</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Uren</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Datum</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Wie</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,11 +261,20 @@ export default function ProjectDetailClient({
         </div>
       </section>
 
-      {showEdit && (
-        <Modal title="Project bewerken" onClose={() => setShowEdit(false)}>
-          <EditProjectForm project={project} clients={clients} onClose={() => setShowEdit(false)} />
-        </Modal>
-      )}
     </div>
+  );
+}
+
+function LinkKnop({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="card-hover px-3 py-1.5 rounded-md text-sm"
+      style={{ border: "1px solid var(--border)", color: "var(--text-heading)" }}
+    >
+      {label}
+    </a>
   );
 }

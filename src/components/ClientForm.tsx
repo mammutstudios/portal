@@ -97,13 +97,13 @@ export default function ClientForm({
         {logoMode === "image" ? (
           <div className="flex items-center gap-3">
             <div
-              className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+              className="w-14 h-14 squircle flex items-center justify-center flex-shrink-0 overflow-hidden"
               style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
             >
               {preview ? (
                 <img src={preview} alt="Logo" className="w-full h-full object-contain" />
               ) : (
-                <ImageSquare size={20} style={{ color: "var(--text-muted)" }} />
+                <ImageSquare size={22} style={{ color: "var(--text-muted)" }} />
               )}
             </div>
             <div>

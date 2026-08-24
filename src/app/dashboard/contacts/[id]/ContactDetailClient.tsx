@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CaretRight, EnvelopeSimple, Phone, X } from "@phosphor-icons/react";
+import { CaretRight, X } from "@phosphor-icons/react";
 import Modal from "@/components/Modal";
 import ContactForm from "@/components/ContactForm";
+import DeleteButton from "@/components/DeleteButton";
+import { deleteContactAction } from "@/lib/actions/contacts";
 import SearchSelect from "@/components/SearchSelect";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
 import { linkContactToClientAction, unlinkContactFromClientAction } from "@/lib/actions/contacts";
@@ -70,7 +72,6 @@ export default function ContactDetailClient({
   clients: LinkedClient[];
   projects: ProjectRow[];
 }) {
-  const [showEdit, setShowEdit] = useState(false);
   const [showAddClient, setShowAddClient] = useState(false);
   const router = useRouter();
 
@@ -92,27 +93,20 @@ export default function ContactDetailClient({
         <Link href="/dashboard/contacts" className="hover:underline" style={{ color: "var(--text-muted)" }}>
           Contactpersonen
         </Link>
-        <CaretRight size={12} weight="bold" />
+        <CaretRight size={13} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{contact.name}</span>
       </nav>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-            {contact.name}
-          </h1>
-          {contact.job_title && (
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>{contact.job_title}</p>
-          )}
-        </div>
-        <button
-          onClick={() => setShowEdit(true)}
-          className="text-sm px-3 py-1.5 rounded-md flex-shrink-0"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
-          Bewerken
-        </button>
+      <h1 className="text-3xl font-extrabold mb-6" style={{ color: "var(--text-heading)" }}>
+        {contact.name}
+      </h1>
+
+      {/* Meteen aanpasbaar: dit is geen overzichtspagina meer. */}
+      <div
+        className="squircle p-5 mb-8"
+        style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+      >
+        <ContactForm contact={contact} columns={2} onClose={() => router.refresh()} />
       </div>
 
       {/* Two-column layout */}
@@ -121,32 +115,10 @@ export default function ContactDetailClient({
         {/* Left: info card */}
         <div className="w-64 flex-shrink-0 space-y-4">
 
-          {/* Contact details */}
-          {(contact.email || contact.phone) && (
-            <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
-              {contact.email && (
-                <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: contact.phone ? "1px solid var(--border)" : "none" }}>
-                  <EnvelopeSimple size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                  <a href={`mailto:${contact.email}`} className="text-sm truncate hover:underline" style={{ color: "var(--text)" }}>
-                    {contact.email}
-                  </a>
-                </div>
-              )}
-              {contact.phone && (
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <Phone size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                  <a href={`tel:${contact.phone}`} className="text-sm hover:underline" style={{ color: "var(--text)" }}>
-                    {contact.phone}
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Organisaties */}
           <div>
             <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Organisaties</h2>
-            <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+            <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
               {linkedClients.length === 0 && (
                 <p className="px-3 py-3 text-xs text-center" style={{ color: "var(--text-muted)" }}>Geen organisaties gekoppeld.</p>
               )}
@@ -169,10 +141,10 @@ export default function ContactDetailClient({
                         /^https?|^\//.test(c.logo_url) ? (
                           <img src={c.logo_url} alt={c.name} className="w-full h-full object-contain" />
                         ) : (
-                          <span style={{ fontSize: "10px" }}>{c.logo_url}</span>
+                          <span style={{ fontSize: "0.625rem" }}>{c.logo_url}</span>
                         )
                       ) : (
-                        <span style={{ fontSize: "8px", fontWeight: 600, color: "var(--text-muted)" }}>
+                        <span style={{ fontSize: "0.5rem", fontWeight: 600, color: "var(--text-muted)" }}>
                           {c.name.charAt(0).toUpperCase()}
                         </span>
                       )}
@@ -185,7 +157,7 @@ export default function ContactDetailClient({
                     style={{ color: "var(--text-muted)" }}
                     title="Ontkoppelen"
                   >
-                    <X size={12} weight="bold" />
+                    <X size={13} weight="bold" />
                   </button>
                 </div>
               ))}
@@ -210,13 +182,13 @@ export default function ContactDetailClient({
         {/* Right: projects */}
         <div className="flex-1">
           <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Projecten</h2>
-          <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--border)" }}>
+          <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
             {projects.length > 0 ? (
-              <table className="w-full min-w-[640px]">
+              <table className="w-full min-w-[40rem]">
                 <thead>
-                  <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-                    <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Project</th>
-                    <th className="text-left px-4 py-2.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>Status</th>
+                  <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
                     <th className="w-8 px-4 py-2.5" />
                   </tr>
                 </thead>
@@ -237,7 +209,7 @@ export default function ContactDetailClient({
                         <ProjectStatusBadge status={project.status as any} />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <CaretRight size={14} weight="bold" style={{ color: "var(--text-muted)" }} />
+                        <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
                       </td>
                     </tr>
                   ))}
@@ -252,11 +224,17 @@ export default function ContactDetailClient({
         </div>
       </div>
 
-      {showEdit && (
-        <Modal title="Contactpersoon bewerken" onClose={() => setShowEdit(false)}>
-          <ContactForm contact={contact} onClose={() => setShowEdit(false)} />
-        </Modal>
-      )}
+      <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--border)" }}>
+        <DeleteButton
+          label="Contactpersoon verwijderen"
+          redirectTo="/dashboard/contacts"
+          onDelete={async () => {
+            const fd = new FormData();
+            fd.set("id", contact.id);
+            await deleteContactAction(fd);
+          }}
+        />
+      </div>
 
       {showAddClient && (
         <Modal title="Organisatie koppelen" onClose={() => setShowAddClient(false)}>
