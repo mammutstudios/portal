@@ -103,6 +103,7 @@ export default function ProjectDetailClient({
             invoices={invoices.filter((i) => i.project_id === project.id)}
             tasks={tasks}
             currentProfileId={currentProfileId}
+            canManage
             currentName={currentName}
             currentAvatarUrl={currentAvatarUrl}
           />
