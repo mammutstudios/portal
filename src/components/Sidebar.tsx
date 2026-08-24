@@ -258,7 +258,7 @@ export default function Sidebar({
         style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}
       >
         <div className="flex items-center gap-2.5">
-          <MammutMark className="h-7 w-7 flex-shrink-0" />
+          <MammutMark />
           <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>Mammut Studios</span>
         </div>
         <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-md" style={{ color: "var(--text-heading)" }} aria-label="Menu">
@@ -281,7 +281,7 @@ export default function Sidebar({
         {/* Logo — op desktop staat die in de topbar, hier alleen voor de mobiele drawer */}
         <div className="md:hidden px-4 py-4 flex items-center justify-between gap-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2.5">
-            <MammutMark className="h-7 w-7 flex-shrink-0" />
+            <MammutMark />
             <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
               Mammut Studios
             </span>

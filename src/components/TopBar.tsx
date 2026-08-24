@@ -100,7 +100,7 @@ export default function TopBar({
         // sidebar, waarvan de rand binnen die breedte valt (border-box).
         style={{ width: "calc(var(--sidebar-width) - 1px)" }}
       >
-        <MammutMark className="h-7 w-7 flex-shrink-0" />
+        <MammutMark />
         <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
           Mammut Studios
         </span>
