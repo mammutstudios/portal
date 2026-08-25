@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Select from "@/components/Select";
@@ -8,6 +8,7 @@ import SearchSelect from "@/components/SearchSelect";
 import { createDealAction, updateDealAction } from "@/lib/actions/deals";
 import { quickCreateClientAction } from "@/lib/actions/clients";
 import { quickCreateContactAction } from "@/lib/actions/contacts";
+import { uploadDealBestand, bestandsgrootte } from "@/lib/dealUpload";
 import { DEAL_STATUSSEN, DEAL_STATUS_LABEL, type Deal } from "@/lib/types";
 
 const invoerStijl = {
@@ -53,6 +54,16 @@ export default function DealForm({
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
 
+  // Bij een nieuwe deal bestaat er nog niets om bestanden aan te hangen, dus
+  // houden we ze hier vast tot de deal is opgeslagen. Op een bestaande deal
+  // doet het blok op de dealpagina dat werk.
+  const bestandInvoer = useRef<HTMLInputElement>(null);
+  const [klaarstaand, setKlaarstaand] = useState<File[]>([]);
+  const [sleept, setSleept] = useState(false);
+
+  const voegToe = (lijst: FileList | null) =>
+    setKlaarstaand((eerder) => [...eerder, ...Array.from(lijst ?? [])]);
+
   async function opslaan(formData: FormData) {
     setBezig(true);
     setFout(null);
@@ -65,9 +76,26 @@ export default function DealForm({
       setFout(uitkomst.error);
       return;
     }
-    // Terug naar de lijst, en die opnieuw laten ophalen: anders staat de
-    // zojuist opgeslagen deal er nog niet in.
-    router.push("/dashboard/deals");
+
+    // De klaargezette bestanden kunnen er nu pas aan hangen; de deal bestaat
+    // sinds een regel geleden.
+    // updateDealAction geeft geen id terug, createDealAction wel; vandaar de
+    // losse uitlezing in plaats van een smalle union.
+    const nieuwId = deal ? null : (uitkomst as { id?: string | null }).id ?? null;
+    if (nieuwId && klaarstaand.length > 0) {
+      setBezig(true);
+      for (const bestand of klaarstaand) {
+        const mislukt = await uploadDealBestand(nieuwId, bestand);
+        // De deal staat er al; een mislukte bijlage mag dat niet ongedaan
+        // maken. Je ziet het op de dealpagina en probeert het daar opnieuw.
+        if (mislukt) console.error(`[deals] ${bestand.name}: ${mislukt}`);
+      }
+      setBezig(false);
+    }
+
+    // Naar de deal zelf bij een nieuwe, zodat je ziet wat er staat; anders
+    // terug naar de lijst.
+    router.push(nieuwId ? `/dashboard/deals/${nieuwId}` : "/dashboard/deals");
     router.refresh();
   }
 
@@ -160,6 +188,71 @@ export default function DealForm({
           style={invoerStijl}
         />
       </Veld>
+
+      {!deal && (
+        <Veld label="Bijlagen">
+          {/* Slepen of klikken: allebei komen ze in dezelfde lijst terecht.
+              De bestanden gaan pas de deur uit als de deal is opgeslagen, want
+              vóór die tijd is er niets om ze aan te hangen. */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setSleept(true);
+            }}
+            onDragLeave={() => setSleept(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setSleept(false);
+              voegToe(e.dataTransfer.files);
+            }}
+            onClick={() => bestandInvoer.current?.click()}
+            className="rounded-lg px-4 py-6 text-center cursor-pointer transition-colors"
+            style={{
+              border: `1px dashed ${sleept ? "var(--text-heading)" : "var(--border)"}`,
+              background: sleept ? "var(--bg-hover)" : "var(--bg-secondary)",
+            }}
+          >
+            <p className="text-sm" style={{ color: "var(--text)" }}>
+              Sleep bestanden hierheen of klik om te kiezen
+            </p>
+          </div>
+          <input
+            ref={bestandInvoer}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              voegToe(e.target.files);
+              if (bestandInvoer.current) bestandInvoer.current.value = "";
+            }}
+          />
+
+          {klaarstaand.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {klaarstaand.map((b, i) => (
+                <li
+                  key={`${b.name}-${i}`}
+                  className="flex items-center gap-3 text-sm"
+                  style={{ color: "var(--text)" }}
+                >
+                  <span className="truncate min-w-0 flex-1">{b.name}</span>
+                  <span className="text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+                    {bestandsgrootte(b.size)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setKlaarstaand((eerder) => eerder.filter((_, j) => j !== i))}
+                    className="text-xs hover:underline"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    Weghalen
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Veld>
+      )}
 
       {fout && (
         <p className="text-sm" style={{ color: "#b0413e" }}>

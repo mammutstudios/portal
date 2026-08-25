@@ -2,13 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import {
-  signDealUploadAction,
-  registerDealFileAction,
-  deleteDealFileAction,
-  dealFileUrlAction,
-} from "@/lib/actions/dealBestanden";
+import { deleteDealFileAction, dealFileUrlAction } from "@/lib/actions/dealBestanden";
+import { uploadDealBestand, bestandsgrootte } from "@/lib/dealUpload";
 
 export type DealBestand = {
   id: string;
@@ -16,12 +11,6 @@ export type DealBestand = {
   size_bytes: number | null;
   mime_type: string | null;
   created_at: string;
-};
-
-const grootte = (bytes: number | null) => {
-  if (!bytes) return "";
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`.replace(".", ",");
 };
 
 /**
@@ -47,36 +36,12 @@ export default function DealBestanden({
     if (!bestandenLijst?.length) return;
     setFout(null);
 
-    const supabase = createClient();
-
     // Eén voor één: bij een mislukking weet je meteen welke, en de rest gaat
     // gewoon door.
     for (const bestand of Array.from(bestandenLijst)) {
       setBezig(bestand.name);
-
-      const link = await signDealUploadAction(dealId, bestand.name, bestand.size);
-      if ("error" in link) {
-        setFout(`${bestand.name}: ${link.error}`);
-        continue;
-      }
-
-      const { error } = await supabase.storage
-        .from("documents")
-        .uploadToSignedUrl(link.path, link.token, bestand);
-
-      if (error) {
-        setFout(`${bestand.name}: uploaden mislukt`);
-        continue;
-      }
-
-      const rij = await registerDealFileAction(
-        dealId,
-        link.path,
-        bestand.name,
-        bestand.size,
-        bestand.type || null,
-      );
-      if (rij?.error) setFout(`${bestand.name}: ${rij.error}`);
+      const mislukt = await uploadDealBestand(dealId, bestand);
+      if (mislukt) setFout(`${bestand.name}: ${mislukt}`);
     }
 
     setBezig(null);
@@ -150,7 +115,7 @@ export default function DealBestanden({
                 <span className="truncate block">{b.name}</span>
               </button>
               <span className="text-xs tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>
-                {grootte(b.size_bytes)}
+                {bestandsgrootte(b.size_bytes)}
               </span>
               <button
                 onClick={() => verwijderen(b.id, b.name)}

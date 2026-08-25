@@ -49,7 +49,9 @@ export async function createDealAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/deals");
-  return { success: true };
+  // Het id gaat mee terug: het formulier hangt er meteen de bestanden aan die
+  // je bij het invullen al had gekozen.
+  return { success: true, id: (data as { id?: string } | null)?.id ?? null };
 }
 
 export async function updateDealAction(id: string, formData: FormData) {
