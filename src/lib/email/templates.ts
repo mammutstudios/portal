@@ -142,7 +142,7 @@ export function portalInviteMail(invite: {
       ${punten
         .map(
           ([icoon, kop, uitleg]) => `<tr>
-            <td width="48" valign="top" style="padding:14px 12px 14px 0;border-top:1px solid ${BORDER}">
+            <td width="42" valign="top" style="padding:14px 10px 14px 0;border-top:1px solid ${BORDER}">
               <img src="${SITE}/brand/mail/${icoon}.png" width="32" height="32" alt="" style="display:block;border:0">
             </td>
             <td valign="top" style="padding:14px 0;border-top:1px solid ${BORDER}">

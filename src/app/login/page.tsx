@@ -37,7 +37,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-secondary)" }}>
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <img src="/icon.png" alt="" width={40} height={40} className="inline-block w-10 h-10 mb-4" />
+          <img
+            src="/brand/mammut-studios/mammut-beeldmerk.svg"
+            alt=""
+            width={40}
+            height={40}
+            className="inline-block w-10 h-10 mb-4"
+          />
           <h1 className="text-xl font-semibold" style={{ color: "var(--text-heading)" }}>
             Mammut Portal
           </h1>
