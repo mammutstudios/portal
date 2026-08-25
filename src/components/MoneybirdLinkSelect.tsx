@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
+import SearchSelect from "@/components/SearchSelect";
 import { linkMoneybirdContactAction } from "@/lib/actions/moneybird";
 
 export type MoneybirdContactOption = { id: string; label: string };
@@ -21,10 +22,8 @@ export default function MoneybirdLinkSelect({
   onLinked?: () => void;
 }) {
   const [pending, startTransition] = useTransition();
-  const [value, setValue] = useState(initial ?? "");
 
   function onChange(next: string) {
-    setValue(next);
     const fd = new FormData();
     fd.set("client_id", clientId);
     fd.set("moneybird_contact_id", next);
@@ -35,23 +34,20 @@ export default function MoneybirdLinkSelect({
   }
 
   return (
-    <select
-      value={value}
-      disabled={pending}
+    <div
       onClick={(e) => e.stopPropagation()}
-      onChange={(e) => onChange(e.target.value)}
-      className="squircle px-2.5 py-2 text-sm w-full max-w-sm"
-      style={{
-        border: "1px solid var(--border)",
-        background: "var(--bg)",
-        color: value ? "var(--text-heading)" : "var(--text-muted)",
-        opacity: pending ? 0.5 : 1,
-      }}
+      style={{ opacity: pending ? 0.5 : 1, pointerEvents: pending ? "none" : undefined }}
     >
-      <option value="">Niet gekoppeld</option>
-      {options.map((o) => (
-        <option key={o.id} value={o.id}>{o.label}</option>
-      ))}
-    </select>
+      <SearchSelect
+        name="moneybird_contact_id"
+        placeholder="Niet gekoppeld"
+        defaultValue={initial ?? undefined}
+        options={[
+          { value: "", label: "Niet gekoppeld" },
+          ...options.map((o) => ({ value: o.id, label: o.label })),
+        ]}
+        onChange={(next) => onChange(next ?? "")}
+      />
+    </div>
   );
 }

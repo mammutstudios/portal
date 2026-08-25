@@ -84,6 +84,12 @@ export default function ClientDetailClient({
     <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
   );
 
+  const meta = [
+    client.client_number,
+    client.email,
+    client.slug ? `/${client.slug}` : null,
+  ].filter(Boolean) as string[];
+
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
@@ -94,10 +100,10 @@ export default function ClientDetailClient({
         <span style={{ color: "var(--text-heading)" }}>{client.name}</span>
       </nav>
 
-      <div className="flex items-start justify-between mb-1">
-        <div className="flex items-center gap-4">
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4 min-w-0">
           <div
-            className="w-12 h-12 squircle overflow-hidden flex items-center justify-center flex-shrink-0"
+            className="w-14 h-14 squircle overflow-hidden flex items-center justify-center flex-shrink-0"
             style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
           >
             {client.logo_url ? (
@@ -112,64 +118,27 @@ export default function ClientDetailClient({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-              {client.name}
-            </h1>
-            {client.client_number && (
-              <span className="text-sm" style={{ color: "var(--text-muted)" }}>{client.client_number}</span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
+                {client.name}
+              </h1>
+              {client.tag && <ClientTagBadge tag={client.tag} />}
+            </div>
+            {meta.length > 0 && (
+              <p className="text-sm mt-1 truncate" style={{ color: "var(--text-muted)" }}>
+                {meta.join(" · ")}
+              </p>
             )}
-            {client.tag && <ClientTagBadge tag={client.tag} />}
           </div>
         </div>
         <button
           onClick={() => setShowEdit(true)}
-          className="text-sm px-3 py-1.5 rounded-md"
+          className="card-hover text-sm px-3 py-1.5 rounded-md flex-shrink-0"
           style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
         >
           Bewerken
         </button>
-      </div>
-
-      {client.email && (
-        <p className="text-sm mb-1 mt-1" style={{ color: "var(--text-muted)" }}>{client.email}</p>
-      )}
-      {client.slug && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>/{client.slug}</p>
-      )}
-      <div className="mb-8" />
-
-      {/* Moneybird — eenmalig instellen per organisatie */}
-      {moneybirdContacts.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-sm font-medium mb-1" style={{ color: "var(--text-heading)" }}>
-            Moneybird
-          </h2>
-          <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
-            Welke relatie in Moneybird hoort bij deze organisatie? Facturen van die
-            relatie komen daarna automatisch bij deze klant terecht.
-          </p>
-          <MoneybirdLinkSelect
-            clientId={client.id}
-            value={client.moneybird_contact_id ?? null}
-            options={moneybirdContacts}
-            onLinked={() => router.refresh()}
-          />
-        </div>
-      )}
-
-      {/* Analytics — eenmalig instellen per organisatie */}
-      <div className="mb-8">
-        <h2 className="text-sm font-medium mb-1" style={{ color: "var(--text-heading)" }}>
-          Analytics
-        </h2>
-        <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
-          Het domein zoals het in Plausible staat. De klant ziet die cijfers in het portaal.
-        </p>
-        <PlausibleSiteField
-          clientId={client.id}
-          value={(client as { plausible_site_id?: string | null }).plausible_site_id ?? null}
-        />
       </div>
 
       {/* Contactpersonen */}
@@ -250,6 +219,52 @@ export default function ClientDetailClient({
             Nog geen contactpersonen.
           </p>
         )}
+      </div>
+
+      {/* Instellingen: eenmalig per organisatie, daarna loopt het vanzelf */}
+      <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>
+        Instellingen
+      </h2>
+
+      <div
+        className="squircle p-5 mb-8"
+        style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h3 className="text-sm font-medium mb-1" style={{ color: "var(--text-heading)" }}>
+              Moneybird
+            </h3>
+            <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+              Welke relatie in Moneybird hoort bij deze organisatie?
+            </p>
+            {moneybirdContacts.length > 0 ? (
+              <MoneybirdLinkSelect
+                clientId={client.id}
+                value={client.moneybird_contact_id ?? null}
+                options={moneybirdContacts}
+                onLinked={() => router.refresh()}
+              />
+            ) : (
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Geen relaties opgehaald uit Moneybird.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium mb-1" style={{ color: "var(--text-heading)" }}>
+              Analytics
+            </h3>
+            <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+              Het domein zoals het in Plausible staat.
+            </p>
+            <PlausibleSiteField
+              clientId={client.id}
+              value={(client as { plausible_site_id?: string | null }).plausible_site_id ?? null}
+            />
+          </div>
+        </div>
       </div>
 
       <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>
