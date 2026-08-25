@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { meet } from "@/lib/timing";
 
 export type MonthStats = {
   /** Eerste dag van de maand, als YYYY-MM. */
@@ -130,10 +131,12 @@ export const maandCijfers = cache(async function maandCijfers(
 
   // Tickets en uren hangen aan projecten, niet aan klanten. Deze vraag stond
   // eerder in monthStats en ging dus zes keer over de lijn.
-  const { data } = await supabase.from("projects").select("id").in("client_id", clientIds);
+  const { data } = await meet("maand.projecten", () =>
+    supabase.from("projects").select("id").in("client_id", clientIds),
+  );
   const projectIds = (data ?? []).map((p) => p.id as string);
 
-  return Promise.all(
-    maanden.map((m) => monthStats(supabase, m.year, m.month, projectIds, clientIds)),
+  return meet("maand.tellingen", () =>
+    Promise.all(maanden.map((m) => monthStats(supabase, m.year, m.month, projectIds, clientIds))),
   );
 });

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { meet } from "@/lib/timing";
 
 /**
  * Wie kijkt er naar het portaal, en welke klanten mag diegene zien?
@@ -50,7 +51,7 @@ export type PortalContext = {
  * (Supabase-dashboard, Auth → Signing Keys) meteen sneller.
  */
 async function getUserId(supabase: SupabaseClient): Promise<string | null> {
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await meet("context.getClaims", () => supabase.auth.getClaims());
   if (!error && data?.claims?.sub) return data.claims.sub;
   if (error) {
     // Alleen bij een echt probleem terugvallen; geen sessie is geen fout.
@@ -91,7 +92,7 @@ export const getPortalContext = cache(async function getPortalContext(): Promise
   // vraag als het lidmaatschap, want de kolom heet user_id, niet profile_id:
   // met de verkeerde naam faalt de query stil en houdt elke klant een leeg
   // portaal over.
-  const [profielAntwoord, ledenAntwoord, previewAntwoord] = await Promise.all([
+  const [profielAntwoord, ledenAntwoord, previewAntwoord] = await meet("context.queries", () => Promise.all([
     supabase.from("profiles").select("full_name, role").eq("id", userId).maybeSingle(),
     supabase
       .from("client_members")
@@ -100,7 +101,7 @@ export const getPortalContext = cache(async function getPortalContext(): Promise
     previewClientId
       ? supabase.from("clients").select(KLANTVELDEN).eq("id", previewClientId).maybeSingle()
       : Promise.resolve({ data: null }),
-  ]);
+  ]));
 
   const profile = profielAntwoord.data as { full_name: string | null; role: string | null } | null;
   const isAdmin = profile?.role === "admin";
