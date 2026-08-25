@@ -2,8 +2,18 @@
 
 import { useState, useRef } from "react";
 import { ImageSquare } from "@phosphor-icons/react";
-import Picker from "@emoji-mart/react";
-import data from "@emoji-mart/data";
+import dynamic from "next/dynamic";
+
+/**
+ * Lui geladen: de kiezer plus zijn dataset is de grootste brok JavaScript van
+ * de app. Zo komt die pas binnen als je hem daadwerkelijk opent, in plaats van
+ * bij elk bezoek aan de klantenpagina's.
+ */
+const EmojiPicker = dynamic(() => import("@/components/EmojiPicker"), {
+  ssr: false,
+  // Dezelfde hoogte als de kiezer, anders springt het paneel bij het openen.
+  loading: () => <div aria-hidden style={{ height: 435 }} />,
+});
 import { createClientAction, updateClientAction } from "@/lib/actions/clients";
 import { useRouter } from "next/navigation";
 import type { Client } from "@/lib/types";
@@ -162,15 +172,7 @@ export default function ClientForm({
                 </button>
               </div>
             )}
-            <Picker
-              data={data}
-              onEmojiSelect={(e: { native: string }) => setSelectedEmoji(e.native)}
-              locale="nl"
-              theme="light"
-              previewPosition="none"
-              skinTonePosition="none"
-              set="native"
-            />
+            <EmojiPicker onSelect={setSelectedEmoji} />
           </div>
         )}
       </div>
