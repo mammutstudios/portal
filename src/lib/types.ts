@@ -34,6 +34,26 @@ export type ClientMember = {
 
 export type ProjectStatus = "upcoming" | "active" | "review" | "completed" | "on_hold";
 
+/**
+ * Waar een status in een lijst terechtkomt. Actief bovenaan, dan wat eraan
+ * komt, dan wat stilligt, en afgerond onderaan. Eén bron voor het dashboard
+ * en het klantportaal, zodat lijsten niet elk hun eigen volgorde krijgen.
+ */
+export const PROJECT_STATUS_VOLGORDE: Record<ProjectStatus, number> = {
+  active: 0,
+  upcoming: 1,
+  on_hold: 2,
+  review: 3,
+  completed: 4,
+};
+
+/** Sorteert op status. Stabiel, dus binnen een status blijft de invoervolgorde staan. */
+export function opStatus<T extends { status: ProjectStatus }>(rijen: T[]): T[] {
+  return [...rijen].sort(
+    (a, b) => PROJECT_STATUS_VOLGORDE[a.status] - PROJECT_STATUS_VOLGORDE[b.status],
+  );
+}
+
 /** De fases die een project doorloopt; volgorde is die van het echte traject. */
 export const PROJECT_PHASES = ["kickoff", "ontwerp", "development", "review", "live"] as const;
 export type ProjectPhase = (typeof PROJECT_PHASES)[number];

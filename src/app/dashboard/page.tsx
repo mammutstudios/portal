@@ -11,10 +11,9 @@ import {
   plausibleIsConfigured,
   siteStats,
   series as siteSeries,
-  currentVisitors,
 } from "@/lib/analytics/plausible";
 import { resolvePeriod, isPeriod } from "@/lib/analytics/periods";
-import type { Project } from "@/lib/types";
+import { opStatus, PROJECT_STATUS_VOLGORDE, type Project } from "@/lib/types";
 
 /**
  * Onze eigen website. Bewust een losse instelling in plaats van een klantnaam
@@ -71,9 +70,14 @@ export default async function DashboardPage({
       ])
     : [null, [], null, null, null];
 
+  // Actief vóór upcoming, en binnen dezelfde status zakken retainers naar
+  // onderen. De query haalt alleen active en upcoming op, dus on hold en
+  // afgerond komen hier sowieso niet langs.
   const isRetainer = (p: Project) => p.tags?.some((t) => t.toLowerCase() === "retainer") ?? false;
-  const sortedProjects = [...((projects ?? []) as Project[])].sort(
-    (a, b) => Number(isRetainer(a)) - Number(isRetainer(b))
+  const sortedProjects = opStatus((projects ?? []) as Project[]).sort(
+    (a, b) =>
+      PROJECT_STATUS_VOLGORDE[a.status] - PROJECT_STATUS_VOLGORDE[b.status] ||
+      Number(isRetainer(a)) - Number(isRetainer(b)),
   );
 
   const thisMonthTotal = (transactions ?? [])

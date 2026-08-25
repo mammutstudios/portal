@@ -17,24 +17,6 @@ export type PortalProject = {
   client_action: string | null;
 };
 
-/**
- * Waar een status in de lijst terechtkomt. Actief bovenaan, dan wat eraan
- * komt, dan wat stilligt. Afgerond staat onderaan en komt in het portaal
- * meestal niet eens langs.
- */
-const VOLGORDE: Record<ProjectStatus, number> = {
-  active: 0,
-  upcoming: 1,
-  on_hold: 2,
-  review: 3,
-  completed: 4,
-};
-
-/** Sorteert op status. Stabiel, dus binnen een status blijft de invoervolgorde staan. */
-export function opStatus<T extends { status: ProjectStatus }>(rijen: T[]): T[] {
-  return [...rijen].sort((a, b) => VOLGORDE[a.status] - VOLGORDE[b.status]);
-}
-
 export default function PortalProjectList({
   projecten,
   leegTekst = "Er lopen op dit moment geen projecten.",

@@ -6,7 +6,7 @@ import { CaretRight } from "@phosphor-icons/react";
 import Modal from "@/components/Modal";
 import CreateProjectForm from "@/components/CreateProjectForm";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
-import type { Project, Client } from "@/lib/types";
+import { opStatus, type Project, type Client } from "@/lib/types";
 
 const Chevron = () => (
   <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
@@ -41,10 +41,7 @@ export default function ProjectsPageClient({
 
   // Actief bovenaan, daarna wat eraan komt en de rest. Binnen elke groep blijft
   // de volgorde uit de query staan (nieuwste eerst), want sort is stabiel.
-  const VOLGORDE: Record<string, number> = { active: 0, upcoming: 1, on_hold: 2, review: 3, completed: 4 };
-  const gesorteerd = [...filtered].sort(
-    (a, b) => (VOLGORDE[a.status] ?? 9) - (VOLGORDE[b.status] ?? 9),
-  );
+  const gesorteerd = opStatus(filtered);
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">

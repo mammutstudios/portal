@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal";
 import PortalProjectList, {
-  opStatus,
   PORTAL_PROJECT_KOLOMMEN,
   type PortalProject,
 } from "@/components/PortalProjectList";
+import { opStatus } from "@/lib/types";
 import PageSkeleton from "@/components/PageSkeleton";
 import PortalEmpty from "../PortalEmpty";
 
