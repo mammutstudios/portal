@@ -36,65 +36,66 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-secondary)" }}>
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <img
-            src="/brand/mammut-studios/mammut-beeldmerk.svg"
-            alt=""
-            width={40}
-            height={40}
-            className="inline-block w-10 h-10 mb-4"
-          />
-          <h1 className="text-xl font-semibold" style={{ color: "var(--text-heading)" }}>
-            Mammut Portal
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+        {/* Alles in één vlak: het merk hoort bij het formulier, niet erboven te
+            zweven. Links uitgelijnd, want dat leest als een formulier. */}
+        <div className="squircle p-6" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-3">
+            <img
+              src="/brand/mammut-studios/mammut-beeldmerk.svg"
+              alt=""
+              width={40}
+              height={40}
+              className="w-10 h-10 flex-shrink-0"
+            />
+            <h1 className="text-xl font-semibold" style={{ color: "var(--text-heading)" }}>
+              Mammut Portal
+            </h1>
+          </div>
+
+          <p className="mt-3 text-sm" style={{ color: "var(--text-muted)" }}>
             {step === "email" ? "Log in om verder te gaan" : `Inloglink verstuurd naar ${email}`}
           </p>
-        </div>
 
-        <div className="squircle p-6" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
           {step === "email" ? (
-            <form onSubmit={handleEmailSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm mb-1.5" style={{ color: "var(--text)" }}>
-                  E-mailadres
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  placeholder="jouw@email.com"
-                  className="w-full px-3 py-2 text-sm rounded-md outline-none"
-                  style={{
-                    background: "var(--bg-secondary)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text)",
-                  }}
-                />
-              </div>
+            <form onSubmit={handleEmailSubmit} className="mt-6">
+              <label className="block text-sm mb-1.5" style={{ color: "var(--text)" }}>
+                E-mailadres
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="jouw@email.com"
+                className="w-full px-3 py-2 text-sm rounded-md outline-none"
+                style={{
+                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text)",
+                }}
+              />
 
-              {error && <p className="text-sm" style={{ color: "#c0392b" }}>{error}</p>}
+              {error && <p className="mt-3 text-sm" style={{ color: "#c0392b" }}>{error}</p>}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2 px-4 text-sm font-medium rounded-md transition-opacity disabled:opacity-50"
+                className="w-full mt-6 py-2 px-4 text-sm font-medium rounded-md transition-opacity disabled:opacity-50"
                 style={{ background: "var(--text-heading)", color: "#fff" }}
               >
                 {loading ? "Versturen…" : "Stuur inloglink"}
               </button>
             </form>
           ) : (
-            <div className="space-y-4 text-center">
+            <div className="mt-6">
               <p className="text-sm" style={{ color: "var(--text)" }}>
                 Open de mail en klik op de knop om verder te gaan. De link werkt één keer en verloopt na een uur.
               </p>
               <button
                 type="button"
                 onClick={() => { setStep("email"); setError(null); }}
-                className="w-full text-sm"
+                className="mt-6 text-sm"
                 style={{ color: "var(--text-muted)" }}
               >
                 ← Ander e-mailadres
