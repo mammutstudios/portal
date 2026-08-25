@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Paperclip } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Select from "@/components/Select";
@@ -206,12 +207,13 @@ export default function DealForm({
               voegToe(e.dataTransfer.files);
             }}
             onClick={() => bestandInvoer.current?.click()}
-            className="rounded-lg px-4 py-6 text-center cursor-pointer transition-colors"
+            className="rounded-lg px-4 py-6 flex items-center justify-center gap-2.5 cursor-pointer transition-colors"
             style={{
               border: `1px dashed ${sleept ? "var(--text-heading)" : "var(--border)"}`,
-              background: sleept ? "var(--bg-hover)" : "var(--bg-secondary)",
+              background: sleept ? "var(--bg-hover)" : "var(--bg)",
             }}
           >
+            <Paperclip size={18} style={{ color: "var(--text-muted)" }} />
             <p className="text-sm" style={{ color: "var(--text)" }}>
               Sleep bestanden hierheen of klik om te kiezen
             </p>
