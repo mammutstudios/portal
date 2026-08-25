@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActiviteit } from "@/lib/activity";
 
 export async function createTaskAction(formData: FormData) {
   const supabase = await createClient();
@@ -18,6 +19,13 @@ export async function createTaskAction(formData: FormData) {
   });
 
   if (error) throw new Error(error.message);
+
+  await logActiviteit({
+    action: "taak.aangemaakt",
+    entityType: "taak",
+    entityLabel: (formData.get("title") as string)?.trim() || null,
+    meta: { project_id: (formData.get("project_id") as string) || null },
+  });
 
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard");
@@ -64,6 +72,14 @@ export async function updateTaskAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+/** Zoals de ticketstatussen in de app heten. */
+const TAAK_STATUS_LABEL: Record<string, string> = {
+  todo: "Te doen",
+  in_progress: "Bezig",
+  review: "Review",
+  done: "Klaar",
+};
+
 export async function updateTaskStatusAction(formData: FormData) {
   const supabase = await createClient();
   const id = formData.get("id") as string;
@@ -73,6 +89,18 @@ export async function updateTaskStatusAction(formData: FormData) {
     .update({ status, completed_at: await completedAtFor(supabase, id, status) })
     .eq("id", id);
   if (error) console.error("updateTaskStatus error:", error);
+
+  if (!error) {
+    const { data: taak } = await supabase.from("tasks").select("title").eq("id", id).maybeSingle();
+    await logActiviteit({
+      action: "taak.status",
+      entityType: "taak",
+      entityId: id,
+      entityLabel: (taak as { title?: string } | null)?.title ?? null,
+      meta: { naar: TAAK_STATUS_LABEL[status] ?? status },
+    });
+  }
+
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard");
 }

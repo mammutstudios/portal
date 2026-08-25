@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActiviteit } from "@/lib/activity";
 
 const MIME: Record<string, string> = {
   svg: "image/svg+xml",
@@ -67,6 +68,14 @@ export async function createClientAction(formData: FormData) {
     if (url) await supabase.from("clients").update({ logo_url: url }).eq("id", client.id);
   }
 
+  await logActiviteit({
+    action: "klant.aangemaakt",
+    entityType: "klant",
+    entityId: (client as { id?: string } | null)?.id ?? null,
+    entityLabel: name?.trim() || null,
+    clientId: (client as { id?: string } | null)?.id ?? null,
+  });
+
   revalidatePath("/dashboard/clients");
   revalidatePath("/dashboard");
   return { success: true };
@@ -108,6 +117,14 @@ export async function updateClientAction(id: string, formData: FormData) {
 
   if (error) return { error: error.message };
 
+  await logActiviteit({
+    action: "klant.bijgewerkt",
+    entityType: "klant",
+    entityId: id,
+    entityLabel: name?.trim() || null,
+    clientId: id,
+  });
+
   revalidatePath("/dashboard/clients");
   revalidatePath(`/dashboard/clients/${id}`);
   revalidatePath("/dashboard");
@@ -138,12 +155,25 @@ export async function deleteClientAction(formData: FormData): Promise<{ error?: 
     };
   }
 
+  // De naam nu ophalen; na het verwijderen is hij nergens meer te halen.
+  const { data: teVerwijderen } = await supabase
+    .from("clients")
+    .select("name")
+    .eq("id", id)
+    .maybeSingle();
+
   // Facturen laten we staan; ze verliezen alleen hun koppeling.
   await supabase.from("moneybird_invoices").update({ client_id: null }).eq("client_id", id);
   await supabase.from("contact_clients").delete().eq("client_id", id);
 
   const { error } = await supabase.from("clients").delete().eq("id", id);
   if (error) return { error: error.message };
+
+  await logActiviteit({
+    action: "klant.verwijderd",
+    entityType: "klant",
+    entityLabel: (teVerwijderen as { name?: string } | null)?.name ?? null,
+  });
 
   revalidatePath("/dashboard/clients");
   return {};

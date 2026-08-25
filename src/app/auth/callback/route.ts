@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { logActiviteit } from "@/lib/activity";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -45,6 +46,10 @@ export async function GET(request: NextRequest) {
     .select("role")
     .eq("id", user.id)
     .single();
+
+  // Het inloggen zelf vastleggen. actorId expliciet: op dit punt in het
+  // verzoek zit de sessie nog in de response-cookies, niet in de request.
+  await logActiviteit({ action: "login", actorId: user.id, entityType: "gebruiker", entityId: user.id });
 
   const redirectTo = profile?.role === "admin" ? "/dashboard" : "/portal";
   response.headers.set("location", `${origin}${redirectTo}`);

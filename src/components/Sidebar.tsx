@@ -19,6 +19,7 @@ import {
   List,
   ChartBar,
   Palette,
+  Pulse as PulseIcon,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -198,6 +199,11 @@ const adminNav: NavItem[] = [
     label: "Analytics",
     href: "/dashboard/analytics",
     icon: <ChartBar size={16} weight="fill" />,
+  },
+  {
+    label: "Activiteiten",
+    href: "/dashboard/activiteiten",
+    icon: <PulseIcon size={19} weight="fill" />,
   },
   {
     label: "Finance",

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActiviteit } from "@/lib/activity";
 
 export async function createTimeEntryAction(formData: FormData) {
   const supabase = await createClient();
@@ -16,6 +17,26 @@ export async function createTimeEntryAction(formData: FormData) {
   });
 
   if (error) throw new Error(error.message);
+
+  const projectId = (formData.get("project_id") as string) || null;
+  let projectTitel: string | null = null;
+  if (projectId) {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("title")
+      .eq("id", projectId)
+      .maybeSingle();
+    projectTitel = (project as { title?: string } | null)?.title ?? null;
+  }
+
+  await logActiviteit({
+    action: "uren.geschreven",
+    entityType: "project",
+    entityId: projectId,
+    entityLabel: projectTitel ?? (formData.get("task") as string) ?? null,
+    meta: { uren: parseFloat(formData.get("hours") as string) || 0 },
+  });
+
   revalidatePath("/dashboard/toggl");
 }
 

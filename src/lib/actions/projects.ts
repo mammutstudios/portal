@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { PHASE_LABEL, type ProjectPhase } from "@/lib/types";
+import { logActiviteit } from "@/lib/activity";
 
 /** Zoals de statussen in de app heten. */
 const STATUS_LABEL: Record<string, string> = {
@@ -33,7 +34,7 @@ export async function createProjectAction(formData: FormData) {
   if (!client_id) return { error: "Organisatie is verplicht" };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("projects").insert({
+  const { data: nieuw, error } = await supabase.from("projects").insert({
     title: title.trim(),
     client_id,
     description: description?.trim() || null,
@@ -51,6 +52,14 @@ export async function createProjectAction(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  await logActiviteit({
+    action: "project.aangemaakt",
+    entityType: "project",
+    entityId: (nieuw as { id?: string } | null)?.id ?? null,
+    entityLabel: title.trim(),
+    clientId: client_id,
+  });
 
   revalidatePath("/dashboard/projects");
   revalidatePath("/dashboard");
@@ -122,6 +131,20 @@ export async function updateProjectAction(id: string, formData: FormData) {
   }).eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Een statuswissel is het vermelden waard; de rest is "bijgewerkt".
+  const oudeStatus = (vorige as { status?: string } | null)?.status;
+  await logActiviteit(
+    oudeStatus && oudeStatus !== status
+      ? {
+          action: "project.status",
+          entityType: "project",
+          entityId: id,
+          entityLabel: title.trim(),
+          meta: { van: STATUS_LABEL[oudeStatus] ?? oudeStatus, naar: STATUS_LABEL[status] ?? status },
+        }
+      : { action: "project.bijgewerkt", entityType: "project", entityId: id, entityLabel: title.trim() },
+  );
 
   if (vorige) {
     const wie = user?.id ?? null;
@@ -218,11 +241,34 @@ export async function linkInvoiceToProjectAction(invoiceId: string, projectId: s
     .from("moneybird_invoices")
     .update({ project_id: projectId })
     .eq("id", invoiceId)
-    .select("id");
+    .select("id, reference");
 
   if (error) return { error: error.message };
   if (!data || data.length === 0) {
     return { error: "Koppelen lukte niet: geen rechten of factuur niet gevonden" };
+  }
+
+  const kenmerk = (data[0] as { reference?: string | null }).reference ?? "zonder kenmerk";
+  if (projectId) {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("title")
+      .eq("id", projectId)
+      .maybeSingle();
+    await logActiviteit({
+      action: "factuur.gekoppeld",
+      entityType: "factuur",
+      entityId: invoiceId,
+      entityLabel: kenmerk,
+      meta: { project: (project as { title?: string } | null)?.title ?? null },
+    });
+  } else {
+    await logActiviteit({
+      action: "factuur.ontkoppeld",
+      entityType: "factuur",
+      entityId: invoiceId,
+      entityLabel: kenmerk,
+    });
   }
 
   revalidatePath("/dashboard/projects");
