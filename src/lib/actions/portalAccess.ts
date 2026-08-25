@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { logActiviteit } from "@/lib/activity";
 import { sendMail } from "@/lib/email/send";
 import { portalInviteMail } from "@/lib/email/templates";
+import { plausibleIsConfigured } from "@/lib/analytics/plausible";
 
 /**
  * Toegang tot het klantportaal, uitgedeeld vanaf de contactpersoon.
@@ -148,8 +149,9 @@ export async function inviteContactAction(formData: FormData): Promise<ToegangRe
 
   const organisaties = koppelingen.map((k) => k.clients?.name).filter(Boolean) as string[];
 
-  // Analytics staat alleen in de navigatie als de klant een site heeft die we
-  // meten (portal/layout.tsx), dus beloven we het in de mail ook alleen dan.
+  // Analytics staat alleen in de navigatie als Plausible aanstaat én de klant
+  // een site heeft die we meten (portal/layout.tsx:69). Exact dezelfde twee
+  // voorwaarden, anders belooft de mail een menu-item dat er niet is.
   const { data: metingen } = await service
     .from("clients")
     .select("plausible_site_id")
@@ -159,7 +161,8 @@ export async function inviteContactAction(formData: FormData): Promise<ToegangRe
     contactName: contact.name,
     clientNames: organisaties,
     loginUrl: loginUrl(),
-    metAnalytics: (metingen ?? []).some((c) => Boolean(c.plausible_site_id)),
+    metAnalytics:
+      plausibleIsConfigured() && (metingen ?? []).some((c) => Boolean(c.plausible_site_id)),
   });
 
   const { sent, error: mailFout } = await sendMail({ to: [email], subject: mail.subject, html: mail.html });
