@@ -181,7 +181,7 @@ async function WebsiteBlok({
         prevStats={cijfersVorig}
         series={bezoekers}
         interval={periode.interval}
-        periodeSlot={<PeriodPicker current={periodeKey} />}
+        periodeSlot={<PeriodPicker current={periodeKey} blok />}
       />
     </div>
   );

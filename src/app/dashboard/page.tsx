@@ -157,7 +157,7 @@ export default async function DashboardPage({
             prevStats={eigenVorig}
             series={eigenReeks}
             interval={periode.interval}
-            periodeSlot={<PeriodPicker current={periodeKey} />}
+            periodeSlot={<PeriodPicker current={periodeKey} blok />}
           />
         </div>
       )}

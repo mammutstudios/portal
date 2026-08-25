@@ -92,7 +92,11 @@ function ChartTooltip({
 
 function Metric({ label, value, change }: { label: string; value: string; change?: number | null }) {
   return (
-    <div className="px-5 py-4" style={{ borderLeft: "1px solid var(--border)" }}>
+    // Geen eigen rand: de scheidingslijnen komen uit de tussenruimte van het
+    // raster hieronder. Als inline stijl was die rand niet weg te krijgen bij
+    // het eerste vak, want een class overrulet geen inline stijl, en dan stond
+    // er een dubbele lijn tegen de rand van de kaart.
+    <div className="px-5 py-4" style={{ background: "var(--bg)" }}>
       <div className="text-xs uppercase tracking-wide mb-1.5 truncate" style={{ color: "var(--text-muted)" }}>
         {label}
       </div>
@@ -162,17 +166,17 @@ export default function VisitorsCard({
       style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
     >
       {periodeSlot && (
-        <div
-          className="md:hidden flex justify-end px-3 py-2.5"
-          style={{ borderBottom: "1px solid var(--border)" }}
-        >
+        <div className="md:hidden px-3 py-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
           {periodeSlot}
         </div>
       )}
 
+      {/* gap-px op een gekleurde ondergrond: dat tekent één lijn tussen de
+          vakken en geen enkele aan de buitenkant, bij twee én bij vier
+          kolommen. */}
       <div
-        className="grid grid-cols-2 lg:grid-cols-4 [&>*:first-child]:border-l-0"
-        style={{ borderBottom: "1px solid var(--border)" }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-px"
+        style={{ background: "var(--border)", borderBottom: "1px solid var(--border)" }}
       >
         <Metric label="Unieke bezoekers" value={getal(stats?.visitors ?? 0)}
           change={delta(stats?.visitors, prevStats?.visitors)} />

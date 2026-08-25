@@ -10,7 +10,14 @@ import { PERIODS } from "@/lib/analytics/periods";
  * Gedeeld door de analyticspagina's en het overzicht, zodat die drie
  * dezelfde periodes aanbieden.
  */
-export default function PeriodPicker({ current }: { current: string }) {
+export default function PeriodPicker({
+  current,
+  blok = false,
+}: {
+  current: string;
+  /** Over de volle breedte, voor het vak bovenin de kaart op mobiel. */
+  blok?: boolean;
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const [open, setOpen] = useState(false);
@@ -24,10 +31,10 @@ export default function PeriodPicker({ current }: { current: string }) {
   }
 
   return (
-    <div className="relative">
+    <div className={`relative ${blok ? "w-full" : ""}`}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 px-3 rounded-lg text-sm"
+        className={`flex items-center gap-2 px-3 rounded-lg text-sm ${blok ? "w-full justify-between" : ""}`}
         style={{ height: 36, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text-heading)" }}
       >
         {label}
