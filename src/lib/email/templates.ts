@@ -123,8 +123,6 @@ export function portalInviteMail(invite: {
   contactName: string | null;
   clientNames: string[];
   loginUrl: string;
-  /** Analytics staat alleen in de lijst als die klant een site heeft die we meten. */
-  metAnalytics?: boolean;
 }) {
   const naam = invite.contactName?.trim().split(" ")[0];
   const organisaties = invite.clientNames.filter(Boolean);
@@ -139,11 +137,8 @@ export function portalInviteMail(invite: {
     ["overzicht", "Overzicht", "Wat er op dit moment speelt en waar we staan."],
     ["projecten", "Projecten", "Waar we aan werken, hoe het ervoor staat en wat er van jou nodig is."],
     ["facturen", "Facturen", "Alles wat we hebben gefactureerd, met de pdf erbij."],
+    ["analytics", "Analytics", "Hoeveel mensen je site bezoeken, en waar ze vandaan komen."],
   ];
-
-  if (invite.metAnalytics) {
-    punten.push(["analytics", "Analytics", "Hoeveel mensen je site bezoeken, en waar ze vandaan komen."]);
-  }
 
   const body = `
     <p class="tekst" style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${MUTED}">
