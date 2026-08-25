@@ -64,7 +64,9 @@ export default function PortalProjectList({
         <Link
           key={p.id}
           href={`/portal/projecten/${p.id}`}
-          className="card-hover flex items-start justify-between gap-4 px-4 py-4"
+          // items-center: de knop hoort in het midden van de regel te staan,
+          // niet bovenaan naast de titel.
+          className="card-hover flex items-center justify-between gap-4 px-4 py-4"
           style={{ borderBottom: i < projecten.length - 1 ? "1px solid var(--border)" : "none" }}
         >
           <div className="min-w-0">
