@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { currentVisitorsAction } from "@/lib/actions/analytics";
 
 /** Groene stip met het aantal bezoekers van nu; ververst elke 30 seconden. */
 export default function CurrentVisitors({
@@ -15,16 +14,33 @@ export default function CurrentVisitors({
 
   useEffect(() => {
     let gestopt = false;
+    const controller = new AbortController();
+
+    // Een gewone fetch naar een route handler, bewust geen server action:
+    // die laatste is een POST naar de huidige route en laat Next de hele
+    // pagina opnieuw renderen. Voor een tikker om de dertig seconden betekende
+    // dat elk half minuut alle queries van het scherm opnieuw.
     const tik = async () => {
-      const n = await currentVisitorsAction(siteId);
-      if (!gestopt && n !== null) setAantal(n);
+      try {
+        const res = await fetch(`/api/analytics/bezoekers-nu?site=${encodeURIComponent(siteId)}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const { bezoekers } = (await res.json()) as { bezoekers: number | null };
+        if (!gestopt && bezoekers !== null) setAantal(bezoekers);
+      } catch {
+        // Een teller die er even niet is mag nooit de pagina stukmaken.
+      }
     };
-    // Meteen één keer, niet pas na de eerste dertig seconden. Zo hoeft de
-    // server dit getal niet vooraf op te halen: dat was de enige vraag aan
-    // Plausible die niet gecachet mocht worden, en die hield de hele pagina op.
+
     tik();
     const id = setInterval(tik, 30_000);
-    return () => { gestopt = true; clearInterval(id); };
+    return () => {
+      gestopt = true;
+      controller.abort();
+      clearInterval(id);
+    };
   }, [siteId]);
 
   if (aantal === null) return null;

@@ -53,14 +53,15 @@ export default async function DashboardPage({
   const periode = resolvePeriod(periodeKey, now);
   // Zie loadSiteAnalytics: dag-imports passen niet in uuremmers.
   const metImports = periode.interval !== "time:hour";
-  const [eigenStats, eigenReeks, eigenVorig, eigenNu, eigenClient] = plausibleIsConfigured()
+  // eigenNu is null: zie loadSiteAnalytics. Die teller haalt zichzelf op.
+  const eigenNu = null;
+  const [eigenStats, eigenReeks, eigenVorig, eigenClient] = plausibleIsConfigured()
     ? await Promise.all([
         siteStats(EIGEN_SITE, periode.range, metImports),
         siteSeries(EIGEN_SITE, periode.range, periode.interval, metImports),
         periode.previous
           ? siteStats(EIGEN_SITE, periode.previous, metImports)
           : Promise.resolve(null),
-        currentVisitors(EIGEN_SITE),
         supabase
           .from("clients")
           .select("id")

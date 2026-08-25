@@ -3,7 +3,6 @@ import {
   siteStats,
   series,
   breakdown,
-  currentVisitors,
   type BreakdownRow,
 } from "@/lib/analytics/plausible";
 import { isPeriod, resolvePeriod, type PeriodKey } from "@/lib/analytics/periods";
@@ -35,11 +34,15 @@ export async function loadSiteAnalytics(siteId: string, periode: string | undefi
   // fors opblaast. Bij uuremmers laten we imports daarom weg.
   const metImports = interval !== "time:hour";
 
-  const [stats, punten, prevStats, nu, ...lists] = await Promise.all([
+  // "nu" zit hier bewust niet meer bij. Dat getal mag per definitie niet
+  // gecachet worden, dus het was de enige vraag die deze hele ronde ophield.
+  // CurrentVisitors haalt het zelf op zodra de pagina er staat.
+  const nu = null;
+
+  const [stats, punten, prevStats, ...lists] = await Promise.all([
     siteStats(siteId, range, metImports),
     series(siteId, range, interval, metImports),
     previous ? siteStats(siteId, previous, metImports) : Promise.resolve(null),
-    currentVisitors(siteId),
     ...DIMENSIONS.map((d) => breakdown(siteId, range, d, 6, metImports)),
   ]);
 
