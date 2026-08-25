@@ -2,6 +2,32 @@ const INK = "#140018";
 const MUTED = "#645d73";
 const BORDER = "#dedbdf";
 
+/** Absoluut, want een mail heeft geen basis-url. */
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://portal.mammutstudios.com";
+const LOGO = `${SITE}/brand/mammut-studios/mammut-icon-mail.png`;
+
+/**
+ * Altijd licht. De kaart hoort wit te zijn, ook als de mailclient in donkere
+ * modus staat: zonder deze regels keren Apple Mail en Outlook de kleuren zelf
+ * om en wordt het een grijze brij. Gmail op mobiel trekt zich er niets van aan,
+ * daar is niets tegen te doen.
+ */
+const ALTIJD_LICHT = `
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+  <style>
+    :root { color-scheme: light only; }
+  </style>`;
+
+/** De knop zoals hij in elke mail terugkomt. */
+function knop(href: string, label: string) {
+  return `<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td style="background:${INK};border-radius:10px">
+          <a href="${href}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none">${label}</a>
+        </td>
+      </tr></table>`;
+}
+
 const euro = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
@@ -11,9 +37,14 @@ const VOET_MELDINGEN =
 /** Sober sjabloon in de huisstijl. Tabellen en inline stijl, want mailclients. */
 function layout(title: string, body: string, voet: string = VOET_MELDINGEN) {
   return `<!doctype html>
-<html lang="nl"><body style="margin:0;padding:24px;background:#fafaf9;font-family:Helvetica,Arial,sans-serif;color:${INK}">
+<html lang="nl">
+<head>
+  <meta charset="utf-8">${ALTIJD_LICHT}
+</head>
+<body style="margin:0;padding:24px;background:#fafaf9;font-family:Helvetica,Arial,sans-serif;color:${INK}">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto">
     <tr><td style="background:#ffffff;border:1px solid ${BORDER};border-radius:12px;padding:32px">
+      <img src="${LOGO}" width="48" height="48" alt="Mammut Studios" style="display:block;border:0;margin:0 0 24px">
       <h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:${INK}">${title}</h1>
       ${body}
     </td></tr>
@@ -69,39 +100,70 @@ export function newInvoiceMail(invoice: {
  * de bijbehorende sleutel in de browser die om de link vroeg. Vraagt de server
  * hem aan, dan komt de ontvanger er niet mee binnen. Daarom wijst deze mail
  * naar de inlogpagina, waar de klant zelf zijn link aanvraagt.
+ *
+ * De iconen zijn dezelfde als in de portaalnavigatie, maar dan als png in een
+ * lavendel tegel. Een mailclient rendert geen svg en laadt geen icoonfont, en
+ * ronde hoeken op een tabelcel overleven Outlook niet, dus zitten de tegel en
+ * de radius in de afbeelding zelf. Ze staan in `public/brand/mail`.
  */
 export function portalInviteMail(invite: {
   contactName: string | null;
   clientNames: string[];
   loginUrl: string;
+  /** Analytics staat alleen in de lijst als die klant een site heeft die we meten. */
+  metAnalytics?: boolean;
 }) {
-  const naam = invite.contactName?.split(" ")[0];
+  const naam = invite.contactName?.trim().split(" ")[0];
   const organisaties = invite.clientNames.filter(Boolean);
   const waarvoor =
     organisaties.length === 1
-      ? `het portaal van ${organisaties[0]}`
+      ? organisaties[0]
       : organisaties.length > 1
-        ? `de portalen van ${organisaties.slice(0, -1).join(", ")} en ${organisaties.at(-1)}`
-        : "je klantportaal";
+        ? `${organisaties.slice(0, -1).join(", ")} en ${organisaties.at(-1)}`
+        : null;
+
+  const punten: [string, string, string][] = [
+    ["overzicht", "Overzicht", "De korte versie: wat er nu speelt en waar we staan."],
+    ["projecten", "Projecten", "Waar we aan werken, hoe het ervoor staat en wat er van jou nodig is."],
+    ["facturen", "Facturen", "Alles wat we hebben gefactureerd, met de pdf erbij."],
+  ];
+
+  if (invite.metAnalytics) {
+    punten.push(["analytics", "Analytics", "Hoeveel mensen je site bezoeken, en waar ze vandaan komen."]);
+  }
 
   const body = `
-    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:${MUTED}">
-      ${naam ? `Hoi ${naam}, je` : "Je"} hebt vanaf nu toegang tot ${waarvoor}.
-      Daar staan de projecten waar we aan werken, wat er van jou nodig is en je facturen.
-    </p>
     <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${MUTED}">
-      Inloggen gaat zonder wachtwoord. Vul je e-mailadres in, dan sturen we je een inloglink.
+      Vanaf nu kun je in het portaal van Mammut Studios${waarvoor ? ` voor ${waarvoor}` : ""}.
+      Daar staat op één plek wat er voor je loopt, zodat je het niet meer hoeft terug te zoeken in je mail.
     </p>
-    <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-      <td style="background:${INK};border-radius:10px">
-        <a href="${invite.loginUrl}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none">Naar het portaal</a>
-      </td>
-    </tr></table>`;
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+      ${punten
+        .map(
+          ([icoon, kop, uitleg]) => `<tr>
+            <td width="48" valign="top" style="padding:14px 12px 14px 0;border-top:1px solid ${BORDER}">
+              <img src="${SITE}/brand/mail/${icoon}.png" width="32" height="32" alt="" style="display:block;border:0">
+            </td>
+            <td valign="top" style="padding:14px 0;border-top:1px solid ${BORDER}">
+              <div style="font-size:14px;font-weight:600;color:${INK}">${kop}</div>
+              <div style="font-size:13px;line-height:1.6;color:${MUTED};margin-top:2px">${uitleg}</div>
+            </td>
+          </tr>`,
+        )
+        .join("")}
+    </table>
+
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:${MUTED}">
+      Inloggen gaat zonder wachtwoord. Je vult je e-mailadres in, wij sturen je een link, en die brengt je naar binnen. Onthouden hoeft dus niets.
+    </p>
+
+    ${knop(invite.loginUrl, "Naar het portaal")}`;
 
   return {
-    subject: "Je hebt toegang tot het Mammut Portal",
+    subject: "Welkom bij het Mammut Portal",
     html: layout(
-      "Welkom bij het Mammut Portal",
+      naam ? `Welkom, ${naam}` : "Welkom",
       body,
       "Je krijgt deze mail omdat wij je als contactpersoon toegang hebben gegeven. Klopt dat niet, laat het ons dan weten.",
     ),

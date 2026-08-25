@@ -2,40 +2,35 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
+  <!-- Altijd licht: de kaart hoort wit te blijven, ook in een donkere
+       mailclient. Zonder deze regels keren Apple Mail en Outlook de kleuren om. -->
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
   <style>
-    @media (prefers-color-scheme: dark) {
-      .page  { background: #0f0d12 !important; }
-      .card  { background: #1b181f !important; border-color: #322e38 !important; }
-      .title { color: #ffffff !important; }
-      .text  { color: #a9a2b5 !important; }
-      .btn   { background: #ffffff !important; }
-      .btn a { color: #140018 !important; }
-    }
+    :root { color-scheme: light only; }
   </style>
 </head>
-<body class="page" style="margin:0;padding:24px;background:#fafaf9;font-family:Helvetica,Arial,sans-serif;color:#140018">
+<body style="margin:0;padding:24px;background:#fafaf9;font-family:Helvetica,Arial,sans-serif;color:#140018">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto">
-    <tr><td class="card" style="background:#ffffff;border:1px solid #dedbdf;border-radius:12px;padding:32px">
+    <tr><td style="background:#ffffff;border:1px solid #dedbdf;border-radius:12px;padding:32px">
       <img src="https://portal.mammutstudios.com/brand/mammut-studios/mammut-icon-mail.png"
            width="48" height="48" alt="Mammut Studios"
            style="display:block;border:0;margin:0 0 24px">
-      <h1 class="title" style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#140018">Inloggen bij Mammut Studios</h1>
-      <p class="text" style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#645d73">
+      <h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#140018">Inloggen bij Mammut Studios</h1>
+      <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#645d73">
         Klik op de knop hieronder om in te loggen op je portaal. De link werkt één keer en verloopt na een uur.
       </p>
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-        <td class="btn" style="background:#140018;border-radius:10px">
+        <td style="background:#140018;border-radius:10px">
           <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none">Inloggen</a>
         </td>
       </tr></table>
-      <p class="text" style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#645d73">
+      <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#645d73">
         Werkt de knop niet? Plak deze link in je browser:<br>
         <a href="{{ .ConfirmationURL }}" style="color:#645d73;word-break:break-all">{{ .ConfirmationURL }}</a>
       </p>
     </td></tr>
-    <tr><td class="text" style="padding:16px 8px;font-size:12px;line-height:1.6;color:#645d73">
+    <tr><td style="padding:16px 8px;font-size:12px;line-height:1.6;color:#645d73">
       Je krijgt deze mail omdat er is ingelogd met {{ .Email }}. Was jij dat niet, dan hoef je niets te doen: zonder de link hierboven komt niemand binnen.
     </td></tr>
   </table>

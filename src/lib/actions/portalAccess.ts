@@ -148,10 +148,18 @@ export async function inviteContactAction(formData: FormData): Promise<ToegangRe
 
   const organisaties = koppelingen.map((k) => k.clients?.name).filter(Boolean) as string[];
 
+  // Analytics staat alleen in de navigatie als de klant een site heeft die we
+  // meten (portal/layout.tsx), dus beloven we het in de mail ook alleen dan.
+  const { data: metingen } = await service
+    .from("clients")
+    .select("plausible_site_id")
+    .in("id", koppelingen.map((k) => k.client_id));
+
   const mail = portalInviteMail({
     contactName: contact.name,
     clientNames: organisaties,
     loginUrl: loginUrl(),
+    metAnalytics: (metingen ?? []).some((c) => Boolean(c.plausible_site_id)),
   });
 
   const { sent, error: mailFout } = await sendMail({ to: [email], subject: mail.subject, html: mail.html });
