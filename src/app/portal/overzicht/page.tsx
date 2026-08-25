@@ -1,5 +1,10 @@
 import { Suspense } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal";
+import { ProjectStatusBadge } from "@/components/StatusBadge";
+import ProjectProgress from "@/components/ProjectProgress";
+import type { Project } from "@/lib/types";
 import { maandCijfers } from "@/lib/analytics";
 import {
   plausibleIsConfigured,
@@ -40,6 +45,20 @@ export default function PortalOverzichtPage() {
           <WebsiteKaarten />
         </Suspense>
       </div>
+
+      <section className="mb-10">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
+            Projecten
+          </h2>
+          <Link href="/portal/projecten" className="text-sm hover:underline" style={{ color: "var(--text-muted)" }}>
+            Alle projecten →
+          </Link>
+        </div>
+        <Suspense fallback={<TabelSkelet />}>
+          <LopendeProjecten />
+        </Suspense>
+      </section>
 
       <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-heading)" }}>
         Eerdere maanden
@@ -196,6 +215,96 @@ async function WebsiteKaarten() {
       <Kaart label="Bezoekers" value={getal(visitors)} />
       <Kaart label="Paginaweergaven" value={getal(pageviews)} />
     </>
+  );
+}
+
+/**
+ * Wat er nu loopt en wat eraan komt.
+ *
+ * Bewust alleen actief en upcoming: review, on hold en afgerond horen op de
+ * projectenpagina, niet in het overzicht van vandaag. Actief staat eerst, want
+ * daar wordt nu aan gewerkt.
+ */
+const LOPEND = ["active", "upcoming"] as const;
+
+type LopendProject = {
+  id: string;
+  title: string;
+  status: (typeof LOPEND)[number];
+  next_step: string | null;
+  client_action: string | null;
+  phase: Project["phase"];
+  tags: string[] | null;
+};
+
+async function LopendeProjecten() {
+  const { clientIds } = await getPortalContext();
+  if (clientIds.length === 0) return null;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("projects")
+    .select("id, title, status, next_step, client_action, phase, tags")
+    .in("client_id", clientIds)
+    .in("status", LOPEND)
+    .order("created_at", { ascending: false });
+
+  const projecten = (data ?? []) as unknown as LopendProject[];
+  // Expliciet sorteren en niet op de alfabetische volgorde van de statuswaarde
+  // leunen; dat die "active" vóór "upcoming" zet is toeval.
+  const gesorteerd = [...projecten].sort(
+    (a, b) => LOPEND.indexOf(a.status) - LOPEND.indexOf(b.status),
+  );
+
+  if (gesorteerd.length === 0) {
+    return (
+      <div
+        className="squircle px-4 py-6"
+        style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+      >
+        <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
+          Er lopen op dit moment geen projecten.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="squircle overflow-hidden"
+      style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+    >
+      {gesorteerd.map((p, i) => (
+        <Link
+          key={p.id}
+          href={`/portal/projecten/${p.id}`}
+          className="card-hover block px-4 py-4"
+          style={{ borderBottom: i < gesorteerd.length - 1 ? "1px solid var(--border)" : "none" }}
+        >
+          <div className="flex items-start justify-between gap-4 mb-2.5">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
+                {p.title}
+              </h3>
+              {p.next_step && (
+                <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {p.next_step}
+                </p>
+              )}
+            </div>
+            <ProjectStatusBadge status={p.status} />
+          </div>
+
+          <ProjectProgress phase={p.phase} tags={p.tags} />
+
+          {p.client_action && (
+            <p className="text-xs mt-2.5" style={{ color: "#92400e" }}>
+              Van jou nodig: {p.client_action}
+            </p>
+          )}
+        </Link>
+      ))}
+    </div>
   );
 }
 
