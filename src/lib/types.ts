@@ -39,10 +39,6 @@ export type Deal = {
   created_at: string;
   updated_at: string | null;
   title: string;
-  company: string | null;
-  contact_name: string | null;
-  email: string | null;
-  phone: string | null;
   source: string | null;
   status: DealStatus;
   value_amount: number | null;

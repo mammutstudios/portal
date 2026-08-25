@@ -3,6 +3,27 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Alleen een naam, voor het aanmaken vanuit een keuzelijst. Geeft hetzelfde
+ * terug als quickCreateClientAction, zodat SearchSelect er direct mee verder kan.
+ */
+export async function quickCreateContactAction(
+  name: string,
+): Promise<{ id: string; name: string } | { error: string }> {
+  if (!name?.trim()) return { error: "Naam is verplicht" };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .insert({ name: name.trim() })
+    .select("id, name")
+    .single();
+
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/contacts");
+  return { id: data.id, name: data.name };
+}
+
 export async function createContactAction(formData: FormData) {
   const supabase = await createClient();
   const client_id = (formData.get("client_id") as string) || null;

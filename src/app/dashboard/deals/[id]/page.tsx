@@ -36,7 +36,7 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
         <DealStatusBadge status={d.status} />
       </div>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        {[klant?.name ?? d.company, d.source && `via ${d.source}`].filter(Boolean).join(" · ") ||
+        {[klant?.name, d.source && `via ${d.source}`].filter(Boolean).join(" · ") ||
           "Nog geen organisatie gekoppeld"}
       </p>
 

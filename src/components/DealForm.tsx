@@ -6,6 +6,8 @@ import Link from "next/link";
 import Select from "@/components/Select";
 import SearchSelect from "@/components/SearchSelect";
 import { createDealAction, updateDealAction } from "@/lib/actions/deals";
+import { quickCreateClientAction } from "@/lib/actions/clients";
+import { quickCreateContactAction } from "@/lib/actions/contacts";
 import { DEAL_STATUSSEN, DEAL_STATUS_LABEL, type Deal } from "@/lib/types";
 
 const invoerStijl = {
@@ -82,58 +84,41 @@ export default function DealForm({
         />
       </Veld>
 
-      <Veld label="Bestaande organisatie">
+      {/* Geen losse tekstvelden voor bedrijf en contactpersoon: die zouden een
+          tweede plek zijn voor gegevens die al in clients en contacts staan.
+          Bestaat iemand nog niet, dan typ je de naam en maak je hem hier aan;
+          hij staat dan meteen in je organisaties of contactpersonen. */}
+      <Veld label="Organisatie">
         <SearchSelect
           name="client_id"
           defaultValue={deal?.client_id ?? undefined}
-          placeholder="Geen, dit is een nieuwe klant"
+          placeholder="Zoeken of nieuwe naam typen"
           options={clients.map((c) => ({ value: c.id, label: c.name }))}
+          onCreateNew={async (naam) => {
+            const uitkomst = await quickCreateClientAction(naam);
+            if ("error" in uitkomst) return null;
+            return { value: uitkomst.id, label: uitkomst.name };
+          }}
         />
-        <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
-          Laat leeg als het een nieuwe klant is; bij het omzetten wordt de
-          organisatie dan aangemaakt.
-        </p>
       </Veld>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Veld label="Bedrijf">
-          <input
-            name="company"
-            defaultValue={deal?.company ?? ""}
-            placeholder="Van der Kam"
-            className="w-full px-3 rounded-lg text-sm outline-none"
-            style={{ ...invoerStijl, height: 40 }}
-          />
-        </Veld>
-        <Veld label="Contactpersoon">
-          <input
-            name="contact_name"
-            defaultValue={deal?.contact_name ?? ""}
-            className="w-full px-3 rounded-lg text-sm outline-none"
-            style={{ ...invoerStijl, height: 40 }}
-          />
-        </Veld>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Veld label="E-mail">
-          <input
-            name="email"
-            type="email"
-            defaultValue={deal?.email ?? ""}
-            className="w-full px-3 rounded-lg text-sm outline-none"
-            style={{ ...invoerStijl, height: 40 }}
-          />
-        </Veld>
-        <Veld label="Telefoon">
-          <input
-            name="phone"
-            defaultValue={deal?.phone ?? ""}
-            className="w-full px-3 rounded-lg text-sm outline-none"
-            style={{ ...invoerStijl, height: 40 }}
-          />
-        </Veld>
-      </div>
+      <Veld label="Contactpersoon">
+        <SearchSelect
+          name="contact_id"
+          defaultValue={deal?.contact_id ?? undefined}
+          placeholder="Zoeken of nieuwe naam typen"
+          options={contacts.map((c) => ({
+            value: c.id,
+            label: c.name,
+            sublabel: c.email ?? undefined,
+          }))}
+          onCreateNew={async (naam) => {
+            const uitkomst = await quickCreateContactAction(naam);
+            if ("error" in uitkomst) return null;
+            return { value: uitkomst.id, label: uitkomst.name };
+          }}
+        />
+      </Veld>
 
       <div className="grid grid-cols-2 gap-3">
         <Veld label="Hoe binnengekomen">
@@ -156,23 +141,6 @@ export default function DealForm({
           />
         </Veld>
       </div>
-
-      <Veld label="Bestaande contactpersoon">
-        <SearchSelect
-          name="contact_id"
-          defaultValue={deal?.contact_id ?? undefined}
-          placeholder="Geen, of nieuw zoals hierboven"
-          options={contacts.map((c) => ({
-            value: c.id,
-            label: c.name,
-            sublabel: c.email ?? undefined,
-          }))}
-        />
-        <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
-          Ken je hem al, wijs hem dan aan. Anders maak ik bij het omzetten een
-          contactpersoon aan met de naam hierboven.
-        </p>
-      </Veld>
 
       <Veld label="Status">
         <Select

@@ -15,10 +15,6 @@ function velden(formData: FormData) {
   const bedrag = tekst(formData.get("value_amount"));
   return {
     title: tekst(formData.get("title")),
-    company: tekst(formData.get("company")),
-    contact_name: tekst(formData.get("contact_name")),
-    email: tekst(formData.get("email")),
-    phone: tekst(formData.get("phone")),
     source: tekst(formData.get("source")),
     client_id: tekst(formData.get("client_id")),
     contact_id: tekst(formData.get("contact_id")),
@@ -122,17 +118,17 @@ export async function deleteDealAction(formData: FormData) {
 }
 
 /**
- * Een gewonnen deal wordt een project, en zo nodig ook een organisatie.
+ * Een gewonnen deal wordt een project bij de gekoppelde organisatie.
  *
- * Hoort de deal al bij een bestaande klant, dan komt er alleen een project bij;
- * een tweede organisatie aanmaken zou die klant verdubbelen. Anders wordt de
- * organisatie hier gemaakt.
+ * De organisatie hoort er al aan te hangen: die koppel je bij de deal zelf, en
+ * bestaat hij nog niet dan maak je hem daar aan vanuit de keuzelijst. Hier nog
+ * een organisatie maken zou een tweede versie van dezelfde klant opleveren.
  *
- * De contactpersoon gaat mee: een bestaande wordt gekoppeld, en van een nieuwe
- * naam maken we er een aan. Zo hoef je niets over te tikken.
+ * De contactpersoon gaat mee naar de organisatie en het project, zodat je
+ * niets overtikt.
  *
  * converted_at is het stempel dat dit maar één keer gebeurt. client_id kan dat
- * niet zijn, want die is bij een bestaande klant al vooraf gevuld.
+ * niet zijn, want die is al vóór het omzetten gevuld.
  */
 export async function convertDealAction(id: string) {
   const supabase = await createClient();
@@ -147,29 +143,17 @@ export async function convertDealAction(id: string) {
   if (!deal) return { error: "Deal niet gevonden" };
   if (deal.converted_at) return { error: "Deze deal is al omgezet" };
 
-  // 1. De organisatie: bestaand of nieuw.
-  let clientId = deal.client_id as string | null;
-  let clientNaam: string | null = null;
+  // 1. De organisatie. Die hoort er al aan te hangen: je koppelt hem bij de
+  //    deal zelf, en bestaat hij nog niet dan maak je hem daar aan.
+  const clientId = deal.client_id as string | null;
+  if (!clientId) return { error: "Koppel eerst een organisatie aan deze deal" };
 
-  if (clientId) {
-    const { data: bestaand } = await supabase
-      .from("clients")
-      .select("name")
-      .eq("id", clientId)
-      .maybeSingle();
-    clientNaam = (bestaand as { name?: string } | null)?.name ?? null;
-  } else {
-    const naam = (deal.company as string | null)?.trim() || (deal.title as string);
-    const { data: klant, error: klantFout } = await supabase
-      .from("clients")
-      .insert({ name: naam, email: deal.email, tag: "client" })
-      .select("id, name")
-      .single();
-
-    if (klantFout) return { error: `Organisatie aanmaken mislukt: ${klantFout.message}` };
-    clientId = klant.id as string;
-    clientNaam = klant.name as string;
-  }
+  const { data: klant } = await supabase
+    .from("clients")
+    .select("name")
+    .eq("id", clientId)
+    .maybeSingle();
+  const clientNaam = (klant as { name?: string } | null)?.name ?? null;
 
   // 2. Het project.
   const { data: project, error: projectFout } = await supabase
@@ -188,7 +172,7 @@ export async function convertDealAction(id: string) {
 
   // 3. De contactpersoon, als die er is. Mislukt dit, dan is dat jammer maar
   //    geen reden om de omzetting terug te draaien: klant en project staan er.
-  const contactId = await contactVoorDeal(supabase, deal);
+  const contactId = (deal.contact_id as string | null) ?? null;
   if (contactId) {
     await supabase.from("contact_clients").upsert({ contact_id: contactId, client_id: clientId });
     await supabase.from("project_contacts").insert({ project_id: project.id, contact_id: contactId });
@@ -199,7 +183,7 @@ export async function convertDealAction(id: string) {
     .from("deals")
     .update({
       client_id: clientId,
-      contact_id: contactId ?? deal.contact_id,
+      contact_id: contactId,
       project_id: project.id,
       status: "gewonnen",
       closed_at: (deal.closed_at as string | null) ?? nu,
@@ -216,41 +200,11 @@ export async function convertDealAction(id: string) {
     entityId: clientId,
     entityLabel: clientNaam,
     clientId,
-    meta: { deal: deal.title, project_id: project.id, bestaandeKlant: Boolean(deal.client_id) },
+    meta: { deal: deal.title, project_id: project.id },
   });
 
   revalidatePath("/dashboard/deals");
   revalidatePath("/dashboard/clients");
   revalidatePath("/dashboard/projects");
   return { success: true, clientId };
-}
-
-/**
- * De contactpersoon bij een deal: de aangewezen bestaande, of een nieuwe uit de
- * losse velden. Zonder naam valt er niets te maken.
- */
-async function contactVoorDeal(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  deal: Record<string, unknown>,
-): Promise<string | null> {
-  if (deal.contact_id) return deal.contact_id as string;
-
-  const naam = (deal.contact_name as string | null)?.trim();
-  if (!naam) return null;
-
-  const { data, error } = await supabase
-    .from("contacts")
-    .insert({
-      name: naam,
-      email: deal.email ?? null,
-      phone: deal.phone ?? null,
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    console.error("[deals] contactpersoon aanmaken mislukt:", error);
-    return null;
-  }
-  return data.id as string;
 }

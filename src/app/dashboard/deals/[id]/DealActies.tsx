@@ -57,6 +57,10 @@ export default function DealActies({ deal, klantNaam }: { deal: Deal; klantNaam:
             )}
             .
           </span>
+        ) : !deal.client_id ? (
+          <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Kies een organisatie om deze deal om te kunnen zetten.
+          </span>
         ) : (
           <button
             onClick={() => setOmzetten(true)}
@@ -88,15 +92,14 @@ export default function DealActies({ deal, klantNaam }: { deal: Deal; klantNaam:
                 </>
               ) : (
                 <>
-                  Hiermee maak ik de organisatie{" "}
-                  <strong>{deal.company?.trim() || deal.title}</strong> aan, met een project{" "}
-                  <strong>{deal.title}</strong> op Upcoming.
+                  Er hangt nog geen organisatie aan deze deal. Kies er een bij de deal, dan
+                  komt het project daar terecht.
                 </>
               )}{" "}
               De deal blijft eraan gekoppeld, zodat zichtbaar blijft waar dit werk vandaan komt.
             </p>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              {deal.contact_id || deal.contact_name
+              {deal.contact_id
                 ? "De contactpersoon gaat mee naar de organisatie en het project. "
                 : ""}
               Portaaltoegang komt er niet vanzelf bij; dat regel je apart bij de organisatie.

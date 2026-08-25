@@ -32,11 +32,14 @@ const kortDatum = (d: string) =>
 export default function DealsPageClient({
   deals,
   clients,
+  contacts,
 }: {
   deals: Deal[];
   clients: { id: string; name: string }[];
+  contacts: { id: string; name: string }[];
 }) {
   const klantNaam = new Map(clients.map((c) => [c.id, c.name]));
+  const contactNaam = new Map(contacts.map((c) => [c.id, c.name]));
   const [filter, setFilter] = useState<Filter>("open");
 
   const zichtbaar = deals
@@ -111,14 +114,12 @@ export default function DealsPageClient({
                 </div>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                   {[
-                    // Een gekoppelde organisatie wint van het vrije veld: die
-                    // naam is de echte, het vrije veld is wat iemand typte.
-                    (deal.client_id && klantNaam.get(deal.client_id)) || deal.company,
-                    deal.contact_name,
+                    deal.client_id && klantNaam.get(deal.client_id),
+                    deal.contact_id && contactNaam.get(deal.contact_id),
                     deal.source && `via ${deal.source}`,
                   ]
                     .filter(Boolean)
-                    .join(" · ") || "Geen gegevens"}
+                    .join(" · ") || "Nog niets gekoppeld"}
                 </p>
               </div>
 
