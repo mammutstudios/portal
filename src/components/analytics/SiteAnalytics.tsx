@@ -194,17 +194,41 @@ export default function SiteAnalytics({
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-4 min-w-0">
-          <h1 className="text-2xl font-extrabold truncate" style={{ color: "var(--text-heading)" }}>
-            {siteName}
-          </h1>
+      {/* Zelfde kop als op de overzichten: favicon, naam, teller. De titel
+          blijft hier wel groot, want dit ís de analyticspagina. Op mobiel zakt
+          de teller onder de naam en verhuist de periodekiezer naar de kaart. */}
+      <div className="flex flex-wrap items-center gap-x-4 mb-6">
+        <h1
+          className="order-1 flex items-center gap-2.5 text-2xl font-extrabold min-w-0"
+          style={{ color: "var(--text-heading)" }}
+        >
+          {faviconBase && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`${faviconBase}/favicon/sources/${encodeURIComponent(siteName)}`}
+              alt=""
+              width={22}
+              height={22}
+              className="flex-shrink-0 rounded"
+            />
+          )}
+          <span className="truncate">{siteName}</span>
+        </h1>
+        <div className="order-3 w-full mt-1.5 md:order-2 md:ml-auto md:w-auto md:mt-0">
           <CurrentVisitors siteId={siteName} initial={currentVisitors} />
         </div>
-        <PeriodPicker current={periode} />
+        <div className="hidden md:block order-3">
+          <PeriodPicker current={periode} />
+        </div>
       </div>
 
-      <VisitorsCard stats={stats} prevStats={prevStats} series={series} interval={interval} />
+      <VisitorsCard
+        stats={stats}
+        prevStats={prevStats}
+        series={series}
+        interval={interval}
+        periodeSlot={<PeriodPicker current={periode} blok />}
+      />
 
       <div className="mb-4" />
 
