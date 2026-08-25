@@ -15,7 +15,7 @@ export default function ActiviteitenPage() {
         Activiteiten
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        Wat er in het portaal gebeurt, nieuwste eerst.
+        Wat er in het portaal is gebeurd, nieuwste eerst.
       </p>
 
       <Suspense fallback={<PageSkeleton rijen={6} kaal />}>
@@ -56,7 +56,7 @@ async function Lijst() {
     return (
       <Kader>
         <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
-          Nog niets vastgelegd. Zodra er iets gebeurt verschijnt het hier.
+          Nog niets vastgelegd. Zodra er iets is gebeurd verschijnt het hier.
         </p>
       </Kader>
     );
