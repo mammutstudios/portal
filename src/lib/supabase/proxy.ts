@@ -79,14 +79,20 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL(role === "admin" ? "/dashboard" : "/portal", request.url));
   }
 
-  // Alleen het dashboard heeft de rol hier nodig. Voor /portal weten we het
-  // antwoord toch pas na getPortalContext(), die de rol sowieso al ophaalt en
-  // een admin zonder gekozen klant zelf terugstuurt naar het dashboard. Die
-  // query hier nog een keer doen kostte elk portaalbezoek een heel rondje.
-  if (pathname.startsWith("/dashboard")) {
-    const role = await rolVan(supabase, claims);
-    if (role === "client") return NextResponse.redirect(new URL("/portal", request.url));
-  }
+  // Hier stond een rolcontrole voor /dashboard, en die kostte gemeten op
+  // productie 52 tot 173 ms per verzoek: de hele proxytijd. Bij elke klik,
+  // want navigatie in Next haalt de route opnieuw op. Lokaal merkte je er
+  // niets van omdat de dev-bypass de proxy overslaat.
+  //
+  // De controle zelf is niet weg, hij staat in de layout van het dashboard,
+  // die de rol uit dezelfde query haalt als de naam en dus niets extra kost.
+  // Dat gebeurt terwijl de pagina al streamt, dus een klant die hier toch
+  // belandt ziet de schil kort voordat hij naar het portaal gaat. De gegevens
+  // erin zijn door RLS afgeschermd, dus dat is een omleiding en geen lek.
+  //
+  // Wil je de controle hier terug zonder de rekening: zet de rol als claim in
+  // het token met een custom access token hook in Supabase. rolVan() leest die
+  // hieronder al, en dan kost dit nul rondjes.
 
   klaar();
   return supabaseResponse;
