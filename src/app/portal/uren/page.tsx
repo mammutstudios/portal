@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { logPaginabezoek } from "@/lib/activity";
 import { getPortalContext, shortDate } from "@/lib/portal";
 import PortalEmpty from "../PortalEmpty";
 
@@ -12,6 +13,7 @@ type Entry = {
 
 export default async function PortalHoursPage() {
   const { clientIds, activeClientName } = await getPortalContext();
+  await logPaginabezoek("Uren");
   if (clientIds.length === 0) return <PortalEmpty />;
 
   const supabase = await createClient();

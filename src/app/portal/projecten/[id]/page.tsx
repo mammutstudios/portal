@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext, euro, shortDate } from "@/lib/portal";
+import { logPaginabezoek } from "@/lib/activity";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import DetailList from "@/components/DetailList";
 import ProjectLeadCard from "@/components/ProjectLeadCard";
@@ -47,6 +48,10 @@ async function Projectpagina({ params }: { params: Promise<{ id: string }> }) {
     .maybeSingle();
   const project = data as unknown as Project | null;
   if (!project || !clientIds.includes(project.client_id)) notFound();
+
+  // Pas hier, na de eigenaarscheck: een project dat deze bezoeker niet mag zien
+  // hoort ook geen regel in het log op te leveren.
+  await logPaginabezoek(project.title, { type: "project", id: project.id });
 
   // De rest in één ronde. De eigenaarscheck hierboven blijft bewust apart:
   // in development draait deze client met de service role, en dan is die

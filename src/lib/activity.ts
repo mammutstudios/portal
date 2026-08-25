@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getPortalContext } from "@/lib/portal";
 
 /**
  * Het activiteitenlog.
@@ -27,11 +28,12 @@ export type ActivityAction =
   | "uren.geschreven"
   | "preview.gestart"
   | "portaal.uitgenodigd"
-  | "portaal.ingetrokken";
+  | "portaal.ingetrokken"
+  | "portaal.bekeken";
 
 export type ActivityInvoer = {
   action: ActivityAction;
-  entityType?: "project" | "taak" | "factuur" | "klant" | "uren" | "gebruiker";
+  entityType?: "project" | "taak" | "factuur" | "klant" | "uren" | "gebruiker" | "pagina";
   entityId?: string | null;
   /** De naam op dit moment; blijft leesbaar nadat het onderwerp is hernoemd. */
   entityLabel?: string | null;
@@ -43,6 +45,16 @@ export type ActivityInvoer = {
    */
   actorId?: string | null;
 };
+
+/**
+ * Redirect en notFound van Next werken via een worp. Een catch die alles
+ * opslikt zou die stilzetten, en dan blijft een bezoeker staan waar hij niet
+ * hoort. Deze gaan er dus altijd weer uit.
+ */
+function isBesturing(e: unknown): boolean {
+  const digest = (e as { digest?: unknown } | null)?.digest;
+  return typeof digest === "string" && (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND");
+}
 
 /** Het id van de ingelogde bezoeker, of null als er niemand is. */
 async function huidigeActor(): Promise<string | null> {
@@ -71,7 +83,60 @@ export async function logActiviteit(invoer: ActivityInvoer): Promise<void> {
         meta: invoer.meta ?? null,
       });
   } catch (e) {
+    if (isBesturing(e)) throw e;
     console.error("[activity] wegschrijven mislukt:", e);
+  }
+}
+
+/**
+ * Hoe lang eenzelfde pagina van dezelfde bezoeker als één bezoek telt.
+ *
+ * Zonder dit vult het log zich met een regel per klik en verdwijnt al het
+ * andere eronder. Een half uur is lang genoeg om heen en weer klikken samen te
+ * nemen, en kort genoeg om een bezoek later op de dag apart te zien.
+ */
+const BEZOEK_VENSTER_MINUTEN = 30;
+
+/**
+ * Legt vast dat een klant een portaalpagina bekeek.
+ *
+ * Alleen echte klanten: wat jij in de preview bekijkt is jouw eigen klikwerk en
+ * zegt niets over wat de klant doet. Dat staat al als "bekeek het portaal als".
+ */
+export async function logPaginabezoek(
+  pagina: string,
+  /** Waar de regel heen linkt. Zonder dit is het een gewone portaalpagina. */
+  onderwerp?: { type: "project"; id: string },
+): Promise<void> {
+  try {
+    const { userId, isAdmin } = await getPortalContext();
+    if (isAdmin) return;
+
+    const service = createServiceClient();
+    const sinds = new Date(Date.now() - BEZOEK_VENSTER_MINUTEN * 60_000).toISOString();
+
+    // Zag deze bezoeker dezelfde pagina net al? Dan is dit hetzelfde bezoek.
+    const { data: recent } = await service
+      .from("activities")
+      .select("id")
+      .eq("actor_profile_id", userId)
+      .eq("action", "portaal.bekeken")
+      .eq("entity_label", pagina)
+      .gte("created_at", sinds)
+      .limit(1);
+
+    if (recent && recent.length > 0) return;
+
+    await service.from("activities").insert({
+      actor_profile_id: userId,
+      action: "portaal.bekeken",
+      entity_type: onderwerp?.type ?? "pagina",
+      entity_id: onderwerp?.id ?? null,
+      entity_label: pagina,
+    });
+  } catch (e) {
+    if (isBesturing(e)) throw e;
+    console.error("[activity] paginabezoek vastleggen mislukt:", e);
   }
 }
 
@@ -168,6 +233,8 @@ export function beschrijf(a: Activity): string {
       return `gaf ${naam} toegang tot het portaal`;
     case "portaal.ingetrokken":
       return `trok de portaaltoegang van ${naam} in`;
+    case "portaal.bekeken":
+      return `bekeek ${naam}`;
     default:
       return a.action;
   }

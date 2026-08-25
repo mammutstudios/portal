@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { logPaginabezoek } from "@/lib/activity";
 import { getPortalContext } from "@/lib/portal";
 import { findBrandGuide } from "@/lib/brand";
 import BrandGuideView from "@/components/brand/BrandGuideView";
@@ -13,6 +14,7 @@ import PortalEmpty from "../PortalEmpty";
  */
 export default async function PortalHuisstijlPage() {
   const { clientIds, activeClientId, activeClientName } = await getPortalContext();
+  await logPaginabezoek("Huisstijl");
   if (clientIds.length === 0) return <PortalEmpty />;
 
   const supabase = await createClient();

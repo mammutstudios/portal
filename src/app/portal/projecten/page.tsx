@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { logPaginabezoek } from "@/lib/activity";
 import { getPortalContext } from "@/lib/portal";
 import PortalProjectList, {
   PORTAL_PROJECT_KOLOMMEN,
@@ -37,6 +38,7 @@ export default function PortalProjectenPage() {
 
 async function Projecten() {
   const { clientIds } = await getPortalContext();
+  await logPaginabezoek("Projecten");
   if (clientIds.length === 0) return <PortalEmpty />;
 
   const supabase = await createClient();

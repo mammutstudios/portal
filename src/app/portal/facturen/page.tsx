@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { logPaginabezoek } from "@/lib/activity";
 import { getPortalContext, euro } from "@/lib/portal";
 import InvoiceTable, { type MoneybirdInvoice } from "@/components/InvoiceTable";
 import PortalEmpty from "../PortalEmpty";
 
 export default async function PortalInvoicesPage() {
   const { clientIds, activeClientName } = await getPortalContext();
+  await logPaginabezoek("Facturen");
   if (clientIds.length === 0) return <PortalEmpty />;
 
   const supabase = await createClient();

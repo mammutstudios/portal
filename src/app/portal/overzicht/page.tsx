@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal";
+import { logPaginabezoek } from "@/lib/activity";
 import PortalProjectList, {
   PORTAL_PROJECT_KOLOMMEN,
   type PortalProject,
@@ -196,6 +197,7 @@ async function WebsiteBlok({
  */
 async function LopendeProjecten() {
   const { clientIds } = await getPortalContext();
+  await logPaginabezoek("Overzicht");
   if (clientIds.length === 0) return null;
 
   const supabase = await createClient();

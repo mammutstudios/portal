@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { logPaginabezoek } from "@/lib/activity";
 import { getPortalContext } from "@/lib/portal";
 import { loadSiteAnalytics } from "@/lib/analytics/load";
 import SiteAnalytics from "@/components/analytics/SiteAnalytics";
@@ -23,6 +24,7 @@ export default function PortalAnalyticsPage({
 
 async function Cijfers({ searchParams }: { searchParams: Promise<{ periode?: string }> }) {
   const [{ periode }, { clients }] = await Promise.all([searchParams, getPortalContext()]);
+  await logPaginabezoek("Analytics");
 
   // De gekoppelde site komt uit de context; dat scheelt een eigen query naar
   // clients die hier eerder bij elk bezoek stond.
