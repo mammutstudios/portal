@@ -33,7 +33,8 @@ export type ActivityAction =
   | "deal.aangemaakt"
   | "deal.status"
   | "deal.omgezet"
-  | "deal.verwijderd";
+  | "deal.verwijderd"
+  | "deal.bestand";
 
 export type ActivityInvoer = {
   action: ActivityAction;
@@ -249,6 +250,8 @@ export function beschrijf(a: Activity): string {
       return `zette ${typeof meta.deal === "string" ? meta.deal : "een deal"} om naar ${naam}`;
     case "deal.verwijderd":
       return `verwijderde de aanvraag ${naam}`;
+    case "deal.bestand":
+      return `voegde ${naam} toe aan een deal`;
     default:
       return a.action;
   }

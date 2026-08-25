@@ -4,6 +4,7 @@ import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import DealForm from "@/components/DealForm";
 import DealActies from "./DealActies";
+import DealBestanden, { type DealBestand } from "./DealBestanden";
 import { DealStatusBadge } from "@/components/StatusBadge";
 import type { Deal } from "@/lib/types";
 
@@ -11,11 +12,17 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: deal }, { data: clients }, { data: contacts }] = await Promise.all([
-    supabase.from("deals").select("*").eq("id", id).maybeSingle(),
-    supabase.from("clients").select("id, name").order("name"),
-    supabase.from("contacts").select("id, name, email").order("name"),
-  ]);
+  const [{ data: deal }, { data: clients }, { data: contacts }, { data: bestanden }] =
+    await Promise.all([
+      supabase.from("deals").select("*").eq("id", id).maybeSingle(),
+      supabase.from("clients").select("id, name").order("name"),
+      supabase.from("contacts").select("id, name, email").order("name"),
+      supabase
+        .from("files")
+        .select("id, name, size_bytes, mime_type, created_at")
+        .eq("deal_id", id)
+        .order("created_at", { ascending: false }),
+    ]);
 
   if (!deal) notFound();
   const d = deal as Deal;
@@ -41,6 +48,8 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
       </p>
 
       <DealActies deal={d} klantNaam={klant?.name ?? null} />
+
+      <DealBestanden dealId={d.id} bestanden={(bestanden ?? []) as DealBestand[]} />
 
       <div className="squircle p-6" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         <DealForm deal={d} clients={clients ?? []} contacts={contacts ?? []} />

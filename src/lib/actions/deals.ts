@@ -124,8 +124,8 @@ export async function deleteDealAction(formData: FormData) {
  * bestaat hij nog niet dan maak je hem daar aan vanuit de keuzelijst. Hier nog
  * een organisatie maken zou een tweede versie van dezelfde klant opleveren.
  *
- * De contactpersoon gaat mee naar de organisatie en het project, zodat je
- * niets overtikt.
+ * De contactpersoon en de bestanden gaan mee naar het project, zodat je niets
+ * overtikt en de briefing staat waar het werk staat.
  *
  * converted_at is het stempel dat dit maar één keer gebeurt. client_id kan dat
  * niet zijn, want die is al vóór het omzetten gevuld.
@@ -177,6 +177,14 @@ export async function convertDealAction(id: string) {
     await supabase.from("contact_clients").upsert({ contact_id: contactId, client_id: clientId });
     await supabase.from("project_contacts").insert({ project_id: project.id, contact_id: contactId });
   }
+
+  // 4. De bestanden verhuizen mee: een briefing hoort bij het werk, niet bij
+  //    de aanvraag alleen. deal_id blijft staan als herkomst.
+  const { error: bestandFout } = await supabase
+    .from("files")
+    .update({ project_id: project.id })
+    .eq("deal_id", id);
+  if (bestandFout) console.error("[deals] bestanden koppelen mislukt:", bestandFout);
 
   const nu = new Date().toISOString();
   const { error: koppelFout } = await supabase
