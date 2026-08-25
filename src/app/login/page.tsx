@@ -52,9 +52,11 @@ export default function LoginPage() {
             </h1>
           </div>
 
-          <p className="mt-3 text-sm" style={{ color: "var(--text-muted)" }}>
-            {step === "email" ? "Log in om verder te gaan" : `Inloglink verstuurd naar ${email}`}
-          </p>
+          {step === "email" && (
+            <p className="mt-3 text-sm" style={{ color: "var(--text-muted)" }}>
+              Log in om verder te gaan
+            </p>
+          )}
 
           {step === "email" ? (
             <form onSubmit={handleEmailSubmit} className="mt-6">
@@ -89,7 +91,21 @@ export default function LoginPage() {
             </form>
           ) : (
             <div className="mt-6">
-              <p className="text-sm" style={{ color: "var(--text)" }}>
+              {/* Het adres in een eigen vlakje: dat is het enige wat je hier
+                  moet controleren, en als losse regel muted tekst viel het weg. */}
+              <div
+                className="squircle px-3 py-2.5"
+                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+              >
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  Inloglink verstuurd naar
+                </p>
+                <p className="text-sm font-medium break-all" style={{ color: "var(--text-heading)" }}>
+                  {email}
+                </p>
+              </div>
+
+              <p className="mt-4 text-sm" style={{ color: "var(--text-muted)" }}>
                 Open de mail en klik op de knop om verder te gaan. De link werkt één keer en verloopt na een uur.
               </p>
               <button
