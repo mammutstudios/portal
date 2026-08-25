@@ -7,7 +7,7 @@ export default async function NieuweDealPage() {
   const supabase = await createClient();
   const [{ data: clients }, { data: contacts }] = await Promise.all([
     supabase.from("clients").select("id, name").order("name"),
-    supabase.from("contacts").select("id, name, email").order("name"),
+    supabase.from("contacts").select("id, name, email, contact_clients(client_id)").order("name"),
   ]);
 
   return (

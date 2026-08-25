@@ -49,7 +49,13 @@ export default function DealForm({
   deal?: Deal;
   /** Bestaande organisaties, voor een aanvraag van een klant die je al kent. */
   clients: { id: string; name: string }[];
-  contacts: { id: string; name: string; email: string | null }[];
+  /** Met de organisaties waar ze bij horen, zodat de lijst mee kan filteren. */
+  contacts: {
+    id: string;
+    name: string;
+    email: string | null;
+    contact_clients?: { client_id: string | null }[] | null;
+  }[];
 }) {
   const router = useRouter();
   const [bezig, setBezig] = useState(false);
@@ -61,6 +67,20 @@ export default function DealForm({
   const bestandInvoer = useRef<HTMLInputElement>(null);
   const [klaarstaand, setKlaarstaand] = useState<File[]>([]);
   const [sleept, setSleept] = useState(false);
+
+  // Bij een gekozen organisatie alleen de mensen die daarbij horen. Zonder
+  // organisatie de hele lijst, want dan valt er niets te filteren.
+  const [klantId, setKlantId] = useState(deal?.client_id ?? "");
+  const hoortBij = (c: (typeof contacts)[number]) =>
+    (c.contact_clients ?? []).some((k) => k.client_id === klantId);
+  const zichtbareContacten = klantId ? contacts.filter(hoortBij) : contacts;
+
+  // Is er precies één, dan is die de bedoeling; dat scheelt een klik.
+  const enige = zichtbareContacten.length === 1 ? zichtbareContacten[0].id : undefined;
+  // Wisselt de organisatie, dan telt de eerder bewaarde contactpersoon niet
+  // meer mee: die hoort bij de vorige organisatie.
+  const gewisseld = klantId !== (deal?.client_id ?? "");
+  const standaardContact = gewisseld ? enige : (deal?.contact_id ?? enige);
 
   const voegToe = (lijst: FileList | null) =>
     setKlaarstaand((eerder) => [...eerder, ...Array.from(lijst ?? [])]);
@@ -123,6 +143,7 @@ export default function DealForm({
           defaultValue={deal?.client_id ?? undefined}
           placeholder="Zoeken of nieuwe naam typen"
           options={clients.map((c) => ({ value: c.id, label: c.name }))}
+          onChange={(waarde) => setKlantId(waarde ?? "")}
           onCreateNew={async (naam) => {
             const uitkomst = await quickCreateClientAction(naam);
             if ("error" in uitkomst) return null;
@@ -132,17 +153,26 @@ export default function DealForm({
       </Veld>
 
       <Veld label="Contactpersoon">
+        {/* De key hangt aan de organisatie: wisselt die, dan begint deze lijst
+            opnieuw met de juiste mensen en de juiste voorkeuze. */}
         <SearchSelect
+          key={klantId}
           name="contact_id"
-          defaultValue={deal?.contact_id ?? undefined}
-          placeholder="Zoeken of nieuwe naam typen"
-          options={contacts.map((c) => ({
+          defaultValue={standaardContact}
+          placeholder={
+            klantId && zichtbareContacten.length === 0
+              ? "Nog niemand bij deze organisatie, typ een naam"
+              : "Zoeken of nieuwe naam typen"
+          }
+          options={zichtbareContacten.map((c) => ({
             value: c.id,
             label: c.name,
             sublabel: c.email ?? undefined,
           }))}
           onCreateNew={async (naam) => {
-            const uitkomst = await quickCreateContactAction(naam);
+            // Meteen aan de gekozen organisatie hangen, anders staat hij
+            // nergens bij en valt hij de volgende keer buiten dit lijstje.
+            const uitkomst = await quickCreateContactAction(naam, klantId || null);
             if ("error" in uitkomst) return null;
             return { value: uitkomst.id, label: uitkomst.name };
           }}

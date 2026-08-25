@@ -9,6 +9,8 @@ import { revalidatePath } from "next/cache";
  */
 export async function quickCreateContactAction(
   name: string,
+  /** Meteen aan deze organisatie hangen; anders staat hij nergens bij. */
+  clientId?: string | null,
 ): Promise<{ id: string; name: string } | { error: string }> {
   if (!name?.trim()) return { error: "Naam is verplicht" };
 
@@ -20,6 +22,12 @@ export async function quickCreateContactAction(
     .single();
 
   if (error) return { error: error.message };
+
+  if (clientId) {
+    await supabase.from("contact_clients").insert({ contact_id: data.id, client_id: clientId });
+    revalidatePath(`/dashboard/clients/${clientId}`);
+  }
+
   revalidatePath("/dashboard/contacts");
   return { id: data.id, name: data.name };
 }

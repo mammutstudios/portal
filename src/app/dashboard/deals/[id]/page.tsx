@@ -16,7 +16,7 @@ export default async function DealPage({ params }: { params: Promise<{ id: strin
     await Promise.all([
       supabase.from("deals").select("*").eq("id", id).maybeSingle(),
       supabase.from("clients").select("id, name").order("name"),
-      supabase.from("contacts").select("id, name, email").order("name"),
+      supabase.from("contacts").select("id, name, email, contact_clients(client_id)").order("name"),
       supabase
         .from("files")
         .select("id, name, size_bytes, mime_type, created_at")
