@@ -7,8 +7,14 @@ import { logActiviteit } from "@/lib/activity";
 
 const BUCKET = "documents";
 
-/** Hierboven weigeren we het. Een briefing die groter is hoort in de cloud. */
-export const MAX_BYTES = 25 * 1024 * 1024;
+/**
+ * Hierboven weigeren we het. Een briefing die groter is hoort in de cloud.
+ *
+ * Niet geëxporteerd, en dat is geen slordigheid: een bestand met "use server"
+ * mag alleen async functies exporteren. Eén losse constante laat de hele module
+ * vallen, en dat gaf een serverfout bij het opslaan van een deal.
+ */
+const MAX_BYTES = 25 * 1024 * 1024;
 
 /**
  * Uploaden gaat niet via de server maar rechtstreeks van de browser naar de
