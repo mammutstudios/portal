@@ -99,6 +99,12 @@ export function zinVoorWijziging(w: Wijziging): string {
 export type Activity = {
   id: string;
   created_at: string;
+  /**
+   * Wie het deed. Staat los van `profiles`: is dit gevuld maar profiles leeg,
+   * dan bestond de actor wél maar mocht de lezer zijn naam niet zien. Dan is
+   * "Systeem" een leugen en hoort er "Onbekende gebruiker" te staan.
+   */
+  actor_profile_id: string | null;
   action: ActivityAction | string;
   entity_type: string | null;
   entity_id: string | null;
@@ -165,6 +171,14 @@ export function beschrijf(a: Activity): string {
     default:
       return a.action;
   }
+}
+
+/** De naam van de actor, of wat er staat als die er niet is. */
+export function actorNaam(a: Activity): string {
+  if (a.profiles?.full_name) return a.profiles.full_name;
+  // Wel een actor, geen naam: waarschijnlijk mag deze lezer dat profiel niet
+  // zien. Nooit "Systeem" tonen, want dan lijkt het alsof niemand het deed.
+  return a.actor_profile_id ? "Onbekende gebruiker" : "Systeem";
 }
 
 /** Waar je heen gaat als je op de regel klikt. Null = nergens heen. */

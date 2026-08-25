@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import ClientLogo from "@/components/ClientLogo";
 import PageSkeleton from "@/components/PageSkeleton";
 import {
+  actorNaam,
   beschrijf,
   linkVoor,
   wijzigingenVan,
@@ -36,7 +37,7 @@ async function Lijst() {
   const { data, error } = await supabase
     .from("activities")
     .select(
-      "id, created_at, action, entity_type, entity_id, entity_label, client_id, meta, profiles:actor_profile_id(full_name, avatar_url)",
+      "id, created_at, actor_profile_id, action, entity_type, entity_id, entity_label, client_id, meta, profiles:actor_profile_id(full_name, avatar_url)",
     )
     .order("created_at", { ascending: false })
     .limit(LIMIET);
@@ -96,7 +97,7 @@ async function Lijst() {
 }
 
 function Regel({ activiteit, laatste }: { activiteit: Activity; laatste: boolean }) {
-  const naam = activiteit.profiles?.full_name ?? "Systeem";
+  const naam = actorNaam(activiteit);
   const href = linkVoor(activiteit);
   // Eén wijziging staat al in de zin; vanaf twee komen ze eronder te staan.
   const wijzigingen = wijzigingenVan(activiteit);
