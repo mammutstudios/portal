@@ -248,6 +248,64 @@ export function actorNaam(a: Activity): string {
   return a.actor_profile_id ? "Onbekende gebruiker" : "Systeem";
 }
 
+/**
+ * Opeenvolgende paginabezoeken van dezelfde persoon zijn één rondgang.
+ *
+ * Vijf losse regels voor iemand die even rondklikt duwt al het andere uit
+ * beeld. De regels blijven apart in de database staan, want daar is de
+ * fijnmazigheid iets waard; alleen het lezen wordt samengevouwen.
+ */
+const RONDGANG_MINUTEN = 30;
+
+export type Groep =
+  | { soort: "enkel"; activiteit: Activity }
+  | { soort: "rondgang"; regels: Activity[] };
+
+export function groepeer(regels: Activity[]): Groep[] {
+  const uit: Groep[] = [];
+
+  for (let i = 0; i < regels.length; i++) {
+    const eerste = regels[i];
+    if (eerste.action !== "portaal.bekeken") {
+      uit.push({ soort: "enkel", activiteit: eerste });
+      continue;
+    }
+
+    // De lijst is nieuwste eerst, dus we lopen terug in de tijd.
+    const rondgang = [eerste];
+    while (i + 1 < regels.length) {
+      const volgende = regels[i + 1];
+      const vorige = rondgang[rondgang.length - 1];
+      const gat =
+        (new Date(vorige.created_at).getTime() - new Date(volgende.created_at).getTime()) / 60_000;
+      if (
+        volgende.action !== "portaal.bekeken" ||
+        volgende.actor_profile_id !== eerste.actor_profile_id ||
+        gat > RONDGANG_MINUTEN
+      ) {
+        break;
+      }
+      rondgang.push(volgende);
+      i++;
+    }
+
+    uit.push(
+      rondgang.length === 1
+        ? { soort: "enkel", activiteit: eerste }
+        : { soort: "rondgang", regels: rondgang },
+    );
+  }
+
+  return uit;
+}
+
+/** "Overzicht, Projecten en Facturen", in de volgorde van bezoeken. */
+export function paginasZin(rondgang: Activity[]): string {
+  const namen = [...rondgang].reverse().map((r) => r.entity_label ?? "een pagina");
+  if (namen.length === 1) return namen[0];
+  return `${namen.slice(0, -1).join(", ")} en ${namen[namen.length - 1]}`;
+}
+
 /** Waar je heen gaat als je op de regel klikt. Null = nergens heen. */
 export function linkVoor(a: Activity): string | null {
   if (!a.entity_id) return null;

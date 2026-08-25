@@ -6,7 +6,9 @@ import PageSkeleton from "@/components/PageSkeleton";
 import {
   actorNaam,
   beschrijf,
+  groepeer,
   linkVoor,
+  paginasZin,
   wijzigingenVan,
   zinVoorWijziging,
   type Activity,
@@ -86,9 +88,21 @@ async function Lijst() {
             {dagLabel(dag)}
           </h2>
           <Kader plat>
-            {vanDieDag.map((a, i) => (
-              <Regel key={a.id} activiteit={a} laatste={i === vanDieDag.length - 1} />
-            ))}
+            {groepeer(vanDieDag).map((groep, i, alle) =>
+              groep.soort === "enkel" ? (
+                <Regel
+                  key={groep.activiteit.id}
+                  activiteit={groep.activiteit}
+                  laatste={i === alle.length - 1}
+                />
+              ) : (
+                <Rondgang
+                  key={groep.regels[0].id}
+                  regels={groep.regels}
+                  laatste={i === alle.length - 1}
+                />
+              ),
+            )}
           </Kader>
         </section>
       ))}
@@ -137,6 +151,33 @@ function Regel({ activiteit, laatste }: { activiteit: Activity; laatste: boolean
   ) : (
     <div className={klassen} style={stijl}>
       {inhoud}
+    </div>
+  );
+}
+
+/**
+ * Eén regel voor een rondgang langs meerdere pagina's, met de tijdspanne
+ * ernaast. Bewust niet klikbaar: de losse pagina's wijzen elk ergens anders
+ * heen en één link zou daar een willekeurige uit kiezen.
+ */
+function Rondgang({ regels, laatste }: { regels: Activity[]; laatste: boolean }) {
+  const naam = actorNaam(regels[0]);
+  const van = tijd(regels[regels.length - 1].created_at);
+  const tot = tijd(regels[0].created_at);
+
+  return (
+    <div
+      className="flex items-start gap-3 px-4 py-3"
+      style={{ borderBottom: laatste ? "none" : "1px solid var(--border)" }}
+    >
+      <ClientLogo logo_url={regels[0].profiles?.avatar_url ?? null} name={naam} />
+      <p className="text-sm min-w-0 flex-1" style={{ color: "var(--text)" }}>
+        <span className="font-medium" style={{ color: "var(--text-heading)" }}>{naam}</span>{" "}
+        bekeek {paginasZin(regels)}
+      </p>
+      <span className="text-xs tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+        {van === tot ? tot : `${van} tot ${tot}`}
+      </span>
     </div>
   );
 }
