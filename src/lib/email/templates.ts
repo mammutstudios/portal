@@ -7,22 +7,35 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://portal.mammutstudios.c
 const LOGO = `${SITE}/brand/mammut-studios/mammut-icon-mail.png`;
 
 /**
- * Altijd licht. De kaart hoort wit te zijn, ook als de mailclient in donkere
- * modus staat: zonder deze regels keren Apple Mail en Outlook de kleuren zelf
- * om en wordt het een grijze brij. Gmail op mobiel trekt zich er niets van aan,
- * daar is niets tegen te doen.
+ * Altijd licht. De kaart hoort wit te blijven, ook in een donkere mailclient.
+ *
+ * Drie lagen, want elke client doet het anders. `color-scheme` houdt Apple Mail
+ * en Outlook voor macOS tegen. De `data-ogsb` en `data-ogsc` regels zetten terug
+ * wat Outlook.com zelf overschrijft; die attributen plakt Outlook op elementen
+ * waarvan het de achtergrond of de tekstkleur heeft aangepast. En alles heeft
+ * een eigen achtergrondkleur, zodat er nergens iets doorschijnt.
+ *
+ * Clients die de hele mail simpelweg omkeren, zoals Gmail op Android en sommige
+ * bureaubladclients, trekken zich hier niets van aan. Daar is met html niets
+ * tegen te doen.
  */
 const ALTIJD_LICHT = `
   <meta name="color-scheme" content="light only">
   <meta name="supported-color-schemes" content="light">
   <style>
     :root { color-scheme: light only; }
+    [data-ogsb] .vel,   [data-ogsc] .vel   { background: #fafaf9 !important; }
+    [data-ogsb] .kaart, [data-ogsc] .kaart { background: #ffffff !important; }
+    [data-ogsb] .knop,  [data-ogsc] .knop  { background: ${INK} !important; }
+    [data-ogsc] .titel  { color: ${INK} !important; }
+    [data-ogsc] .tekst  { color: ${MUTED} !important; }
+    [data-ogsc] .knop a { color: #ffffff !important; }
   </style>`;
 
 /** De knop zoals hij in elke mail terugkomt. */
 function knop(href: string, label: string) {
   return `<table role="presentation" cellpadding="0" cellspacing="0"><tr>
-        <td style="background:${INK};border-radius:10px">
+        <td class="knop" style="background:${INK};border-radius:10px">
           <a href="${href}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none">${label}</a>
         </td>
       </tr></table>`;
@@ -41,14 +54,14 @@ function layout(title: string, body: string, voet: string = VOET_MELDINGEN) {
 <head>
   <meta charset="utf-8">${ALTIJD_LICHT}
 </head>
-<body style="margin:0;padding:24px;background:#fafaf9;font-family:Helvetica,Arial,sans-serif;color:${INK}">
+<body class="vel" style="margin:0;padding:24px;background:#fafaf9;font-family:Helvetica,Arial,sans-serif;color:${INK}">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto">
-    <tr><td style="background:#ffffff;border:1px solid ${BORDER};border-radius:12px;padding:32px">
+    <tr><td class="kaart" style="background:#ffffff;border:1px solid ${BORDER};border-radius:12px;padding:32px">
       <img src="${LOGO}" width="48" height="48" alt="Mammut Studios" style="display:block;border:0;margin:0 0 24px">
-      <h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:${INK}">${title}</h1>
+      <h1 class="titel" style="margin:0 0 16px;font-size:20px;line-height:1.3;color:${INK}">${title}</h1>
       ${body}
     </td></tr>
-    <tr><td style="padding:16px 8px;font-size:12px;line-height:1.6;color:${MUTED}">
+    <tr><td class="tekst" style="padding:16px 8px;font-size:12px;line-height:1.6;color:${MUTED}">
       ${voet}
     </td></tr>
   </table>
@@ -123,7 +136,7 @@ export function portalInviteMail(invite: {
         : null;
 
   const punten: [string, string, string][] = [
-    ["overzicht", "Overzicht", "De korte versie: wat er nu speelt en waar we staan."],
+    ["overzicht", "Overzicht", "Wat er op dit moment speelt en waar we staan."],
     ["projecten", "Projecten", "Waar we aan werken, hoe het ervoor staat en wat er van jou nodig is."],
     ["facturen", "Facturen", "Alles wat we hebben gefactureerd, met de pdf erbij."],
   ];
@@ -133,7 +146,7 @@ export function portalInviteMail(invite: {
   }
 
   const body = `
-    <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${MUTED}">
+    <p class="tekst" style="margin:0 0 24px;font-size:14px;line-height:1.6;color:${MUTED}">
       Vanaf nu kun je in het portaal van Mammut Studios${waarvoor ? ` voor ${waarvoor}` : ""}.
       Daar staat op één plek wat er voor je loopt, zodat je het niet meer hoeft terug te zoeken in je mail.
     </p>
@@ -146,15 +159,15 @@ export function portalInviteMail(invite: {
               <img src="${SITE}/brand/mail/${icoon}.png" width="32" height="32" alt="" style="display:block;border:0">
             </td>
             <td valign="top" style="padding:14px 0;border-top:1px solid ${BORDER}">
-              <div style="font-size:14px;font-weight:600;color:${INK}">${kop}</div>
-              <div style="font-size:13px;line-height:1.6;color:${MUTED};margin-top:2px">${uitleg}</div>
+              <div class="titel" style="font-size:14px;font-weight:600;color:${INK}">${kop}</div>
+              <div class="tekst" style="font-size:13px;line-height:1.6;color:${MUTED};margin-top:2px">${uitleg}</div>
             </td>
           </tr>`,
         )
         .join("")}
     </table>
 
-    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:${MUTED}">
+    <p class="tekst" style="margin:0 0 20px;font-size:14px;line-height:1.6;color:${MUTED}">
       Inloggen gaat zonder wachtwoord. Je vult je e-mailadres in, wij sturen je een link, en die brengt je naar binnen. Onthouden hoeft dus niets.
     </p>
 
