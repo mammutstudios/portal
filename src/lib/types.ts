@@ -14,6 +14,44 @@ export type Profile = {
 
 export type ClientTag = "agency" | "client";
 
+/**
+ * Een aanvraag die nog geen klant is.
+ *
+ * Let op de naam: "lead" betekent hier het teamlid dat een project trekt
+ * (projects.lead_profile_id). Vandaar deals.
+ */
+export const DEAL_STATUSSEN = ["nieuw", "gesprek", "offerte", "gewonnen", "verloren"] as const;
+export type DealStatus = (typeof DEAL_STATUSSEN)[number];
+
+export const DEAL_STATUS_LABEL: Record<DealStatus, string> = {
+  nieuw: "Nieuw",
+  gesprek: "Gesprek",
+  offerte: "Offerte",
+  gewonnen: "Gewonnen",
+  verloren: "Verloren",
+};
+
+/** Gewonnen en verloren zijn klaar; de rest loopt nog. */
+export const DEAL_OPEN: DealStatus[] = ["nieuw", "gesprek", "offerte"];
+
+export type Deal = {
+  id: string;
+  created_at: string;
+  updated_at: string | null;
+  title: string;
+  company: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  source: string | null;
+  status: DealStatus;
+  value_amount: number | null;
+  notes: string | null;
+  client_id: string | null;
+  project_id: string | null;
+  closed_at: string | null;
+};
+
 export type Client = {
   id: string;
   client_number: string | null;

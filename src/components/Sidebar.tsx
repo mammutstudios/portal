@@ -20,6 +20,7 @@ import {
   ChartBar,
   Palette,
   Pulse as PulseIcon,
+  Handshake,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -189,6 +190,11 @@ const adminNav: NavItem[] = [
     label: "Projecten",
     href: "/dashboard/projects",
     icon: <Folder size={19} weight="fill" />,
+  },
+  {
+    label: "Deals",
+    href: "/dashboard/deals",
+    icon: <Handshake size={19} weight="fill" />,
   },
   {
     label: "Toggl",

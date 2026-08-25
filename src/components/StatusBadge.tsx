@@ -1,4 +1,4 @@
-import type { ProjectStatus, TaskStatus, ClientTag } from "@/lib/types";
+import type { ProjectStatus, TaskStatus, ClientTag, DealStatus } from "@/lib/types";
 
 const projectStatusConfig: Record<ProjectStatus, { label: string; bg: string; color: string }> = {
   upcoming: { label: "Upcoming", bg: "#ffedd5", color: "#9a3412" },
@@ -14,6 +14,26 @@ const taskStatusConfig: Record<TaskStatus, { label: string; bg: string; color: s
   review: { label: "Review", bg: "#fef3c7", color: "#92400e" },
   done: { label: "Klaar", bg: "#d3f1e3", color: "#1a6b47" },
 };
+
+const dealStatusConfig: Record<DealStatus, { label: string; bg: string; color: string }> = {
+  nieuw: { label: "Nieuw", bg: "#dbeafe", color: "#1e40af" },
+  gesprek: { label: "Gesprek", bg: "#ffedd5", color: "#9a3412" },
+  offerte: { label: "Offerte", bg: "#fef3c7", color: "#92400e" },
+  gewonnen: { label: "Gewonnen", bg: "#d3f1e3", color: "#1a6b47" },
+  verloren: { label: "Verloren", bg: "#f1f1ef", color: "#6b6b6b" },
+};
+
+export function DealStatusBadge({ status }: { status: DealStatus }) {
+  const config = dealStatusConfig[status] ?? dealStatusConfig.nieuw;
+  return (
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+      style={{ background: config.bg, color: config.color }}
+    >
+      {config.label}
+    </span>
+  );
+}
 
 export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
   const config = projectStatusConfig[status];

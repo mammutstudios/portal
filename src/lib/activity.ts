@@ -29,11 +29,15 @@ export type ActivityAction =
   | "preview.gestart"
   | "portaal.uitgenodigd"
   | "portaal.ingetrokken"
-  | "portaal.bekeken";
+  | "portaal.bekeken"
+  | "deal.aangemaakt"
+  | "deal.status"
+  | "deal.omgezet"
+  | "deal.verwijderd";
 
 export type ActivityInvoer = {
   action: ActivityAction;
-  entityType?: "project" | "taak" | "factuur" | "klant" | "uren" | "gebruiker" | "pagina";
+  entityType?: "project" | "taak" | "factuur" | "klant" | "uren" | "gebruiker" | "pagina" | "deal";
   entityId?: string | null;
   /** De naam op dit moment; blijft leesbaar nadat het onderwerp is hernoemd. */
   entityLabel?: string | null;
@@ -235,6 +239,16 @@ export function beschrijf(a: Activity): string {
       return `trok de portaaltoegang van ${naam} in`;
     case "portaal.bekeken":
       return `bekeek ${naam}`;
+    case "deal.aangemaakt":
+      return typeof meta.bron === "string" && meta.bron
+        ? `noteerde de aanvraag ${naam} via ${meta.bron}`
+        : `noteerde de aanvraag ${naam}`;
+    case "deal.status":
+      return van && naar ? `zette ${naam} van ${van} naar ${naar}` : `wijzigde ${naam}`;
+    case "deal.omgezet":
+      return `zette ${typeof meta.deal === "string" ? meta.deal : "een deal"} om naar ${naam}`;
+    case "deal.verwijderd":
+      return `verwijderde de aanvraag ${naam}`;
     default:
       return a.action;
   }
@@ -314,6 +328,8 @@ export function linkVoor(a: Activity): string | null {
       return `/dashboard/projects/${a.entity_id}`;
     case "klant":
       return `/dashboard/clients/${a.entity_id}`;
+    case "deal":
+      return "/dashboard/deals";
     case "taak":
       return "/dashboard/tasks";
     case "factuur":
