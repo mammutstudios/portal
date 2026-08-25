@@ -201,11 +201,6 @@ const adminNav: NavItem[] = [
     icon: <ChartBar size={16} weight="fill" />,
   },
   {
-    label: "Activiteiten",
-    href: "/dashboard/activiteiten",
-    icon: <PulseIcon size={19} weight="fill" />,
-  },
-  {
     label: "Finance",
     href: "/dashboard/finance",
     icon: <CurrencyDollar size={19} weight="bold" />,
@@ -226,6 +221,13 @@ const adminNav: NavItem[] = [
     icon: <AddressBook size={19} weight="fill" />,
   },
 ];
+
+/** Staat onderaan bij het portaal-item en niet in de hoofdnavigatie. */
+const activiteitenItem: NavItem = {
+  label: "Activiteiten",
+  href: "/dashboard/activiteiten",
+  icon: <PulseIcon size={19} weight="fill" />,
+};
 
 const clientNav: NavItem[] = [
   {
@@ -387,6 +389,13 @@ function SidebarBody({
 
       {/* Preview + Sign out */}
       <div className="px-3 py-3 space-y-0.5">
+        {role === "admin" && (
+          <NavLink
+            item={activiteitenItem}
+            pathname={pathname}
+            onNavigate={() => setMobileOpen(false)}
+          />
+        )}
         {role === "admin" && (
           <Link
             href="/dashboard/klantportaal"
