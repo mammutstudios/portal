@@ -14,10 +14,9 @@ export default function DealsPage() {
 
 async function Deals() {
   const supabase = await createClient();
-  const [{ data, error }, { data: clients }, { data: contacts }] = await Promise.all([
+  const [{ data, error }, { data: clients }] = await Promise.all([
     supabase.from("deals").select("*").order("created_at", { ascending: false }),
     supabase.from("clients").select("id, name").order("name"),
-    supabase.from("contacts").select("id, name, email").order("name"),
   ]);
 
   // De tabel bestaat pas na de migratie; tot die tijd geen foutscherm maar uitleg.
@@ -44,10 +43,6 @@ async function Deals() {
   }
 
   return (
-    <DealsPageClient
-      deals={(data ?? []) as Deal[]}
-      clients={clients ?? []}
-      contacts={contacts ?? []}
-    />
+    <DealsPageClient deals={(data ?? []) as Deal[]} clients={clients ?? []} />
   );
 }

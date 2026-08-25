@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Select from "@/components/Select";
 import SearchSelect from "@/components/SearchSelect";
 import { createDealAction, updateDealAction } from "@/lib/actions/deals";
@@ -40,13 +41,11 @@ export default function DealForm({
   deal,
   clients,
   contacts,
-  onClose,
 }: {
   deal?: Deal;
   /** Bestaande organisaties, voor een aanvraag van een klant die je al kent. */
   clients: { id: string; name: string }[];
   contacts: { id: string; name: string; email: string | null }[];
-  onClose: () => void;
 }) {
   const router = useRouter();
   const [bezig, setBezig] = useState(false);
@@ -64,7 +63,9 @@ export default function DealForm({
       setFout(uitkomst.error);
       return;
     }
-    onClose();
+    // Terug naar de lijst, en die opnieuw laten ophalen: anders staat de
+    // zojuist opgeslagen deal er nog niet in.
+    router.push("/dashboard/deals");
     router.refresh();
   }
 
@@ -199,14 +200,13 @@ export default function DealForm({
       )}
 
       <div className="flex justify-end gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onClose}
+        <Link
+          href="/dashboard/deals"
           className="text-sm px-3 py-1.5 rounded-md"
           style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
         >
           Annuleren
-        </button>
+        </Link>
         <button
           type="submit"
           disabled={bezig}
