@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { meet, klok } from "@/lib/timing";
 
 /**
  * De poortwachter vóór elke render.
@@ -51,8 +50,7 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const klaar = klok(`proxy ${request.nextUrl.pathname}`);
-  const { data } = await meet("proxy.getClaims", () => supabase.auth.getClaims());
+  const { data } = await supabase.auth.getClaims();
   const claims = data?.claims ?? null;
 
   const { pathname } = request.nextUrl;
@@ -94,7 +92,6 @@ export async function updateSession(request: NextRequest) {
   // het token met een custom access token hook in Supabase. rolVan() leest die
   // hieronder al, en dan kost dit nul rondjes.
 
-  klaar();
   return supabaseResponse;
 }
 
@@ -114,9 +111,11 @@ async function rolVan(
     ((claims.app_metadata as { role?: string } | undefined)?.role);
   if (uitToken) return uitToken;
 
-  const { data: profile } = await meet("proxy.rolQuery", () =>
-    supabase.from("profiles").select("role").eq("id", claims.sub as string).maybeSingle(),
-  );
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", claims.sub as string)
+    .maybeSingle();
 
   return (profile?.role as string | null) ?? null;
 }

@@ -39,11 +39,18 @@ export default function ProjectsPageClient({
     p.status === "completed"
   );
 
+  // Actief bovenaan, daarna wat eraan komt en de rest. Binnen elke groep blijft
+  // de volgorde uit de query staan (nieuwste eerst), want sort is stabiel.
+  const VOLGORDE: Record<string, number> = { active: 0, upcoming: 1, on_hold: 2, review: 3, completed: 4 };
+  const gesorteerd = [...filtered].sort(
+    (a, b) => (VOLGORDE[a.status] ?? 9) - (VOLGORDE[b.status] ?? 9),
+  );
+
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          Projecten <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({filtered.length})</span>
+          Projecten <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({gesorteerd.length})</span>
         </h1>
         <button
           onClick={() => setShowModal(true)}
@@ -73,7 +80,7 @@ export default function ProjectsPageClient({
       </div>
 
       <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
-        {filtered.length > 0 ? (
+        {gesorteerd.length > 0 ? (
           <table className="w-full min-w-[40rem]">
             <thead>
               <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
@@ -85,12 +92,12 @@ export default function ProjectsPageClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((project, i) => (
+              {gesorteerd.map((project, i) => (
                 <tr
                   key={project.id}
                   onClick={() => router.push(`/dashboard/projects/${project.id}`)}
                   className="cursor-pointer"
-                  style={{ borderBottom: i < filtered.length - 1 ? "1px solid var(--border)" : "none" }}
+                  style={{ borderBottom: i < gesorteerd.length - 1 ? "1px solid var(--border)" : "none" }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                 >

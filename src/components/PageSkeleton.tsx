@@ -7,18 +7,33 @@
 export default function PageSkeleton({
   rijen = 5,
   breed = false,
+  kaal = false,
 }: {
   rijen?: number;
   /** De brede variant hoort bij pagina's zonder max-w-5xl, zoals analytics. */
   breed?: boolean;
+  /**
+   * Alleen de kaart, zonder de balken voor titel en ondertitel en zonder de
+   * paginamarges. Voor pagina's die hun kop zelf al hebben staan en alleen op
+   * hun inhoud wachten.
+   */
+  kaal?: boolean;
 }) {
   return (
     <div
-      className={`px-4 py-6 md:px-10 md:py-10 animate-pulse ${breed ? "" : "max-w-5xl mx-auto"}`}
+      className={
+        kaal
+          ? "animate-pulse"
+          : `px-4 py-6 md:px-10 md:py-10 animate-pulse ${breed ? "" : "max-w-5xl mx-auto"}`
+      }
       aria-hidden
     >
-      <div className="h-8 rounded mb-3" style={{ width: 220, background: "var(--border)" }} />
-      <div className="h-3.5 rounded mb-8" style={{ width: 320, background: "var(--border)" }} />
+      {!kaal && (
+        <>
+          <div className="h-8 rounded mb-3" style={{ width: 220, background: "var(--border)" }} />
+          <div className="h-3.5 rounded mb-8" style={{ width: 320, background: "var(--border)" }} />
+        </>
+      )}
 
       <div className="squircle overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
         {Array.from({ length: rijen }).map((_, i) => (

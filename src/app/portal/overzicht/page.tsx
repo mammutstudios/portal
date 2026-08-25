@@ -2,7 +2,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal";
-import { ProjectStatusBadge } from "@/components/StatusBadge";
+import PortalProjectList, {
+  PORTAL_PROJECT_KOLOMMEN,
+  type PortalProject,
+} from "@/components/PortalProjectList";
 import {
   plausibleIsConfigured,
   monthlySiteStats,
@@ -174,22 +177,12 @@ async function WebsiteKaarten() {
 }
 
 /**
- * Wat er nu loopt en wat eraan komt.
+ * Alleen wat er nu écht loopt.
  *
- * Bewust alleen actief en upcoming: review, on hold en afgerond horen op de
- * projectenpagina, niet in het overzicht van vandaag. Actief staat eerst, want
- * daar wordt nu aan gewerkt.
+ * Bewust zonder upcoming: het overzicht gaat over vandaag, en wat eraan komt
+ * staat op de projectenpagina. Dezelfde lijst als daar, uit dezelfde component,
+ * zodat de twee niet uit elkaar lopen.
  */
-const LOPEND = ["active", "upcoming"] as const;
-
-type LopendProject = {
-  id: string;
-  title: string;
-  status: (typeof LOPEND)[number];
-  description: string | null;
-  client_action: string | null;
-};
-
 async function LopendeProjecten() {
   const { clientIds } = await getPortalContext();
   if (clientIds.length === 0) return null;
@@ -197,80 +190,12 @@ async function LopendeProjecten() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("id, title, status, description, client_action")
+    .select(PORTAL_PROJECT_KOLOMMEN)
     .in("client_id", clientIds)
-    .in("status", LOPEND)
+    .eq("status", "active")
     .order("created_at", { ascending: false });
 
-  const projecten = (data ?? []) as unknown as LopendProject[];
-  // Expliciet sorteren en niet op de alfabetische volgorde van de statuswaarde
-  // leunen; dat die "active" vóór "upcoming" zet is toeval.
-  const gesorteerd = [...projecten].sort(
-    (a, b) => LOPEND.indexOf(a.status) - LOPEND.indexOf(b.status),
-  );
-
-  if (gesorteerd.length === 0) {
-    return (
-      <div
-        className="squircle px-4 py-6"
-        style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
-      >
-        <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
-          Er lopen op dit moment geen projecten.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="squircle overflow-hidden"
-      style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
-    >
-      {gesorteerd.map((p, i) => (
-        <Link
-          key={p.id}
-          href={`/portal/projecten/${p.id}`}
-          className="card-hover flex items-start justify-between gap-4 px-4 py-4"
-          style={{ borderBottom: i < gesorteerd.length - 1 ? "1px solid var(--border)" : "none" }}
-        >
-          <div className="min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
-                {p.title}
-              </h3>
-              <ProjectStatusBadge status={p.status} />
-            </div>
-
-            {p.description && (
-              <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-                {p.description}
-              </p>
-            )}
-
-            {p.client_action && (
-              <p className="text-xs mt-2" style={{ color: "#92400e" }}>
-                Van jou nodig: {p.client_action}
-              </p>
-            )}
-          </div>
-
-          {/* Een span en geen button: de hele regel is al een link, en een knop
-              daarbinnen zou een klikbaar element in een klikbaar element zijn. */}
-          <span
-            className="text-sm px-3 py-1.5 rounded-md flex-shrink-0"
-            style={{
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              color: "var(--text-heading)",
-            }}
-          >
-            Bekijk
-          </span>
-        </Link>
-      ))}
-    </div>
-  );
+  return <PortalProjectList projecten={(data ?? []) as unknown as PortalProject[]} />;
 }
 
 function Kaart({ label, value }: { label: string; value: string }) {
