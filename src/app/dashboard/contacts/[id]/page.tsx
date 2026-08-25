@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ContactDetailClient from "./ContactDetailClient";
+import { portaalToegangVoor } from "@/lib/portalToegang";
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,6 +16,14 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
   if (!contact) notFound();
 
   const projects = (projectContacts ?? []).map((pc: any) => pc.projects).filter(Boolean);
+  const toegang = await portaalToegangVoor(contact.email);
 
-  return <ContactDetailClient contact={contact} clients={clients ?? []} projects={projects} />;
+  return (
+    <ContactDetailClient
+      contact={contact}
+      clients={clients ?? []}
+      projects={projects}
+      toegang={toegang}
+    />
+  );
 }

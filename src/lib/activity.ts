@@ -25,7 +25,9 @@ export type ActivityAction =
   | "klant.bijgewerkt"
   | "klant.verwijderd"
   | "uren.geschreven"
-  | "preview.gestart";
+  | "preview.gestart"
+  | "portaal.uitgenodigd"
+  | "portaal.ingetrokken";
 
 export type ActivityInvoer = {
   action: ActivityAction;
@@ -156,6 +158,10 @@ export function beschrijf(a: Activity): string {
       return `schreef ${typeof meta.uren === "number" ? `${meta.uren} uur` : "uren"} op ${naam}`;
     case "preview.gestart":
       return `bekeek het portaal als ${naam}`;
+    case "portaal.uitgenodigd":
+      return `gaf ${naam} toegang tot het portaal`;
+    case "portaal.ingetrokken":
+      return `trok de portaaltoegang van ${naam} in`;
     default:
       return a.action;
   }

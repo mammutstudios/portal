@@ -14,7 +14,9 @@ import PortalEmpty from "../PortalEmpty";
  *
  * Dezelfde lijst als op het overzicht, uit dezelfde component, zodat de twee
  * niet uit elkaar lopen. Verschil is de selectie: het overzicht toont alleen
- * wat actief is, hier staat alles wat nog loopt, met actief bovenaan.
+ * wat actief is, hier staat alles, met actief bovenaan en het afgeronde werk
+ * eronder. Dat laatste blijft staan omdat een klant er later nog naar terug
+ * wil kunnen: de oplevering, de facturen en de afspraken staan erin.
  */
 export default function PortalProjectenPage() {
   return (
@@ -23,7 +25,7 @@ export default function PortalProjectenPage() {
         Projecten
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-        Waar we op dit moment aan werken.
+        Waar we aan werken, en wat we voor je hebben opgeleverd.
       </p>
 
       <Suspense fallback={<PageSkeleton rijen={3} kaal />}>
@@ -42,8 +44,24 @@ async function Projecten() {
     .from("projects")
     .select(PORTAL_PROJECT_KOLOMMEN)
     .in("client_id", clientIds)
-    .neq("status", "completed")
     .order("created_at", { ascending: false });
 
-  return <PortalProjectList projecten={opStatus((data ?? []) as unknown as PortalProject[])} />;
+  const alle = (data ?? []) as unknown as PortalProject[];
+  const lopend = alle.filter((p) => p.status !== "completed");
+  const afgerond = alle.filter((p) => p.status === "completed");
+
+  return (
+    <>
+      <PortalProjectList projecten={opStatus(lopend)} />
+
+      {afgerond.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>
+            Afgerond
+          </h2>
+          <PortalProjectList projecten={afgerond} />
+        </section>
+      )}
+    </>
+  );
 }

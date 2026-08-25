@@ -11,6 +11,8 @@ import { deleteContactAction } from "@/lib/actions/contacts";
 import SearchSelect from "@/components/SearchSelect";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
 import { linkContactToClientAction, unlinkContactFromClientAction } from "@/lib/actions/contacts";
+import { inviteContactAction, revokeContactAccessAction } from "@/lib/actions/portalAccess";
+import type { PortaalToegang } from "@/lib/portalToegang";
 import type { Contact, Client } from "@/lib/types";
 
 type LinkedClient = Pick<Client, "id" | "name" | "logo_url" | "client_number">;
@@ -63,14 +65,113 @@ function AddClientForm({ contactId, allClients, linkedIds, onClose }: {
   );
 }
 
+/**
+ * Toegang tot het klantportaal.
+ *
+ * Bewust hier en niet op de organisatie: je nodigt een persoon uit, niet een
+ * bedrijf, en het e-mailadres waar de inloglink heen gaat staat op deze kaart.
+ */
+function PortaalToegangKaart({
+  contact,
+  linkedClients,
+  toegang,
+}: {
+  contact: ContactWithClients;
+  linkedClients: LinkedClient[];
+  toegang: PortaalToegang;
+}) {
+  const [bezig, setBezig] = useState<"uitnodigen" | "intrekken" | null>(null);
+  const [melding, setMelding] = useState<{ ok: boolean; tekst: string } | null>(null);
+  const router = useRouter();
+
+  const heeftToegang = toegang.clientIds.length > 0;
+  const zichtbaar = linkedClients.filter((c) => toegang.clientIds.includes(c.id));
+
+  async function doe(wat: "uitnodigen" | "intrekken") {
+    setBezig(wat);
+    setMelding(null);
+    const fd = new FormData();
+    fd.set("contact_id", contact.id);
+    const res = wat === "uitnodigen"
+      ? await inviteContactAction(fd)
+      : await revokeContactAccessAction(fd);
+    setMelding(res.ok ? { ok: true, tekst: res.bericht } : { ok: false, tekst: res.fout });
+    setBezig(null);
+    if (res.ok) router.refresh();
+  }
+
+  const blokkade = !contact.email
+    ? "Vul eerst een e-mailadres in, daar gaat de inloglink heen."
+    : linkedClients.length === 0
+      ? "Koppel eerst een organisatie, anders is er niets te zien."
+      : null;
+
+  return (
+    <div>
+      <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Klantportaal</h2>
+      <div className="squircle p-3" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
+        {blokkade ? (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{blokkade}</p>
+        ) : heeftToegang ? (
+          <>
+            <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+              Heeft toegang tot {zichtbaar.map((c) => c.name).join(", ") || "het portaal"}.
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => doe("uitnodigen")}
+                disabled={bezig !== null}
+                className="w-full px-3 py-1.5 rounded-md text-sm"
+                style={{ border: "1px solid var(--border)", color: "var(--text)", opacity: bezig ? 0.6 : 1 }}
+              >
+                {bezig === "uitnodigen" ? "Bezig..." : "Uitnodiging opnieuw sturen"}
+              </button>
+              <button
+                onClick={() => doe("intrekken")}
+                disabled={bezig !== null}
+                className="w-full px-3 py-1.5 rounded-md text-sm"
+                style={{ color: "#c0392b", opacity: bezig ? 0.6 : 1 }}
+              >
+                {bezig === "intrekken" ? "Bezig..." : "Toegang intrekken"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+              Nog geen toegang. Uitnodigen maakt een account aan en stuurt {contact.email} een mail.
+            </p>
+            <button
+              onClick={() => doe("uitnodigen")}
+              disabled={bezig !== null}
+              className="w-full px-3 py-1.5 rounded-md text-sm font-medium"
+              style={{ background: "var(--text-heading)", color: "#fff", opacity: bezig ? 0.6 : 1 }}
+            >
+              {bezig === "uitnodigen" ? "Bezig..." : "Uitnodigen"}
+            </button>
+          </>
+        )}
+
+        {melding && (
+          <p className="text-xs mt-2" style={{ color: melding.ok ? "var(--text-muted)" : "#c0392b" }}>
+            {melding.tekst}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ContactDetailClient({
   contact,
   clients,
   projects,
+  toegang,
 }: {
   contact: ContactWithClients;
   clients: LinkedClient[];
   projects: ProjectRow[];
+  toegang: PortaalToegang;
 }) {
   const [showAddClient, setShowAddClient] = useState(false);
   const router = useRouter();
@@ -177,6 +278,8 @@ export default function ContactDetailClient({
               + Organisatie toevoegen
             </button>
           </div>
+
+          <PortaalToegangKaart contact={contact} linkedClients={linkedClients} toegang={toegang} />
         </div>
 
         {/* Right: projects */}
