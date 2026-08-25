@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Select from "@/components/Select";
+import SearchSelect from "@/components/SearchSelect";
 import { createDealAction, updateDealAction } from "@/lib/actions/deals";
 import { DEAL_STATUSSEN, DEAL_STATUS_LABEL, type Deal } from "@/lib/types";
 
@@ -35,7 +36,18 @@ function Veld({
  * Eén formulier voor allebei: de velden zijn identiek en twee kopieën zouden
  * meteen uit elkaar lopen. `deal` weglaten betekent nieuw.
  */
-export default function DealForm({ deal, onClose }: { deal?: Deal; onClose: () => void }) {
+export default function DealForm({
+  deal,
+  clients,
+  contacts,
+  onClose,
+}: {
+  deal?: Deal;
+  /** Bestaande organisaties, voor een aanvraag van een klant die je al kent. */
+  clients: { id: string; name: string }[];
+  contacts: { id: string; name: string; email: string | null }[];
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
@@ -67,6 +79,19 @@ export default function DealForm({ deal, onClose }: { deal?: Deal; onClose: () =
           className="w-full px-3 rounded-lg text-sm outline-none"
           style={{ ...invoerStijl, height: 40 }}
         />
+      </Veld>
+
+      <Veld label="Bestaande organisatie">
+        <SearchSelect
+          name="client_id"
+          defaultValue={deal?.client_id ?? undefined}
+          placeholder="Geen, dit is een nieuwe klant"
+          options={clients.map((c) => ({ value: c.id, label: c.name }))}
+        />
+        <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+          Laat leeg als het een nieuwe klant is; bij het omzetten wordt de
+          organisatie dan aangemaakt.
+        </p>
       </Veld>
 
       <div className="grid grid-cols-2 gap-3">
@@ -130,6 +155,23 @@ export default function DealForm({ deal, onClose }: { deal?: Deal; onClose: () =
           />
         </Veld>
       </div>
+
+      <Veld label="Bestaande contactpersoon">
+        <SearchSelect
+          name="contact_id"
+          defaultValue={deal?.contact_id ?? undefined}
+          placeholder="Geen, of nieuw zoals hierboven"
+          options={contacts.map((c) => ({
+            value: c.id,
+            label: c.name,
+            sublabel: c.email ?? undefined,
+          }))}
+        />
+        <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+          Ken je hem al, wijs hem dan aan. Anders maak ik bij het omzetten een
+          contactpersoon aan met de naam hierboven.
+        </p>
+      </Veld>
 
       <Veld label="Status">
         <Select

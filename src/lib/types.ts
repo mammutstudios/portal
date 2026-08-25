@@ -47,9 +47,15 @@ export type Deal = {
   status: DealStatus;
   value_amount: number | null;
   notes: string | null;
+  /** De organisatie waar deze aanvraag bij hoort; mag vooraf ingevuld zijn. */
   client_id: string | null;
+  /** Bestaande contactpersoon. Leeg = de losse contactvelden hierboven gelden. */
+  contact_id: string | null;
+  /** Aangemaakt bij het omzetten. */
   project_id: string | null;
   closed_at: string | null;
+  /** Null betekent: nog niet omgezet. Zie de migratie waarom dit los staat. */
+  converted_at: string | null;
 };
 
 export type Client = {

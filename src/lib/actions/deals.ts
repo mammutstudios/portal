@@ -20,6 +20,8 @@ function velden(formData: FormData) {
     email: tekst(formData.get("email")),
     phone: tekst(formData.get("phone")),
     source: tekst(formData.get("source")),
+    client_id: tekst(formData.get("client_id")),
+    contact_id: tekst(formData.get("contact_id")),
     status: (tekst(formData.get("status")) ?? "nieuw") as DealStatus,
     // Komma's zijn wat je typt, punten zijn wat een numeric wil.
     value_amount: bedrag ? Number(bedrag.replace(",", ".")) : null,
@@ -120,11 +122,17 @@ export async function deleteDealAction(formData: FormData) {
 }
 
 /**
- * Een gewonnen deal wordt een organisatie met een project eraan.
+ * Een gewonnen deal wordt een project, en zo nodig ook een organisatie.
  *
- * Zo hoef je niets over te tikken en blijft zichtbaar waar een klant vandaan
- * kwam: de deal houdt zijn client_id en project_id. Een deal die al omgezet is
- * doet dit niet nog een keer, want dan stonden er twee organisaties.
+ * Hoort de deal al bij een bestaande klant, dan komt er alleen een project bij;
+ * een tweede organisatie aanmaken zou die klant verdubbelen. Anders wordt de
+ * organisatie hier gemaakt.
+ *
+ * De contactpersoon gaat mee: een bestaande wordt gekoppeld, en van een nieuwe
+ * naam maken we er een aan. Zo hoef je niets over te tikken.
+ *
+ * converted_at is het stempel dat dit maar één keer gebeurt. client_id kan dat
+ * niet zijn, want die is bij een bestaande klant al vooraf gevuld.
  */
 export async function convertDealAction(id: string) {
   const supabase = await createClient();
@@ -137,23 +145,38 @@ export async function convertDealAction(id: string) {
 
   if (leesFout) return { error: leesFout.message };
   if (!deal) return { error: "Deal niet gevonden" };
-  if (deal.client_id) return { error: "Deze deal is al omgezet" };
+  if (deal.converted_at) return { error: "Deze deal is al omgezet" };
 
-  const naam = (deal.company as string | null)?.trim() || (deal.title as string);
+  // 1. De organisatie: bestaand of nieuw.
+  let clientId = deal.client_id as string | null;
+  let clientNaam: string | null = null;
 
-  const { data: klant, error: klantFout } = await supabase
-    .from("clients")
-    .insert({ name: naam, email: deal.email, tag: "client" })
-    .select("id, name")
-    .single();
+  if (clientId) {
+    const { data: bestaand } = await supabase
+      .from("clients")
+      .select("name")
+      .eq("id", clientId)
+      .maybeSingle();
+    clientNaam = (bestaand as { name?: string } | null)?.name ?? null;
+  } else {
+    const naam = (deal.company as string | null)?.trim() || (deal.title as string);
+    const { data: klant, error: klantFout } = await supabase
+      .from("clients")
+      .insert({ name: naam, email: deal.email, tag: "client" })
+      .select("id, name")
+      .single();
 
-  if (klantFout) return { error: `Organisatie aanmaken mislukt: ${klantFout.message}` };
+    if (klantFout) return { error: `Organisatie aanmaken mislukt: ${klantFout.message}` };
+    clientId = klant.id as string;
+    clientNaam = klant.name as string;
+  }
 
+  // 2. Het project.
   const { data: project, error: projectFout } = await supabase
     .from("projects")
     .insert({
       title: deal.title,
-      client_id: klant.id,
+      client_id: clientId,
       description: deal.notes,
       status: "upcoming",
       budget_amount: deal.value_amount,
@@ -163,14 +186,25 @@ export async function convertDealAction(id: string) {
 
   if (projectFout) return { error: `Project aanmaken mislukt: ${projectFout.message}` };
 
+  // 3. De contactpersoon, als die er is. Mislukt dit, dan is dat jammer maar
+  //    geen reden om de omzetting terug te draaien: klant en project staan er.
+  const contactId = await contactVoorDeal(supabase, deal);
+  if (contactId) {
+    await supabase.from("contact_clients").upsert({ contact_id: contactId, client_id: clientId });
+    await supabase.from("project_contacts").insert({ project_id: project.id, contact_id: contactId });
+  }
+
+  const nu = new Date().toISOString();
   const { error: koppelFout } = await supabase
     .from("deals")
     .update({
-      client_id: klant.id,
+      client_id: clientId,
+      contact_id: contactId ?? deal.contact_id,
       project_id: project.id,
       status: "gewonnen",
-      closed_at: (deal.closed_at as string | null) ?? new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      closed_at: (deal.closed_at as string | null) ?? nu,
+      converted_at: nu,
+      updated_at: nu,
     })
     .eq("id", id);
 
@@ -179,14 +213,44 @@ export async function convertDealAction(id: string) {
   await logActiviteit({
     action: "deal.omgezet",
     entityType: "klant",
-    entityId: klant.id,
-    entityLabel: klant.name,
-    clientId: klant.id,
-    meta: { deal: deal.title, project_id: project.id },
+    entityId: clientId,
+    entityLabel: clientNaam,
+    clientId,
+    meta: { deal: deal.title, project_id: project.id, bestaandeKlant: Boolean(deal.client_id) },
   });
 
   revalidatePath("/dashboard/deals");
   revalidatePath("/dashboard/clients");
   revalidatePath("/dashboard/projects");
-  return { success: true, clientId: klant.id as string };
+  return { success: true, clientId };
+}
+
+/**
+ * De contactpersoon bij een deal: de aangewezen bestaande, of een nieuwe uit de
+ * losse velden. Zonder naam valt er niets te maken.
+ */
+async function contactVoorDeal(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  deal: Record<string, unknown>,
+): Promise<string | null> {
+  if (deal.contact_id) return deal.contact_id as string;
+
+  const naam = (deal.contact_name as string | null)?.trim();
+  if (!naam) return null;
+
+  const { data, error } = await supabase
+    .from("contacts")
+    .insert({
+      name: naam,
+      email: deal.email ?? null,
+      phone: deal.phone ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[deals] contactpersoon aanmaken mislukt:", error);
+    return null;
+  }
+  return data.id as string;
 }

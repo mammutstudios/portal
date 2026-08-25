@@ -32,8 +32,17 @@ const euro = (n: number) =>
 const kortDatum = (d: string) =>
   new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
 
-export default function DealsPageClient({ deals }: { deals: Deal[] }) {
+export default function DealsPageClient({
+  deals,
+  clients,
+  contacts,
+}: {
+  deals: Deal[];
+  clients: { id: string; name: string }[];
+  contacts: { id: string; name: string; email: string | null }[];
+}) {
   const router = useRouter();
+  const klantNaam = new Map(clients.map((c) => [c.id, c.name]));
   const [filter, setFilter] = useState<Filter>("open");
   const [nieuw, setNieuw] = useState(false);
   const [bewerken, setBewerken] = useState<Deal | null>(null);
@@ -89,7 +98,7 @@ export default function DealsPageClient({ deals }: { deals: Deal[] }) {
         </button>
       </div>
       <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
-        Aanvragen die nog geen klant zijn.
+        Aanvragen en nieuw werk, van nieuwe klanten en van bestaande.
         {openWaarde > 0 && ` ${euro(openWaarde)} openstaand.`}
       </p>
 
@@ -127,7 +136,13 @@ export default function DealsPageClient({ deals }: { deals: Deal[] }) {
                   <DealStatusBadge status={deal.status} />
                 </div>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  {[deal.company, deal.contact_name, deal.source && `via ${deal.source}`]
+                  {[
+                    // Een gekoppelde organisatie wint van het vrije veld: die
+                    // naam is de echte, het vrije veld is wat iemand typte.
+                    (deal.client_id && klantNaam.get(deal.client_id)) || deal.company,
+                    deal.contact_name,
+                    deal.source && `via ${deal.source}`,
+                  ]
                     .filter(Boolean)
                     .join(" · ") || "Geen gegevens"}
                 </p>
@@ -145,7 +160,7 @@ export default function DealsPageClient({ deals }: { deals: Deal[] }) {
               </span>
 
               {/* Omzetten kan één keer; daarna wijst de deal naar zijn klant. */}
-              {deal.client_id ? (
+              {deal.converted_at ? (
                 <span className="text-xs flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                   Omgezet
                 </span>
@@ -176,13 +191,18 @@ export default function DealsPageClient({ deals }: { deals: Deal[] }) {
 
       {nieuw && (
         <Modal title="Nieuwe deal" onClose={() => setNieuw(false)}>
-          <DealForm onClose={() => setNieuw(false)} />
+          <DealForm clients={clients} contacts={contacts} onClose={() => setNieuw(false)} />
         </Modal>
       )}
 
       {bewerken && (
         <Modal title="Deal bijwerken" onClose={() => setBewerken(null)}>
-          <DealForm deal={bewerken} onClose={() => setBewerken(null)} />
+          <DealForm
+            deal={bewerken}
+            clients={clients}
+            contacts={contacts}
+            onClose={() => setBewerken(null)}
+          />
         </Modal>
       )}
 
@@ -190,14 +210,26 @@ export default function DealsPageClient({ deals }: { deals: Deal[] }) {
         <Modal title="Deal omzetten" onClose={() => setOmzetten(null)}>
           <div className="space-y-4">
             <p className="text-sm" style={{ color: "var(--text)" }}>
-              Hiermee maak ik de organisatie{" "}
-              <strong>{omzetten.company?.trim() || omzetten.title}</strong> aan, met een project{" "}
-              <strong>{omzetten.title}</strong> op Upcoming. De deal blijft eraan gekoppeld, zodat
-              zichtbaar blijft waar deze klant vandaan komt.
+              {omzetten.client_id ? (
+                <>
+                  Hiermee komt er een project <strong>{omzetten.title}</strong> op Upcoming bij{" "}
+                  <strong>{klantNaam.get(omzetten.client_id) ?? "deze organisatie"}</strong>. Er
+                  wordt geen tweede organisatie aangemaakt.
+                </>
+              ) : (
+                <>
+                  Hiermee maak ik de organisatie{" "}
+                  <strong>{omzetten.company?.trim() || omzetten.title}</strong> aan, met een project{" "}
+                  <strong>{omzetten.title}</strong> op Upcoming.
+                </>
+              )}{" "}
+              De deal blijft eraan gekoppeld, zodat zichtbaar blijft waar dit werk vandaan komt.
             </p>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              De klant krijgt hier nog geen portaaltoegang van; dat regel je apart bij de
-              organisatie.
+              {omzetten.contact_id || omzetten.contact_name
+                ? "De contactpersoon gaat mee naar de organisatie en het project. "
+                : ""}
+              Portaaltoegang komt er niet vanzelf bij; dat regel je apart bij de organisatie.
             </p>
 
             {fout && (

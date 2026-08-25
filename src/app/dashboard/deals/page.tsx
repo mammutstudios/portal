@@ -14,10 +14,11 @@ export default function DealsPage() {
 
 async function Deals() {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("deals")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [{ data, error }, { data: clients }, { data: contacts }] = await Promise.all([
+    supabase.from("deals").select("*").order("created_at", { ascending: false }),
+    supabase.from("clients").select("id, name").order("name"),
+    supabase.from("contacts").select("id, name, email").order("name"),
+  ]);
 
   // De tabel bestaat pas na de migratie; tot die tijd geen foutscherm maar uitleg.
   if (error) {
@@ -27,7 +28,7 @@ async function Deals() {
           Deals
         </h1>
         <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-          Aanvragen die nog geen klant zijn.
+          Aanvragen en nieuw werk, van nieuwe klanten en van bestaande.
         </p>
         <div className="squircle px-4 py-6" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
@@ -42,5 +43,11 @@ async function Deals() {
     );
   }
 
-  return <DealsPageClient deals={(data ?? []) as Deal[]} />;
+  return (
+    <DealsPageClient
+      deals={(data ?? []) as Deal[]}
+      clients={clients ?? []}
+      contacts={contacts ?? []}
+    />
+  );
 }
