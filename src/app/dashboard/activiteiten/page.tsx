@@ -3,7 +3,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ClientLogo from "@/components/ClientLogo";
 import PageSkeleton from "@/components/PageSkeleton";
-import { beschrijf, linkVoor, type Activity } from "@/lib/activity";
+import {
+  beschrijf,
+  linkVoor,
+  wijzigingenVan,
+  zinVoorWijziging,
+  type Activity,
+} from "@/lib/activity";
 
 /** Hoeveel regels de pagina laat zien. Genoeg om terug te kijken, niet eindeloos. */
 const LIMIET = 150;
@@ -92,21 +98,35 @@ async function Lijst() {
 function Regel({ activiteit, laatste }: { activiteit: Activity; laatste: boolean }) {
   const naam = activiteit.profiles?.full_name ?? "Systeem";
   const href = linkVoor(activiteit);
+  // Eén wijziging staat al in de zin; vanaf twee komen ze eronder te staan.
+  const wijzigingen = wijzigingenVan(activiteit);
+  const detail = wijzigingen.length > 1 ? wijzigingen : [];
 
   const inhoud = (
     <>
       <ClientLogo logo_url={activiteit.profiles?.avatar_url ?? null} name={naam} />
-      <p className="text-sm min-w-0 flex-1" style={{ color: "var(--text)" }}>
-        <span className="font-medium" style={{ color: "var(--text-heading)" }}>{naam}</span>{" "}
-        {beschrijf(activiteit)}
-      </p>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm" style={{ color: "var(--text)" }}>
+          <span className="font-medium" style={{ color: "var(--text-heading)" }}>{naam}</span>{" "}
+          {beschrijf(activiteit)}
+        </p>
+        {detail.length > 0 && (
+          <ul className="mt-1 space-y-0.5">
+            {detail.map((w) => (
+              <li key={w.veld} className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {zinVoorWijziging(w)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <span className="text-xs tabular-nums flex-shrink-0" style={{ color: "var(--text-muted)" }}>
         {tijd(activiteit.created_at)}
       </span>
     </>
   );
 
-  const klassen = "flex items-center gap-3 px-4 py-3";
+  const klassen = `flex gap-3 px-4 py-3 ${detail.length > 0 ? "items-start" : "items-center"}`;
   const stijl = { borderBottom: laatste ? "none" : "1px solid var(--border)" };
 
   return href ? (

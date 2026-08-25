@@ -107,7 +107,9 @@ export async function updateProjectAction(id: string, formData: FormData) {
   const [{ data: vorige }, { data: { user } }] = await Promise.all([
     supabase
       .from("projects")
-      .select("status, phase, budget_amount, deadline, lead_profile_id")
+      .select(
+        "title, status, phase, budget_amount, deadline, lead_profile_id, description, tags, next_step, client_action, live_url, staging_url, progress",
+      )
       .eq("id", id)
       .maybeSingle(),
     supabase.auth.getUser(),
@@ -132,19 +134,48 @@ export async function updateProjectAction(id: string, formData: FormData) {
 
   if (error) return { error: error.message };
 
-  // Een statuswissel is het vermelden waard; de rest is "bijgewerkt".
-  const oudeStatus = (vorige as { status?: string } | null)?.status;
-  await logActiviteit(
-    oudeStatus && oudeStatus !== status
-      ? {
-          action: "project.status",
-          entityType: "project",
-          entityId: id,
-          entityLabel: title.trim(),
-          meta: { van: STATUS_LABEL[oudeStatus] ?? oudeStatus, naar: STATUS_LABEL[status] ?? status },
-        }
-      : { action: "project.bijgewerkt", entityType: "project", entityId: id, entityLabel: title.trim() },
-  );
+  // Wát er veranderde, veld voor veld. "Bijgewerkt" zonder die lijst zegt
+  // niets: dan zie je wel dat er iets gebeurde, maar niet of het het budget
+  // was of de status.
+  const wijzigingen = verschillenIn(vorige, {
+    title: title.trim(),
+    status,
+    phase: phase || null,
+    budget_amount: budget_amount?.trim() ? Number(budget_amount) : null,
+    deadline: deadline || null,
+    lead_profile_id: lead_profile_id || null,
+    description: description?.trim() || null,
+    tags,
+    next_step: next_step?.trim() || null,
+    client_action: client_action?.trim() || null,
+    live_url: live_url?.trim() || null,
+    staging_url: staging_url?.trim() || null,
+    progress: progress === "" || progress == null ? null : Number(progress),
+  });
+
+  // De lead is een id; die zegt pas iets met een naam erbij.
+  const leadWijziging = wijzigingen.find((w) => w.veld === "Lead");
+  if (leadWijziging) {
+    const namen = await namenVan(supabase, [
+      (vorige as { lead_profile_id?: string | null } | null)?.lead_profile_id ?? null,
+      lead_profile_id || null,
+    ]);
+    leadWijziging.van = namen[0];
+    leadWijziging.naar = namen[1];
+  }
+
+  // Niets veranderd is geen gebeurtenis; een opslaan zonder wijziging hoort
+  // het log niet te vullen.
+  if (wijzigingen.length > 0) {
+    await logActiviteit({
+      action: "project.bijgewerkt",
+      entityType: "project",
+      entityId: id,
+      entityLabel: title.trim(),
+      clientId: client_id || null,
+      meta: { wijzigingen },
+    });
+  }
 
   if (vorige) {
     const wie = user?.id ?? null;
@@ -310,4 +341,82 @@ export async function deleteProjectCommentAction(commentId: string, projectId: s
   revalidatePath(`/dashboard/projects/${projectId}`);
   revalidatePath(`/portal/projecten/${projectId}`);
   return { success: true };
+}
+
+/** Eén veld dat veranderde, zoals het in het activiteitenlog komt te staan. */
+type Wijziging = { veld: string; van: string | null; naar: string | null };
+
+const euroTekst = (n: number) =>
+  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
+
+const datumTekst = (d: string) =>
+  new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+
+/** Lange teksten afkappen; een logregel is geen tekstveld. */
+const kort = (t: string) => (t.length > 60 ? `${t.slice(0, 57)}…` : t);
+
+/** Namen bij profiel-ids, in dezelfde volgorde. Eén query voor allebei. */
+async function namenVan(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ids: (string | null)[],
+): Promise<(string | null)[]> {
+  const teZoeken = ids.filter(Boolean) as string[];
+  if (teZoeken.length === 0) return ids.map(() => null);
+
+  const { data } = await supabase.from("profiles").select("id, full_name").in("id", teZoeken);
+  const opId = new Map((data ?? []).map((p) => [p.id as string, p.full_name as string | null]));
+  return ids.map((id) => (id ? opId.get(id) ?? null : null));
+}
+
+/**
+ * Wat er tussen de oude en de nieuwe waarden verschilt.
+ *
+ * Vergelijkt op de weergegeven tekst, niet op de ruwe waarde: null en een lege
+ * string zijn voor een mens hetzelfde, en 1000 en "1000" ook.
+ */
+function verschillenIn(
+  vorige: Record<string, unknown> | null,
+  nieuw: Record<string, unknown>,
+): Wijziging[] {
+  if (!vorige) return [];
+
+  const velden: { sleutel: string; label: string; toon: (v: unknown) => string | null }[] = [
+    { sleutel: "title", label: "Naam", toon: (v) => (v ? String(v) : null) },
+    { sleutel: "status", label: "Status", toon: (v) => (v ? STATUS_LABEL[String(v)] ?? String(v) : null) },
+    {
+      sleutel: "phase",
+      label: "Fase",
+      toon: (v) => (v ? PHASE_LABEL[String(v) as ProjectPhase] ?? String(v) : null),
+    },
+    {
+      sleutel: "budget_amount",
+      label: "Projectbedrag",
+      toon: (v) => (v == null || v === "" ? null : euroTekst(Number(v))),
+    },
+    { sleutel: "deadline", label: "Opleverdatum", toon: (v) => (v ? datumTekst(String(v)) : null) },
+    { sleutel: "lead_profile_id", label: "Lead", toon: (v) => (v ? String(v) : null) },
+    { sleutel: "description", label: "Omschrijving", toon: (v) => (v ? kort(String(v)) : null) },
+    {
+      sleutel: "tags",
+      label: "Type",
+      toon: (v) => (Array.isArray(v) && v.length > 0 ? v.join(", ") : null),
+    },
+    { sleutel: "next_step", label: "Volgende stap", toon: (v) => (v ? kort(String(v)) : null) },
+    { sleutel: "client_action", label: "Van de klant nodig", toon: (v) => (v ? kort(String(v)) : null) },
+    { sleutel: "live_url", label: "Live-url", toon: (v) => (v ? String(v) : null) },
+    { sleutel: "staging_url", label: "Testomgeving", toon: (v) => (v ? String(v) : null) },
+    {
+      sleutel: "progress",
+      label: "Voortgang",
+      toon: (v) => (v == null || v === "" ? null : `${Number(v)}%`),
+    },
+  ];
+
+  const uit: Wijziging[] = [];
+  for (const { sleutel, label, toon } of velden) {
+    const van = toon(vorige[sleutel]);
+    const naar = toon(nieuw[sleutel]);
+    if (van !== naar) uit.push({ veld: label, van, naar });
+  }
+  return uit;
 }

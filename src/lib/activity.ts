@@ -73,6 +73,26 @@ export async function logActiviteit(invoer: ActivityInvoer): Promise<void> {
   }
 }
 
+/** Eén veld dat veranderde, zoals updateProjectAction het wegschrijft. */
+export type Wijziging = { veld: string; van: string | null; naar: string | null };
+
+/** De wijzigingen uit meta, of een lege lijst als er geen in staan. */
+export function wijzigingenVan(a: Activity): Wijziging[] {
+  const lijst = a.meta?.wijzigingen;
+  if (!Array.isArray(lijst)) return [];
+  return lijst.filter(
+    (w): w is Wijziging =>
+      typeof w === "object" && w !== null && typeof (w as Wijziging).veld === "string",
+  );
+}
+
+/** "Status van Actief naar Review", of "Budget weggehaald". */
+export function zinVoorWijziging(w: Wijziging): string {
+  if (w.van && w.naar) return `${w.veld} van ${w.van} naar ${w.naar}`;
+  if (w.naar) return `${w.veld} op ${w.naar}`;
+  return `${w.veld} weggehaald`;
+}
+
 /** Eén regel zoals hij in de lijst komt te staan. */
 export type Activity = {
   id: string;
@@ -101,8 +121,19 @@ export function beschrijf(a: Activity): string {
       return "logde in";
     case "project.aangemaakt":
       return `maakte project ${naam} aan`;
-    case "project.bijgewerkt":
+    case "project.bijgewerkt": {
+      const w = wijzigingenVan(a);
+      // Eén wijziging past in de zin. Meer dan één zet de pagina eronder, want
+      // een zin met vijf velden erin leest niemand.
+      if (w.length === 1) {
+        const e = w[0];
+        if (e.van && e.naar) return `zette ${e.veld} van ${naam} van ${e.van} naar ${e.naar}`;
+        if (e.naar) return `zette ${e.veld} van ${naam} op ${e.naar}`;
+        return `haalde ${e.veld} weg bij ${naam}`;
+      }
+      if (w.length > 1) return `werkte ${w.length} velden bij op ${naam}`;
       return `werkte project ${naam} bij`;
+    }
     case "project.status":
       return van && naar
         ? `zette ${naam} van ${van} naar ${naar}`
