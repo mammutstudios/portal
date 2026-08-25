@@ -6,6 +6,7 @@ import PortalProjectList, {
   PORTAL_PROJECT_KOLOMMEN,
   type PortalProject,
 } from "@/components/PortalProjectList";
+import { opStatus } from "@/lib/types";
 import {
   plausibleIsConfigured,
   monthlySiteStats,
@@ -177,11 +178,11 @@ async function WebsiteKaarten() {
 }
 
 /**
- * Alleen wat er nu écht loopt.
+ * Wat er loopt en wat eraan komt, actief bovenaan.
  *
- * Bewust zonder upcoming: het overzicht gaat over vandaag, en wat eraan komt
- * staat op de projectenpagina. Dezelfde lijst als daar, uit dezelfde component,
- * zodat de twee niet uit elkaar lopen.
+ * Dezelfde lijst als op de projectenpagina, uit dezelfde component en met
+ * dezelfde volgorde, zodat de twee niet uit elkaar lopen. Wat stilligt of af
+ * is hoort hier niet: dat staat op de projectenpagina.
  */
 async function LopendeProjecten() {
   const { clientIds } = await getPortalContext();
@@ -192,10 +193,10 @@ async function LopendeProjecten() {
     .from("projects")
     .select(PORTAL_PROJECT_KOLOMMEN)
     .in("client_id", clientIds)
-    .eq("status", "active")
+    .in("status", ["active", "upcoming"])
     .order("created_at", { ascending: false });
 
-  return <PortalProjectList projecten={(data ?? []) as unknown as PortalProject[]} />;
+  return <PortalProjectList projecten={opStatus((data ?? []) as unknown as PortalProject[])} />;
 }
 
 function Kaart({ label, value }: { label: string; value: string }) {
