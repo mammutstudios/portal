@@ -113,11 +113,19 @@ export default function VisitorsCard({
   prevStats = null,
   series,
   interval = "time:day",
+  periodeSlot = null,
 }: {
   stats: SiteStats | null;
   prevStats?: SiteStats | null;
   series: DailyPoint[];
   interval?: Interval;
+  /**
+   * De periodekiezer, alleen op mobiel. Daar staat hij niet naast de titel
+   * maar bovenin deze kaart, zodat meteen duidelijk is over welke periode de
+   * cijfers eronder gaan. Op desktop staat hij naast de sitenaam en blijft dit
+   * vak leeg.
+   */
+  periodeSlot?: React.ReactNode;
 }) {
   const data = series.map((p) => ({
     punt:
@@ -153,6 +161,15 @@ export default function VisitorsCard({
       className="squircle overflow-hidden"
       style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
     >
+      {periodeSlot && (
+        <div
+          className="md:hidden flex justify-end px-3 py-2.5"
+          style={{ borderBottom: "1px solid var(--border)" }}
+        >
+          {periodeSlot}
+        </div>
+      )}
+
       <div
         className="grid grid-cols-2 lg:grid-cols-4 [&>*:first-child]:border-l-0"
         style={{ borderBottom: "1px solid var(--border)" }}
