@@ -9,12 +9,13 @@ import PortalProjectList, {
 import { opStatus } from "@/lib/types";
 import {
   plausibleIsConfigured,
-  monthlySiteStats,
   siteStats,
   series as siteSeries,
 } from "@/lib/analytics/plausible";
+import { resolvePeriod, isPeriod } from "@/lib/analytics/periods";
 import CurrentVisitors from "@/components/CurrentVisitors";
 import VisitorsCard from "@/components/analytics/VisitorsCard";
+import PeriodPicker from "@/components/analytics/PeriodPicker";
 
 /**
  * Het overzicht van de klant: waar we aan werken, en hoe de site het doet.
@@ -23,7 +24,11 @@ import VisitorsCard from "@/components/analytics/VisitorsCard";
  * een eigen <Suspense>, zodat de trage bron de snelle niet ophoudt: de
  * projecten uit Supabase staan los van wat Plausible doet, en andersom.
  */
-export default function PortalOverzichtPage() {
+export default function PortalOverzichtPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ periode?: string }>;
+}) {
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <Suspense fallback={<KopSkelet />}>
@@ -31,11 +36,7 @@ export default function PortalOverzichtPage() {
       </Suspense>
 
       <Suspense fallback={null}>
-        <WebsiteBlok />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <WebsiteKaarten />
+        <WebsiteBlok searchParams={searchParams} />
       </Suspense>
 
       <section className="mb-10">
@@ -80,13 +81,6 @@ function voornaam(volledig: string | null): string | null {
   return volledig?.trim().split(/\s+/)[0] || null;
 }
 
-const getal = (n: number) => new Intl.NumberFormat("nl-NL").format(n);
-
-/** De lopende maand als YYYY-MM, in dezelfde vorm als MonthStats.month. */
-function huidigeMaand(nu = new Date()): string {
-  return new Date(Date.UTC(nu.getFullYear(), nu.getMonth(), 1)).toISOString().slice(0, 7);
-}
-
 /**
  * De gekoppelde sites van deze bezoeker.
  *
@@ -119,60 +113,75 @@ async function Kop() {
   );
 }
 
-async function WebsiteBlok() {
-  const [siteId] = await gekoppeldeSites();
+/**
+ * De websitecijfers, in dezelfde opmaak als het interne overzicht: de naam van
+ * de site met favicon, de teller van nu, en een periodekiezer. Standaard de
+ * laatste 7 dagen.
+ */
+async function WebsiteBlok({
+  searchParams,
+}: {
+  searchParams: Promise<{ periode?: string }>;
+}) {
+  const [{ periode: gekozen }, sites] = await Promise.all([searchParams, gekoppeldeSites()]);
+  const siteId = sites[0];
   if (!siteId) return null;
 
-  const nu = new Date();
-  const eerste = `${huidigeMaand(nu)}-01`;
-  const laatste = new Date(nu.getFullYear(), nu.getMonth() + 1, 0).toISOString().slice(0, 10);
-  // Vorige maand erbij voor de verandering, net als op de analyticspagina.
-  const vorigeVan = new Date(nu.getFullYear(), nu.getMonth() - 1, 1).toISOString().slice(0, 10);
-  const vorigeTot = new Date(nu.getFullYear(), nu.getMonth(), 0).toISOString().slice(0, 10);
+  const periodeKey = isPeriod(gekozen) ? gekozen : "7d";
+  const periode = resolvePeriod(periodeKey);
+  // Zie loadSiteAnalytics: dag-imports passen niet in uuremmers.
+  const metImports = periode.interval !== "time:hour";
 
   const [bezoekers, cijfers, cijfersVorig] = await Promise.all([
-    siteSeries(siteId, [eerste, laatste]),
-    siteStats(siteId, [eerste, laatste]),
-    siteStats(siteId, [vorigeVan, vorigeTot]),
+    siteSeries(siteId, periode.range, periode.interval, metImports),
+    siteStats(siteId, periode.range, metImports),
+    periode.previous ? siteStats(siteId, periode.previous, metImports) : Promise.resolve(null),
   ]);
 
   if (bezoekers.length === 0) return null;
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
-          Website
-        </h2>
+    <div className="mb-10">
+      {/* Zelfde indeling als het interne overzicht: op mobiel zakt alleen de
+          teller onder de naam en blijft de kiezer ernaast staan. */}
+      <div className="flex flex-wrap items-center gap-x-4 mb-3">
+        <Link
+          href="/portal/analytics"
+          className="order-1 flex items-center gap-2 text-sm font-semibold hover:underline"
+          style={{ color: "var(--text-heading)" }}
+        >
+          {process.env.PLAUSIBLE_BASE_URL && (
+            // Plausible serveert favicons zelf, net als bij de bronnenlijst.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`${process.env.PLAUSIBLE_BASE_URL}/favicon/sources/${encodeURIComponent(siteId)}`}
+              alt=""
+              width={16}
+              height={16}
+              className="flex-shrink-0 rounded-sm"
+            />
+          )}
+          {siteId}
+        </Link>
         {/* initial is null: die teller haalt zichzelf op zodra de pagina er
             staat. Als antwoord uit Plausible mocht hij nooit gecachet worden,
             en zo stond een vraag die per definitie vers moet zijn de hele
             pagina in de weg. */}
-        <CurrentVisitors siteId={siteId} initial={null} />
+        <div className="order-3 w-full mt-1.5 md:order-2 md:ml-auto md:w-auto md:mt-0">
+          <CurrentVisitors siteId={siteId} initial={null} />
+        </div>
+        {/* Op mobiel geen periodekiezer: daar is de ruimte te krap en
+            staat de standaardperiode al goed. */}
+        <div className="hidden md:block order-3">
+          <PeriodPicker current={periodeKey} />
+        </div>
       </div>
-      <VisitorsCard stats={cijfers} prevStats={cijfersVorig} series={bezoekers} />
-    </div>
-  );
-}
-
-async function WebsiteKaarten() {
-  const sites = await gekoppeldeSites();
-  if (sites.length === 0) return null;
-
-  const maand = huidigeMaand();
-  const alle = await Promise.all(sites.map((id) => monthlySiteStats(id, maand)));
-  const gevonden = alle.filter(Boolean) as NonNullable<(typeof alle)[number]>[];
-  if (gevonden.length === 0) return null;
-
-  const visitors = gevonden.reduce((s, x) => s + x.visitors, 0);
-  const pageviews = gevonden.reduce((s, x) => s + x.pageviews, 0);
-
-  // Het raster zit hier en niet in de pagina: zonder gekoppelde site valt het
-  // hele blok weg, inclusief de marge eronder.
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
-      <Kaart label="Bezoekers" value={getal(visitors)} />
-      <Kaart label="Paginaweergaven" value={getal(pageviews)} />
+      <VisitorsCard
+        stats={cijfers}
+        prevStats={cijfersVorig}
+        series={bezoekers}
+        interval={periode.interval}
+      />
     </div>
   );
 }
@@ -197,19 +206,6 @@ async function LopendeProjecten() {
     .order("created_at", { ascending: false });
 
   return <PortalProjectList projecten={opStatus((data ?? []) as unknown as PortalProject[])} />;
-}
-
-function Kaart({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="squircle p-6" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
-      <div className="text-xs uppercase tracking-wide mb-2" style={{ color: "var(--text-muted)" }}>
-        {label}
-      </div>
-      <div className="text-3xl font-bold" style={{ color: "var(--text-heading)" }}>
-        {value}
-      </div>
-    </div>
-  );
 }
 
 function KopSkelet() {

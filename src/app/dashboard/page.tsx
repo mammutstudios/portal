@@ -116,16 +116,39 @@ export default async function DashboardPage({
 
       {eigenReeks.length > 0 && (
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
+          {/* Eén rij op desktop, twee op mobiel: daar zakt de bezoekersteller
+              onder de titel en blijft de periodekiezer naast de naam staan.
+              De teller staat er maar één keer, met order-klassen verplaatst,
+              want twee keer renderen zou ook twee keer gaan pollen. */}
+          <div className="flex flex-wrap items-center gap-x-4 mb-3">
             <Link
               href={eigenClient ? `/dashboard/analytics/${eigenClient.id}` : "/dashboard/analytics"}
-              className="text-sm font-semibold hover:underline"
+              className="order-1 flex items-center gap-2 text-sm font-semibold hover:underline"
               style={{ color: "var(--text-heading)" }}
             >
+              {plausibleIsConfigured() && process.env.PLAUSIBLE_BASE_URL && (
+                // Plausible serveert favicons zelf, net als bij de bronnenlijst
+                // op de analyticspagina.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`${process.env.PLAUSIBLE_BASE_URL}/favicon/sources/${encodeURIComponent(EIGEN_SITE)}`}
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="flex-shrink-0 rounded-sm"
+                />
+              )}
               {EIGEN_SITE}
             </Link>
-            <div className="flex items-center gap-4">
+            {/* Op mobiel blijft de periodekiezer naast de titel staan en zakt
+                alleen de teller naar de regel eronder; op desktop staan ze
+                allebei rechts, teller eerst. */}
+            <div className="order-3 w-full mt-1.5 md:order-2 md:ml-auto md:w-auto md:mt-0">
               <CurrentVisitors siteId={EIGEN_SITE} initial={eigenNu} />
+            </div>
+            {/* Op mobiel geen periodekiezer: daar is de ruimte te krap en
+                staat de standaardperiode al goed. */}
+            <div className="hidden md:block order-3">
               <PeriodPicker current={periodeKey} />
             </div>
           </div>
