@@ -13,7 +13,7 @@ import SmoothScroll from "@/components/SmoothScroll";
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="app-shell flex flex-col h-screen overflow-hidden">
+    <div className="app-shell flex flex-col h-dvh overflow-hidden">
       <SmoothScroll />
       <Suspense fallback={<TopBar name={null} avatarUrl={null} homeHref="/dashboard" />}>
         <DashboardTopBar />
@@ -23,7 +23,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Sidebar role="admin" />
         </Suspense>
         <main className="app-main flex-1 overflow-y-auto pt-14 md:pt-0">
-          {children}
+          {/* Dit omhulsel blijft staan zolang de schil staat; SmoothScroll meet
+              eraan. Zie de toelichting in SmoothScroll waarom dat moet. */}
+          <div data-scroll-content>{children}</div>
         </main>
       </div>
     </div>

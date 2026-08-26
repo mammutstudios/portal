@@ -330,10 +330,14 @@ function SidebarBody({
   // Close drawer on route change
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
-  // Lock body scroll when drawer open
+  // Zet het scrollen vast zolang de la open staat. Dat moet op `.app-main`
+  // gebeuren en niet op `body`: de pagina scrollt in dat contentvlak, body zelf
+  // staat stil. Het slot op body deed hier dus niets.
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    const main = document.querySelector<HTMLElement>(".app-main");
+    if (!main) return;
+    main.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { main.style.overflow = ""; };
   }, [mobileOpen]);
 
   return (
@@ -358,7 +362,9 @@ function SidebarBody({
       )}
 
       <aside
-        className={`app-sidebar flex flex-col z-50 md:sticky md:top-0 md:translate-x-0 fixed top-0 left-0 transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        // Op mobiel schuift de la vanaf rechts binnen, aan dezelfde kant als de
+        // hamburger die hem opent. Op desktop staat hij gewoon links in de rij.
+        className={`app-sidebar flex flex-col z-50 md:sticky md:top-0 md:right-auto md:translate-x-0 fixed top-0 right-0 transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
         style={{
           width: "15.5rem",
           minWidth: "15.5rem",

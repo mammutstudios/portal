@@ -19,7 +19,7 @@ import { hasBrandGuide } from "@/lib/brand";
  */
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="app-shell flex flex-col h-screen overflow-hidden">
+    <div className="app-shell flex flex-col h-dvh overflow-hidden">
       <SmoothScroll />
       <Suspense
         fallback={
@@ -32,11 +32,15 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         <Suspense fallback={<SidebarFallback role="client" pending />}>
           <PortalSidebar />
         </Suspense>
-        <main className="app-main flex-1 overflow-y-auto">
-          <Suspense fallback={null}>
-            <PreviewBalk />
-          </Suspense>
-          {children}
+        <main className="app-main flex-1 overflow-y-auto pt-14 md:pt-0">
+          {/* Dit omhulsel blijft staan zolang de schil staat; SmoothScroll meet
+              eraan. Zie de toelichting in SmoothScroll waarom dat moet. */}
+          <div data-scroll-content>
+            <Suspense fallback={null}>
+              <PreviewBalk />
+            </Suspense>
+            {children}
+          </div>
         </main>
       </div>
     </div>

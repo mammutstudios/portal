@@ -116,9 +116,14 @@ th, td {
 }
 
 .app-sidebar {
-  height: 100vh;
+  /* dvh, niet vh: op mobiel is 100vh hoger dan het zichtbare venster zodra de
+     browserbalken in beeld staan, waardoor de onderkant van het menu onder die
+     balken verdween. */
+  height: 100dvh;
   background: var(--bg);
-  border-right: 1px solid var(--border);
+  /* De la komt op mobiel van rechts, dus zit de scheidingslijn aan de kant die
+     naar de inhoud wijst: links. Op desktop draait dat om. */
+  border-left: 1px solid var(--border);
 }
 
 .app-main {
@@ -144,6 +149,7 @@ th, td {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
     max-width: var(--sidebar-width);
+    border-left: none;
     border-right: 1px solid var(--border);
   }
 }
