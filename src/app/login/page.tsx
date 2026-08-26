@@ -34,7 +34,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg-secondary)" }}>
+    // px-4 is hier niet cosmetisch: de kaart is `w-full max-w-sm`, dus op een
+    // telefoon die smaller is dan die maat plakte hij tegen beide schermranden
+    // en waren zijn hoeken niet te zien. py-10 houdt hem los van de randen als
+    // het venster laag is, bijvoorbeeld liggend of met het toetsenbord open.
+    <div className="min-h-dvh flex items-center justify-center px-4 py-10" style={{ background: "var(--bg-secondary)" }}>
       <div className="w-full max-w-sm">
         {/* Alles in één vlak: het merk hoort bij het formulier, niet erboven te
             zweven. Links uitgelijnd, want dat leest als een formulier. */}
