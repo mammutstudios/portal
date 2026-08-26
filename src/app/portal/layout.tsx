@@ -20,7 +20,13 @@ import { hasBrandGuide } from "@/lib/brand";
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell flex flex-col h-dvh overflow-hidden">
-      <SmoothScroll />
+      {/* In een <Suspense>, want SmoothScroll leest de route met usePathname.
+          Met cacheComponents aan is dat ongecachte data, en zonder grens
+          eromheen blokkeert het het prerenderen van elke route met een
+          dynamische parameter. Hij rendert zelf niets, dus fallback null. */}
+      <Suspense fallback={null}>
+        <SmoothScroll />
+      </Suspense>
       <Suspense
         fallback={
           <TopBar name={null} avatarUrl={null} homeHref="/portal" settingsHref="/portal/instellingen" />
