@@ -246,10 +246,11 @@ export default async function DashboardPage({
                 {sortedProjects.map((project, i) => (
                   <HoverRow
                     key={project.id}
+                    href={`/dashboard/projects/${project.id}`}
                     style={{ borderBottom: i < sortedProjects.length - 1 ? "1px solid var(--border)" : "none" }}
                   >
                     <td className="px-4 py-3">
-                      <Link href={`/dashboard/projects/${project.id}`} className="text-sm font-semibold after:absolute after:inset-0 after:content-['']" style={{ color: "var(--text-heading)" }}>
+                      <Link href={`/dashboard/projects/${project.id}`} className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
                         {project.title}
                       </Link>
                     </td>
