@@ -20,7 +20,7 @@ import {
   ChartBar,
   Palette,
   Pulse as PulseIcon,
-  Handshake,
+  Funnel,
 } from "@phosphor-icons/react";
 
 type SubItem = { label: string; href: string };
@@ -194,7 +194,10 @@ const adminNav: NavItem[] = [
   {
     label: "Deals",
     href: "/dashboard/deals",
-    icon: <Handshake size={19} weight="fill" />,
+    // Een trechter: het beeld voor een pijplijn, en de enige driehoekige vorm
+    // in dit rijtje. Handshake stond er eerst, maar twee handen met vingers
+    // worden op 19 pixels gevuld een vlek naast al die strakke vormen.
+    icon: <Funnel size={19} weight="fill" />,
   },
   {
     label: "Toggl",
