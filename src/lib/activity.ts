@@ -19,6 +19,7 @@ export type ActivityAction =
   | "project.bijgewerkt"
   | "project.status"
   | "taak.aangemaakt"
+  | "taak.ingediend"
   | "taak.status"
   | "factuur.gekoppeld"
   | "factuur.ontkoppeld"
@@ -218,6 +219,8 @@ export function beschrijf(a: Activity): string {
         : `wijzigde de status van ${naam}`;
     case "taak.aangemaakt":
       return `maakte ticket ${naam} aan`;
+    case "taak.ingediend":
+      return `diende ticket ${naam} in`;
     case "taak.status":
       return naar ? `zette ticket ${naam} op ${naar}` : `wijzigde ticket ${naam}`;
     case "factuur.gekoppeld":

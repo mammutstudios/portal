@@ -10,9 +10,43 @@ function toISO(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function DatePicker({ name, defaultValue, placeholder = "Kies datum" }: { name: string; defaultValue?: string; placeholder?: string }) {
+export default function DatePicker({
+  name,
+  defaultValue,
+  placeholder = "Kies datum",
+  onChange,
+  startOpen = false,
+  onSluiten,
+  subtle = false,
+}: {
+  name: string;
+  defaultValue?: string;
+  placeholder?: string;
+  /** Voor inline bewerken: de gekozen datum meteen wegschrijven. Leeg betekent
+      dat de datum is weggehaald. */
+  onChange?: (waarde: string) => void;
+  /**
+   * Meteen open bij het monteren. Voor inline bewerken: daar heb je al
+   * geklikt om het veld tevoorschijn te halen, en een tweede klik om het
+   * open te krijgen is er een te veel.
+   */
+  startOpen?: boolean;
+  /**
+   * Dichtgeklapt zonder iets te kiezen. Voor inline bewerken: de regel moet
+   * dan terug naar zijn gewone weergave, anders blijf je met een leeg
+   * keuzeveld zitten waar eerst een waarde stond.
+   */
+  onSluiten?: () => void;
+  /**
+   * Ingetogen: geen eigen vlak en geen rand, alleen een oplichting als je er
+   * overheen gaat, en krapper. Voor inline bewerken in een lijst, waar een
+   * volwaardig invoerveld de regel opblaast. Zelfde betekenis als de gelijk-
+   * namige optie op SearchSelect.
+   */
+  subtle?: boolean;
+}) {
   const initial = defaultValue ? new Date(defaultValue) : null;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [selected, setSelected] = useState<Date | null>(initial && !isNaN(initial.getTime()) ? initial : null);
   const [viewYear, setViewYear] = useState((selected ?? new Date()).getFullYear());
   const [viewMonth, setViewMonth] = useState((selected ?? new Date()).getMonth());
@@ -20,7 +54,10 @@ export default function DatePicker({ name, defaultValue, placeholder = "Kies dat
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        onSluiten?.();
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -57,9 +94,18 @@ export default function DatePicker({ name, defaultValue, placeholder = "Kies dat
       <input type="hidden" name={name} value={value} />
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full px-3 py-2 rounded-md text-sm flex items-center justify-between outline-none"
-        style={{ border: `1px solid ${open ? "var(--text-heading)" : "var(--border)"}`, background: "var(--bg)", color: selected ? "var(--text)" : "var(--text-muted)" }}
+        onClick={() => {
+          if (open) onSluiten?.();
+          setOpen((o) => !o);
+        }}
+        className={`w-full rounded-md text-sm flex items-center justify-between outline-none ${subtle ? "px-2 py-1.5" : "px-3 py-2"}`}
+        style={{
+          border: subtle ? "1px solid transparent" : `1px solid ${open ? "var(--text-heading)" : "var(--border)"}`,
+          background: subtle ? "transparent" : "var(--bg)",
+          color: selected ? "var(--text)" : "var(--text-muted)",
+        }}
+        onMouseEnter={(e) => { if (subtle) e.currentTarget.style.background = "var(--bg-hover)"; }}
+        onMouseLeave={(e) => { if (subtle) e.currentTarget.style.background = "transparent"; }}
       >
         <span>{label}</span>
         <CaretDown size={14} weight="bold" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
@@ -98,7 +144,7 @@ export default function DatePicker({ name, defaultValue, placeholder = "Kies dat
                 <button
                   key={d}
                   type="button"
-                  onClick={() => { setSelected(new Date(viewYear, viewMonth, d)); setOpen(false); }}
+                  onClick={() => { const gekozen = new Date(viewYear, viewMonth, d); setSelected(gekozen); setOpen(false); onChange?.(toISO(gekozen)); }}
                   className="aspect-square rounded-md text-xs font-medium flex items-center justify-center"
                   style={{
                     background: sel ? "var(--text-heading)" : "transparent",
@@ -116,10 +162,10 @@ export default function DatePicker({ name, defaultValue, placeholder = "Kies dat
 
           {/* Footer */}
           <div className="flex items-center justify-between mt-3 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
-            <button type="button" onClick={() => { setSelected(null); setOpen(false); }} className="text-xs" style={{ color: "var(--text-muted)" }}>
+            <button type="button" onClick={() => { setSelected(null); setOpen(false); onChange?.(""); }} className="text-xs" style={{ color: "var(--text-muted)" }}>
               Wissen
             </button>
-            <button type="button" onClick={() => { const t = new Date(); setSelected(t); setViewYear(t.getFullYear()); setViewMonth(t.getMonth()); setOpen(false); }} className="text-xs font-medium" style={{ color: "var(--text-heading)" }}>
+            <button type="button" onClick={() => { const t = new Date(); setSelected(t); setViewYear(t.getFullYear()); setViewMonth(t.getMonth()); setOpen(false); onChange?.(toISO(t)); }} className="text-xs font-medium" style={{ color: "var(--text-heading)" }}>
               Vandaag
             </button>
           </div>

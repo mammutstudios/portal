@@ -168,8 +168,9 @@ export type Project = {
   clients?: Pick<Client, "id" | "name" | "logo_url"> | null;
 };
 
-export type TaskStatus = "todo" | "in_progress" | "review" | "done";
-export type TaskPriority = "low" | "medium" | "high";
+export type TaskStatus = "open" | "in_progress" | "review" | "done";
+/** Twee treden: normaal, of het moet voor de rest. Zie TicketEigenschappen. */
+export type TaskPriority = "medium" | "high";
 
 export type Task = {
   id: string;
@@ -182,9 +183,26 @@ export type Task = {
   assigned_contact_id: string | null;
   assigned_profile_id: string | null;
   created_at: string;
+  completed_at: string | null;
+  /**
+   * De organisatie waar dit ticket bij hoort. Bij werk dat aan een project
+   * hangt is dit dezelfde klant als die van het project; bij een verzoek uit
+   * het portaal is het de enige koppeling die er is.
+   */
+  client_id: string | null;
+  /** Wie het heeft ingediend: het team, of de klant vanuit het portaal. */
+  created_by: string | null;
   projects?: { id: string; title: string } | null;
+  clients?: { id: string; name: string; logo_url: string | null } | null;
   contacts?: { id: string; name: string } | null;
   profiles?: { id: string; full_name: string | null; avatar_url: string | null } | null;
+  created_by_profile?: { id: string; full_name: string | null; avatar_url: string | null } | null;
+  /**
+   * Het aantal reacties, als Supabase erom gevraagd is. Komt terug als een
+   * array met één telling; dat is de vorm die PostgREST voor een geaggregeerde
+   * relatie teruggeeft.
+   */
+  task_comments?: { count: number }[] | null;
 };
 
 export type Subtask = {

@@ -24,6 +24,8 @@ export default function SearchSelect({
   onCreateNew,
   subtle,
   showAvatars,
+  startOpen = false,
+  onSluiten,
 }: {
   name: string;
   options: Option[];
@@ -34,11 +36,23 @@ export default function SearchSelect({
   onCreateNew?: (query: string) => Promise<Option | null>;
   subtle?: boolean;
   showAvatars?: boolean;
+  /**
+   * Meteen open bij het monteren. Voor inline bewerken: daar heb je al
+   * geklikt om het veld tevoorschijn te halen, en een tweede klik om het
+   * open te krijgen is er een te veel.
+   */
+  startOpen?: boolean;
+  /**
+   * Dichtgeklapt zonder iets te kiezen. Voor inline bewerken: de regel moet
+   * dan terug naar zijn gewone weergave, anders blijf je met een leeg
+   * keuzeveld zitten waar eerst een waarde stond.
+   */
+  onSluiten?: () => void;
 }) {
   const [options, setOptions] = useState<Option[]>(initialOptions);
   const defaultOption = options.find((o) => o.value === defaultValue) ?? null;
   const [selected, setSelected] = useState<Option | null>(defaultOption);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState<number>(-1);
   const [creating, setCreating] = useState(false);
@@ -55,6 +69,7 @@ export default function SearchSelect({
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
         setQuery("");
+        onSluiten?.();
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -102,6 +117,7 @@ export default function SearchSelect({
       }
     } else if (e.key === "Escape") {
       setOpen(false);
+      onSluiten?.();
     }
   }
 

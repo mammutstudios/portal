@@ -9,7 +9,7 @@ const projectStatusConfig: Record<ProjectStatus, { label: string; bg: string; co
 };
 
 const taskStatusConfig: Record<TaskStatus, { label: string; bg: string; color: string }> = {
-  todo: { label: "Te doen", bg: "#f1f1ef", color: "#6b6b6b" },
+  open: { label: "Open", bg: "#f3e8ff", color: "#6b21a8" },
   in_progress: { label: "Bezig", bg: "#dbeafe", color: "#1e40af" },
   review: { label: "Review", bg: "#fef3c7", color: "#92400e" },
   done: { label: "Klaar", bg: "#d3f1e3", color: "#1a6b47" },

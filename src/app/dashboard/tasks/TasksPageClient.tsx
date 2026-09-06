@@ -1,252 +1,56 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { updateTaskStatusAction, deleteTaskAction } from "@/lib/actions/tasks";
-import { createSubtaskAction, toggleSubtaskAction, deleteSubtaskAction } from "@/lib/actions/subtasks";
-import { PRIORITY_COLORS } from "@/components/TaskForm";
-import Modal from "@/components/Modal";
-import TaskForm from "@/components/TaskForm";
+import { useState, useMemo, useEffect, useRef, useSyncExternalStore } from "react";
+import { updateTaskStatusAction } from "@/lib/actions/tasks";
+import TicketKanban from "@/components/TicketKanban";
+import { Rows, Kanban, MagnifyingGlass } from "@phosphor-icons/react";
+import { TICKET_STATUS, TICKET_STATUS_ORDER } from "@/lib/tickets";
+
+type Weergave = "lijst" | "kanban";
+
+/**
+ * Lijst of kanban is een voorkeur van jou, niet van een ticket: hij moet blijven
+ * staan als je terugkomt. Zonder opgeslagen voorkeur is het de kanban.
+ * localStorage bestaat alleen in de browser, dus de server rendert de
+ * standaard en useSyncExternalStore wisselt daarna om naar wat jij koos.
+ * Dat is de reden voor dit winkeltje in plaats van een useState met een effect
+ * eromheen: bij dat laatste wijkt de eerste render af van de HTML die de
+ * server stuurde, en dat is een hydratiefout.
+ */
+const WEERGAVE_SLEUTEL = "tickets-weergave";
+
+const weergaveLuisteraars = new Set<() => void>();
+let weergaveNu: Weergave | null = null;
+
+function leesWeergave(): Weergave {
+  if (weergaveNu === null) {
+    weergaveNu = localStorage.getItem(WEERGAVE_SLEUTEL) === "lijst" ? "lijst" : "kanban";
+  }
+  return weergaveNu;
+}
+
+function schrijfWeergave(nieuwe: Weergave) {
+  weergaveNu = nieuwe;
+  localStorage.setItem(WEERGAVE_SLEUTEL, nieuwe);
+  weergaveLuisteraars.forEach((melden) => melden());
+}
+
+function abonneerOpWeergave(melden: () => void) {
+  weergaveLuisteraars.add(melden);
+  return () => {
+    weergaveLuisteraars.delete(melden);
+  };
+}
+import Link from "next/link";
+import ClientLogo from "@/components/ClientLogo";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { Task, Project, Contact, Profile, TaskStatus, Subtask } from "@/lib/types";
-
-function StatusPicker({ task }: { task: Task }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div>
-      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>Status</p>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="px-2.5 py-1 rounded-md text-xs font-medium"
-          style={{
-            background: STATUS_BG[task.status],
-            color: STATUS_TEXT[task.status],
-            border: `1px solid ${STATUS_BORDER[task.status]}`,
-          }}
-        >
-          {STATUS_LABELS[task.status]} ▾
-        </button>
-        {open && (
-          <div
-            className="absolute z-10 mt-1 squircle overflow-hidden"
-            style={{ background: "var(--bg)", border: "1px solid var(--border)", boxShadow: "0 4px 16px rgb(20 0 24 / 0.1)", minWidth: "8.75rem" }}
-          >
-            {STATUS_ORDER.map((s) => (
-              <form key={s} action={updateTaskStatusAction}>
-                <input type="hidden" name="id" value={task.id} />
-                <input type="hidden" name="status" value={s} />
-                <button
-                  type="submit"
-                  onClick={() => setOpen(false)}
-                  className="w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2"
-                  style={{ color: s === task.status ? STATUS_TEXT[s] : "var(--text-heading)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-                >
-                  <span className="w-2 h-2 rounded-full" style={{ background: STATUS_TEXT[s] }} />
-                  {STATUS_LABELS[s]}
-                </button>
-              </form>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TicketDetailModal({ task, onClose, onEdit, onDelete }: {
-  task: Task;
-  onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const assignee = task.profiles?.full_name ?? task.contacts?.name ?? null;
-  const isOverdue = task.due_date && task.status !== "done" && new Date(task.due_date) < new Date();
-  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-  const [newTitle, setNewTitle] = useState("");
-  const [addingSubtask, setAddingSubtask] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    supabase.from("subtasks").select("*").eq("task_id", task.id).order("created_at").then(({ data }) => {
-      if (data) setSubtasks(data);
-    });
-  }, [task.id]);
-
-  useEffect(() => {
-    if (addingSubtask) inputRef.current?.focus();
-  }, [addingSubtask]);
-
-  async function handleAddSubtask(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-    const fd = new FormData();
-    fd.set("task_id", task.id);
-    fd.set("title", newTitle.trim());
-    const optimistic: Subtask = { id: crypto.randomUUID(), task_id: task.id, title: newTitle.trim(), completed: false, created_at: new Date().toISOString() };
-    setSubtasks((s) => [...s, optimistic]);
-    setNewTitle("");
-    await createSubtaskAction(fd);
-    const { data } = await supabase.from("subtasks").select("*").eq("task_id", task.id).order("created_at");
-    if (data) setSubtasks(data);
-  }
-
-  async function handleToggle(subtask: Subtask) {
-    setSubtasks((s) => s.map((x) => x.id === subtask.id ? { ...x, completed: !x.completed } : x));
-    const fd = new FormData();
-    fd.set("id", subtask.id);
-    fd.set("completed", String(!subtask.completed));
-    await toggleSubtaskAction(fd);
-  }
-
-  async function handleDelete(id: string) {
-    setSubtasks((s) => s.filter((x) => x.id !== id));
-    const fd = new FormData();
-    fd.set("id", id);
-    await deleteSubtaskAction(fd);
-  }
-
-  const completed = subtasks.filter((s) => s.completed).length;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-16 px-10"
-      style={{ background: "rgb(20 0 24 / 0.25)" }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-3xl rounded-2xl"
-        style={{ background: "var(--bg)", boxShadow: "0 20px 60px rgb(20 0 24 / 0.18)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Top bar */}
-        <div className="flex items-center justify-end px-8 pt-6 pb-2 gap-2">
-          <button onClick={onEdit} className="text-xs px-3 py-1.5 rounded-md" style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>Bewerken</button>
-          <form action={deleteTaskAction} onSubmit={onDelete}>
-            <input type="hidden" name="id" value={task.id} />
-            <button type="submit" className="text-xs px-3 py-1.5 rounded-md" style={{ color: "#e57373", border: "1px solid #fecaca" }}>Verwijderen</button>
-          </form>
-          <button onClick={onClose} className="text-sm px-2 py-1 rounded-md ml-1" style={{ color: "var(--text-muted)" }}>✕</button>
-        </div>
-
-        {/* Title */}
-        <div className="px-10 pt-2 pb-6">
-          <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)", lineHeight: 1.2 }}>{task.title}</h1>
-          {task.description && (
-            <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>{task.description}</p>
-          )}
-        </div>
-
-        {/* Properties — 4 kolommen */}
-        <div className="px-10 pb-8" style={{ borderTop: "1px solid var(--border)" }}>
-          <div className="grid grid-cols-4 gap-6 pt-6">
-            <StatusPicker task={task} />
-            <div>
-              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>Project</p>
-              <p className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>{task.projects?.title ?? <span style={{ color: "var(--text-muted)" }}>—</span>}</p>
-            </div>
-            <div>
-              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>Toegewezen aan</p>
-              {assignee ? (
-                <div className="flex items-center gap-2">
-                  {task.profiles?.avatar_url ? (
-                    <img src={task.profiles.avatar_url} alt={assignee} className="w-5 h-5 rounded-full object-cover" />
-                  ) : (
-                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0" style={{ background: "var(--text-heading)" }}>
-                      {assignee.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  <span className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>{assignee}</span>
-                </div>
-              ) : <span className="text-sm" style={{ color: "var(--text-muted)" }}>—</span>}
-            </div>
-            <div>
-              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>Deadline</p>
-              <p className="text-sm font-medium" style={{ color: isOverdue ? "#dc2626" : task.due_date ? "var(--text-heading)" : "var(--text-muted)" }}>
-                {task.due_date ? new Date(task.due_date).toLocaleDateString("nl-NL", { day: "numeric", month: "long" }) : "—"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Subtasks */}
-        <div className="px-10 pb-10" style={{ borderTop: "1px solid var(--border)" }}>
-          <div className="flex items-center justify-between mt-6 mb-3">
-            <p className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
-              Subtaken {subtasks.length > 0 && <span className="font-normal text-xs" style={{ color: "var(--text-muted)" }}>({completed}/{subtasks.length})</span>}
-            </p>
-            {!addingSubtask && subtasks.length > 0 && (
-              <button onClick={() => setAddingSubtask(true)} className="text-xs px-2.5 py-1 rounded-md" style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}>+ Toevoegen</button>
-            )}
-          </div>
-          <div className="space-y-0.5 mb-3">
-            {subtasks.map((sub) => (
-              <div key={sub.id} className="flex items-center gap-3 group px-2 py-2 rounded-lg -mx-2"
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "")}>
-                <button onClick={() => handleToggle(sub)} className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center"
-                  style={{ border: `1.5px solid ${sub.completed ? "var(--text-heading)" : "var(--border)"}`, background: sub.completed ? "var(--text-heading)" : "transparent", transition: "all 150ms" }}>
-                  {sub.completed && <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                </button>
-                <span className="text-sm flex-1" style={{ color: sub.completed ? "var(--text-muted)" : "var(--text-heading)", textDecoration: sub.completed ? "line-through" : "none" }}>{sub.title}</span>
-                <button onClick={() => handleDelete(sub.id)} className="opacity-0 group-hover:opacity-100 text-sm transition-opacity px-1" style={{ color: "#e57373" }}>×</button>
-              </div>
-            ))}
-          </div>
-          {addingSubtask ? (
-            <form onSubmit={handleAddSubtask} className="flex gap-2">
-              <input ref={inputRef} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Subtaak omschrijving..."
-                className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
-                style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
-                onKeyDown={(e) => e.key === "Escape" && setAddingSubtask(false)} />
-              <button type="submit" className="text-xs px-3 py-2 rounded-lg font-medium" style={{ background: "var(--text-heading)", color: "#fff" }}>Voeg toe</button>
-              <button type="button" onClick={() => { setAddingSubtask(false); setNewTitle(""); }} className="text-xs px-3 py-2 rounded-lg" style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>Annuleer</button>
-            </form>
-          ) : (
-            <button onClick={() => setAddingSubtask(true)} className="w-full text-left text-sm px-3 py-2.5 rounded-lg" style={{ border: "1px dashed var(--border)", color: "var(--text-muted)" }}>
-              + Subtaak toevoegen
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: "Te doen",
-  in_progress: "Bezig",
-  review: "Review",
-  done: "Klaar",
-};
-
-const STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "review", "done"];
-
-const PRIORITY_LABELS: Record<string, string> = {
-  low: "Laag",
-  medium: "Normaal",
-  high: "Hoog",
-};
-
-function PriorityDot({ priority }: { priority: string | null }) {
-  if (!priority) return null;
-  const c = PRIORITY_COLORS[priority];
-  return (
-    <span
-      className="inline-block w-2 h-2 rounded-full flex-shrink-0"
-      style={{ background: c?.dot ?? "#ccc" }}
-      title={PRIORITY_LABELS[priority]}
-    />
-  );
-}
+import type { Task, TaskStatus } from "@/lib/types";
+import Button, { ButtonLink } from "@/components/Button";
 
 function StatusCycle({ task }: { task: Task }) {
-  const currentIdx = STATUS_ORDER.indexOf(task.status);
-  const next = STATUS_ORDER[(currentIdx + 1) % STATUS_ORDER.length];
+  const currentIdx = TICKET_STATUS_ORDER.indexOf(task.status);
+  const next = TICKET_STATUS_ORDER[(currentIdx + 1) % TICKET_STATUS_ORDER.length];
 
   return (
     <form action={updateTaskStatusAction}>
@@ -254,166 +58,156 @@ function StatusCycle({ task }: { task: Task }) {
       <input type="hidden" name="status" value={next} />
       <button
         type="submit"
-        title={`Zet naar: ${STATUS_LABELS[next]}`}
+        title={`Zet naar: ${TICKET_STATUS[next].label}`}
         className="px-2 py-0.5 rounded-md text-xs font-medium"
         style={{
-          background: STATUS_BG[task.status],
-          color: STATUS_TEXT[task.status],
-          border: `1px solid ${STATUS_BORDER[task.status]}`,
+          background: TICKET_STATUS[task.status].bg,
+          color: TICKET_STATUS[task.status].text,
+          border: `1px solid ${TICKET_STATUS[task.status].border}`,
         }}
       >
-        {STATUS_LABELS[task.status]}
+        {TICKET_STATUS[task.status].label}
       </button>
     </form>
   );
 }
 
-const STATUS_BG: Record<TaskStatus, string> = {
-  todo: "var(--bg-secondary)",
-  in_progress: "#eff6ff",
-  review: "#fefce8",
-  done: "#f0fdf4",
-};
-const STATUS_TEXT: Record<TaskStatus, string> = {
-  todo: "var(--text-muted)",
-  in_progress: "#3b82f6",
-  review: "#ca8a04",
-  done: "#16a34a",
-};
-const STATUS_BORDER: Record<TaskStatus, string> = {
-  todo: "var(--border)",
-  in_progress: "#bfdbfe",
-  review: "#fef08a",
-  done: "#bbf7d0",
-};
-
-export default function TasksPageClient({
-  tasks,
-  projects,
-  contacts,
-  profiles,
-}: {
-  tasks: Task[];
-  projects: Pick<Project, "id" | "title">[];
-  contacts: Pick<Contact, "id" | "name">[];
-  profiles: Pick<Profile, "id" | "full_name">[];
-}) {
-  const [showCreate, setShowCreate] = useState(false);
-  const [editTask, setEditTask] = useState<Task | null>(null);
-  const [viewTask, setViewTask] = useState<Task | null>(null);
-  const [filterStatus, setFilterStatus] = useState<TaskStatus | "all">("all");
-  const [filterPriority, setFilterPriority] = useState<string>("all");
-
-  const filtered = useMemo(() => {
-    return tasks.filter((t) => {
-      if (filterStatus !== "all" && t.status !== filterStatus) return false;
-      if (filterPriority !== "all" && t.priority !== filterPriority) return false;
-      return true;
-    });
-  }, [tasks, filterStatus, filterPriority]);
+// De lijsten voor het bewerkformulier zaten hier ook in, maar dat formulier
+// staat nu op de ticketpagina en haalt ze daar zelf op.
+export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
+  const [zoek, setZoek] = useState("");
+  const router = useRouter();
+  const weergave = useSyncExternalStore(
+    abonneerOpWeergave,
+    leesWeergave,
+    // Wat de server rendert zolang er nog geen browser is om localStorage te
+    // lezen. Moet gelijk zijn aan de standaard hierboven, anders wisselt het
+    // scherm meteen na het laden van weergave.
+    () => "kanban" as Weergave,
+  );
 
   const openCount = tasks.filter((t) => t.status !== "done").length;
 
+  /**
+   * Zoeken doet de browser, niet de server: alle tickets staan hier al. Zodra
+   * dat er duizenden worden hoort dit naar een query, maar dan is de lijst ook
+   * te lang om in één keer op te halen en verandert er meer dan alleen dit.
+   *
+   * Het zoekt over alles wat op een kaart staat, want daar zoek je op: de
+   * titel, de omschrijving, het project, de organisatie en de naam van wie
+   * hem heeft of hem indiende.
+   */
+  const zichtbaar = useMemo(() => {
+    const term = zoek.trim().toLowerCase();
+    if (!term) return tasks;
+    return tasks.filter((t) =>
+      [
+        t.title,
+        t.description,
+        t.projects?.title,
+        t.clients?.name,
+        t.profiles?.full_name,
+        t.contacts?.name,
+        t.created_by_profile?.full_name,
+      ].some((veld) => veld?.toLowerCase().includes(term)),
+    );
+  }, [tasks, zoek]);
+
+  // Geen max-width zoals de andere pagina's: de kanban telt vier kolommen en
+  // die passen niet in een leesbreedte.
   return (
-    <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          Tickets <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({openCount})</span>
-        </h1>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
+    <div className="px-4 py-6 md:px-10 md:py-10">
+      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
+        Tickets <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({openCount})</span>
+      </h1>
+
+      {/* Eén wit vlak om de hele weergave: de wissel en de knop horen bij wat
+          eronder staat, niet bij de paginatitel. De lijst en de kanban delen
+          dat vlak, zodat het omschakelen alleen de inhoud verwisselt en niet
+          het kader eromheen. */}
+      <div
+        className="squircle overflow-hidden mt-6"
+        style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
+      >
+        <div
+          className="flex items-center justify-between gap-2 px-5 py-3"
+          style={{ borderBottom: "1px solid var(--border)" }}
         >
-          + Nieuw ticket
-        </button>
-      </div>
+          <label
+            className="flex items-center gap-2 px-3 rounded-lg min-w-0"
+            style={{ height: 40, maxWidth: "20rem", flex: "1 1 12rem", border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+          >
+            <MagnifyingGlass size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+            <input
+              value={zoek}
+              onChange={(e) => setZoek(e.target.value)}
+              placeholder="Zoeken in tickets"
+              className="flex-1 min-w-0 bg-transparent outline-none text-sm"
+              style={{ color: "var(--text-heading)" }}
+            />
+          </label>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2 mt-5 mb-4 flex-wrap">
-        <div className="flex gap-1">
-          {([["all", "Alle"], ...STATUS_ORDER.map((s) => [s, STATUS_LABELS[s]])] as [string, string][]).map(([val, label]) => (
-            <button
-              key={val}
-              onClick={() => setFilterStatus(val as any)}
-              className="px-2.5 py-1 rounded-md text-xs font-medium"
-              style={{
-                border: `1px solid ${filterStatus === val ? "var(--text-heading)" : "var(--border)"}`,
-                background: filterStatus === val ? "var(--text-heading)" : "transparent",
-                color: filterStatus === val ? "#fff" : "var(--text-muted)",
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          <div className="flex items-center gap-2 self-stretch">
+          <WeergaveWissel weergave={weergave} onKies={schrijfWeergave} />
+          <ButtonLink href="/dashboard/tasks/nieuw">
+            + Nieuw ticket
+          </ButtonLink>
+          </div>
         </div>
-        <div className="w-px h-4" style={{ background: "var(--border)" }} />
-        <div className="flex gap-1">
-          {([["all", "Alle prioriteiten"], ["high", "Hoog"], ["medium", "Normaal"], ["low", "Laag"]] as [string, string][]).map(([val, label]) => (
-            <button
-              key={val}
-              onClick={() => setFilterPriority(val)}
-              className="px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5"
-              style={{
-                border: `1px solid ${filterPriority === val ? (val === "all" ? "var(--text-heading)" : PRIORITY_COLORS[val]?.border) : "var(--border)"}`,
-                background: filterPriority === val ? (val === "all" ? "var(--text-heading)" : PRIORITY_COLORS[val]?.bg) : "transparent",
-                color: filterPriority === val ? (val === "all" ? "#fff" : PRIORITY_COLORS[val]?.text) : "var(--text-muted)",
-              }}
-            >
-              {val !== "all" && <span className="w-1.5 h-1.5 rounded-full" style={{ background: filterPriority === val ? PRIORITY_COLORS[val]?.dot : "var(--text-muted)" }} />}
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
-        {filtered.length > 0 ? (
+      {weergave === "kanban" ? (
+        <div className="px-5 py-4">
+          <TicketKanban tasks={zichtbaar} />
+        </div>
+      ) : (
+      <div className="overflow-x-auto">
+        {zichtbaar.length > 0 ? (
           <table className="w-full min-w-[40rem]">
             <thead>
               <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Ticket</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Project</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Toegewezen</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                {/* De rij hierboven en de knoppenrij erboven raken elkaar; de
+                    lijn hier is de enige die je ziet. */}
+                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Ticket</th>
+                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
+                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Toegewezen</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((task, i) => {
+              {zichtbaar.map((task, i) => {
                 const assignee = task.profiles?.full_name ?? task.contacts?.name ?? null;
-                const isOverdue = task.due_date && task.status !== "done" && new Date(task.due_date) < new Date();
                 return (
                   <tr
                     key={task.id}
-                    onClick={() => setViewTask(task)}
+                    onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
                     className="cursor-pointer"
-                    style={{ borderBottom: i < filtered.length - 1 ? "1px solid var(--border)" : "none", transition: "background 120ms" }}
+                    style={{ borderBottom: i < zichtbaar.length - 1 ? "1px solid var(--border)" : "none", transition: "background 120ms" }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                   >
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <PriorityDot priority={task.priority} />
-                        <p className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>{task.title}</p>
-                      </div>
+                    <td className="px-5 py-2">
+                      <p className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>{task.title}</p>
                     </td>
-                    <td className="px-4 py-2 text-sm" style={{ color: "var(--text-muted)" }}>
-                      {task.projects?.title ?? "—"}
+                    {/* De statusknop mag niet doorklikken naar het ticket: hier
+                        wissel je hem, en dat is een andere handeling. */}
+                    <td className="px-5 py-2" onClick={(e) => e.stopPropagation()}>
+                      <StatusCycle task={task} />
                     </td>
-                    <td className="px-4 py-2 text-sm" style={{ color: "var(--text-muted)" }}>
+                    <td className="px-5 py-2 text-sm" style={{ color: "var(--text-muted)" }}>
+                      {task.clients?.name ? (
+                        <span className="flex items-center gap-2 min-w-0">
+                          <ClientLogo logo_url={task.clients.logo_url} name={task.clients.name} size="xs" />
+                          <span className="truncate">{task.clients.name}</span>
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-5 py-2 text-sm" style={{ color: "var(--text-muted)" }}>
                       {assignee ? (
                         <div className="flex items-center gap-2">
-                          {task.profiles ? (
-                            task.profiles.avatar_url ? (
-                              <img src={task.profiles.avatar_url} alt={assignee} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-                            ) : (
-                              <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-white" style={{ background: "var(--text-heading)" }}>
-                                {assignee.charAt(0).toUpperCase()}
-                              </span>
-                            )
+                          {task.profiles?.avatar_url ? (
+                            <img src={task.profiles.avatar_url} alt={assignee} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
                           ) : (
-                            <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold" style={{ background: "var(--bg-secondary)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                            <span className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-white" style={{ background: "var(--text-heading)", fontSize: "0.5625rem" }}>
                               {assignee.charAt(0).toUpperCase()}
                             </span>
                           )}
@@ -421,49 +215,83 @@ export default function TasksPageClient({
                         </div>
                       ) : "—"}
                     </td>
-                    <td className="px-4 py-2 text-sm" style={{ color: isOverdue ? "#dc2626" : "var(--text-muted)" }}>
-                      {task.due_date ? new Date(task.due_date).toLocaleDateString("nl-NL") : "—"}
-                    </td>
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <StatusCycle task={task} />
-                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         ) : (
-          <p className="px-4 py-8 text-sm text-center" style={{ color: "var(--text-muted)" }}>
-            Geen tickets gevonden.{" "}
-            {filterStatus === "all" && filterPriority === "all" && (
-              <button onClick={() => setShowCreate(true)} className="underline" style={{ color: "var(--text)" }}>
-                Maak het eerste aan.
-              </button>
+          <p className="px-5 py-8 text-sm text-center" style={{ color: "var(--text-muted)" }}>
+            {zoek.trim() ? (
+              <>Niets gevonden voor &ldquo;{zoek.trim()}&rdquo;.</>
+            ) : (
+              <>
+                Nog geen tickets.{" "}
+                <Link href="/dashboard/tasks/nieuw" className="underline" style={{ color: "var(--text)" }}>
+                  Maak het eerste aan.
+                </Link>
+              </>
             )}
           </p>
         )}
       </div>
-
-      {showCreate && (
-        <Modal title="Nieuw ticket" onClose={() => setShowCreate(false)}>
-          <TaskForm projects={projects} contacts={contacts} profiles={profiles} onClose={() => setShowCreate(false)} />
-        </Modal>
       )}
+      </div>
 
-      {editTask && (
-        <Modal title="Ticket bewerken" onClose={() => setEditTask(null)}>
-          <TaskForm task={editTask} projects={projects} contacts={contacts} profiles={profiles} onClose={() => setEditTask(null)} />
-        </Modal>
-      )}
+    </div>
+  );
+}
 
-      {viewTask && !editTask && (
-        <TicketDetailModal
-          task={viewTask}
-          onClose={() => setViewTask(null)}
-          onEdit={() => { setEditTask(viewTask); setViewTask(null); }}
-          onDelete={() => setViewTask(null)}
-        />
-      )}
+/**
+ * Lijst of kanban.
+ *
+ * Twee knoppen naast elkaar in plaats van een uitklapmenu: er zijn er maar
+ * twee, en zo zie je meteen waar je staat zonder eerst te openen. Het icoon
+ * doet het werk, het woord staat ernaast omdat een rijtje streepjes en een
+ * rijtje kolommen op 16 pixels te veel op elkaar lijken.
+ */
+const WEERGAVEN: { waarde: Weergave; label: string; icoon: React.ReactNode }[] = [
+  // Kanban vooraan: dat is de standaardweergave, en die hoort links te staan
+  // zodat de volgorde van de knoppen klopt met waar je terechtkomt.
+  { waarde: "kanban", label: "Kanban", icoon: <Kanban size={16} weight="bold" /> },
+  { waarde: "lijst", label: "Lijst", icoon: <Rows size={16} weight="bold" /> },
+];
+
+function WeergaveWissel({
+  weergave,
+  onKies,
+}: {
+  weergave: Weergave;
+  onKies: (w: Weergave) => void;
+}) {
+  return (
+    // self-stretch in plaats van een eigen hoogte: de wissel rekt mee met de
+    // hoogste buur op de rij, en dat is de knop ernaast. Zo blijven ze gelijk
+    // ook als die knop ooit andere padding krijgt. De radius is die van het
+    // zoekveld en van de zoekbalk in de topbalk (0.5rem).
+    <div
+      className="flex self-stretch overflow-hidden rounded-lg"
+      style={{ border: "1px solid var(--border)" }}
+    >
+      {WEERGAVEN.map(({ waarde, label, icoon }) => (
+        <button
+          key={waarde}
+          onClick={() => onKies(waarde)}
+          aria-pressed={weergave === waarde}
+          className="text-sm font-medium px-3 flex items-center gap-1.5"
+          style={{
+            background: weergave === waarde ? "var(--bg-hover)" : "transparent",
+            color: weergave === waarde ? "var(--text-heading)" : "var(--text-muted)",
+            // De inactieve helft trekt anders net zoveel aandacht als de kant
+            // waar je op staat.
+            opacity: weergave === waarde ? 1 : 0.6,
+            transition: "background 150ms, color 150ms, opacity 150ms",
+          }}
+        >
+          {icoon}
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

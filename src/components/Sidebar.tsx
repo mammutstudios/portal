@@ -250,6 +250,11 @@ const clientNav: NavItem[] = [
     icon: <Folder size={19} weight="fill" />,
   },
   {
+    label: "Tickets",
+    href: "/portal/tickets",
+    icon: <CheckSquare size={19} weight="fill" />,
+  },
+  {
     label: "Huisstijl",
     href: "/portal/huisstijl",
     icon: <Palette size={19} weight="fill" />,
