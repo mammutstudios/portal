@@ -12,6 +12,20 @@ import { appUrl, stuurSlack } from "@/lib/slack";
  * dan al. stuurSlack logt de reden en geeft { sent: false } terug.
  */
 
+/**
+ * Een teken voor de kop, per soort bericht.
+ *
+ * Als Slack-code en niet als los teken, want dan zet Slack er zijn eigen
+ * versie neer en ziet het er op elk toestel hetzelfde uit. Vier soorten
+ * berichten in één kanaal lopen anders door elkaar; hieraan zie je in één
+ * oogopslag welk soort het is.
+ */
+const TEKEN = {
+  nieuw: ":pencil:",
+  reactie: ":speech_balloon:",
+  klaar: ":white_check_mark:",
+} as const;
+
 /** Een tekstblok inkorten zodat een lange omschrijving het kanaal niet vult. */
 function kort(tekst: string | null | undefined, max = 300): string | null {
   const schoon = (tekst ?? "").trim();
@@ -32,6 +46,20 @@ type TicketKop = {
   clients?: { name: string | null } | null;
 };
 
+/**
+ * De regel onder de kop: bij welke klant het hoort en wie het deed.
+ *
+ * Het logo stond hier eerst als klein plaatje voor de naam, in een
+ * context-blok. Slack lijnt zo'n afbeelding zelf uit tegen de tekst ernaast en
+ * dat viel net verkeerd; er is geen instelling voor. Alleen de naam dus, en
+ * dat is meteen consistent: drie van de klanten hebben een SVG als logo en
+ * die toont Slack sowieso niet.
+ */
+function klantRegel(ticket: TicketKop, wat: string): string {
+  const naam = ticket.clients?.name;
+  return naam ? `${naam}  ·  ${wat}` : wat;
+}
+
 /** Een klant heeft vanuit het portaal een verzoek ingediend. */
 export async function meldVerzoekIngediend(
   supabase: SupabaseClient,
@@ -45,8 +73,8 @@ export async function meldVerzoekIngediend(
 
   await stuurSlack({
     tekst: `Nieuw verzoek van ${organisatie}: ${ticket.title}`,
-    kop: `Nieuw verzoek van ${organisatie}`,
-    regels: [`*${ticket.title}*`, `Ingediend door ${indiener}`, ...(uitleg ? [uitleg] : [])],
+    kop: `${TEKEN.nieuw} Nieuw verzoek: ${ticket.title}`,
+    regels: [klantRegel(ticket, `Ingediend door ${indiener}`), ...(uitleg ? [uitleg] : [])],
     link: { label: "Open ticket", url: appUrl(`/dashboard/tasks/${ticket.id}`) },
   });
 }
@@ -59,17 +87,12 @@ export async function meldTicketAangemaakt(
   omschrijving: string | null,
 ) {
   const door = await naamVan(supabase, doorId);
-  const organisatie = ticket.clients?.name;
   const uitleg = kort(omschrijving);
 
   await stuurSlack({
     tekst: `Nieuw ticket: ${ticket.title}`,
-    kop: `Nieuw ticket: ${ticket.title}`,
-    regels: [
-      ...(organisatie ? [`_${organisatie}_`] : []),
-      `Aangemaakt door ${door}`,
-      ...(uitleg ? [uitleg] : []),
-    ],
+    kop: `${TEKEN.nieuw} Nieuw ticket: ${ticket.title}`,
+    regels: [klantRegel(ticket, `Aangemaakt door ${door}`), ...(uitleg ? [uitleg] : [])],
     link: { label: "Open ticket", url: appUrl(`/dashboard/tasks/${ticket.id}`) },
   });
 }
@@ -99,13 +122,11 @@ export async function meldReactie(
     if (namen.length > 0) genoemd = `Genoemd: ${namen.join(", ")}`;
   }
 
-  const organisatie = ticket.clients?.name;
-
   await stuurSlack({
     tekst: `${auteur} reageerde op ${ticket.title}`,
-    kop: `${auteur} reageerde op ${ticket.title}`,
+    kop: `${TEKEN.reactie} ${auteur} reageerde op ${ticket.title}`,
     regels: [
-      ...(organisatie ? [`_${organisatie}_`] : []),
+      ...(ticket.clients?.name ? [ticket.clients.name] : []),
       kort(body) ?? "",
       ...(genoemd ? [genoemd] : []),
     ].filter(Boolean),
@@ -120,12 +141,11 @@ export async function meldTicketKlaar(
   doorId: string | null,
 ) {
   const door = await naamVan(supabase, doorId);
-  const organisatie = ticket.clients?.name;
 
   await stuurSlack({
     tekst: `${ticket.title} staat op Klaar`,
-    kop: `${ticket.title} staat op Klaar`,
-    regels: [...(organisatie ? [`_${organisatie}_`] : []), `Afgerond door ${door}`],
+    kop: `${TEKEN.klaar} ${ticket.title} staat op Klaar`,
+    regels: [klantRegel(ticket, `Afgerond door ${door}`)],
     link: { label: "Open ticket", url: appUrl(`/dashboard/tasks/${ticket.id}`) },
   });
 }
