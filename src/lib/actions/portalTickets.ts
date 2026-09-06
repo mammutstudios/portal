@@ -6,6 +6,7 @@ import { getPortalContext } from "@/lib/portal";
 import { logActiviteit } from "@/lib/activity";
 import { TICKET_STATUS_NIEUW } from "@/lib/tickets";
 import { standaardToegewezene } from "@/lib/team";
+import { meldVerzoekIngediend, ticketVoorMelding } from "@/lib/slackMeldingen";
 
 /**
  * Een klant dient vanuit het portaal een verzoek in. Dat wordt een ticket op
@@ -78,10 +79,18 @@ export async function createPortalTicketAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  // De melding komt na het loggen: een ticket dat er staat is belangrijker dan
+  // een bericht dat aankomt, en stuurSlack gooit niet.
+  const nieuwId = (nieuw?.id as string | undefined) ?? null;
+  if (nieuwId) {
+    const kop = await ticketVoorMelding(supabase, nieuwId);
+    if (kop) await meldVerzoekIngediend(supabase, kop, userId, description);
+  }
+
   await logActiviteit({
     action: "taak.ingediend",
     entityType: "taak",
-    entityId: (nieuw?.id as string | undefined) ?? null,
+    entityId: nieuwId,
     entityLabel: title,
     clientId: gevraagdeClient,
     meta: { project_id: projectId },

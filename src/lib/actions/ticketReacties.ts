@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { meldReactie, ticketVoorMelding } from "@/lib/slackMeldingen";
 
 /**
  * Reacties onder een ticket.
@@ -33,6 +34,9 @@ export async function addTicketReactieAction(
     .insert({ task_id: taskId, profile_id: user.id, body: tekst, mentions: [...new Set(mentions)] });
 
   if (error) return { error: error.message };
+
+  const kop = await ticketVoorMelding(supabase, taskId);
+  if (kop) await meldReactie(supabase, kop, user.id, tekst, [...new Set(mentions)]);
 
   revalidatePath(`/dashboard/tasks/${taskId}`);
   revalidatePath("/portal/tickets");

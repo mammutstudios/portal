@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { logActiviteit } from "@/lib/activity";
 import { TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { standaardToegewezene } from "@/lib/team";
+import { meldTicketKlaar, ticketVoorMelding } from "@/lib/slackMeldingen";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -135,6 +136,7 @@ export async function updateTaskStatusAction(formData: FormData) {
       entityLabel: (taak as { title?: string } | null)?.title ?? null,
       meta: { naar: TICKET_STATUS_LABEL[status as keyof typeof TICKET_STATUS_LABEL] ?? status },
     });
+    await meldKlaarAls(supabase, id, status);
   }
 
   revalidatePath("/dashboard/tasks");
@@ -205,11 +207,30 @@ export async function updateTaskVeldAction(formData: FormData) {
       entityLabel: (taak as { title?: string } | null)?.title ?? null,
       meta: { naar: TICKET_STATUS_LABEL[ruw as keyof typeof TICKET_STATUS_LABEL] ?? ruw },
     });
+    await meldKlaarAls(supabase, id, ruw);
   }
 
   revalidatePath(`/dashboard/tasks/${id}`);
   revalidatePath("/dashboard/tasks");
   revalidatePath("/dashboard");
+}
+
+/**
+ * Een bericht in Slack zodra een ticket op Klaar komt.
+ *
+ * Op twee plekken nodig: slepen op de kanban en de statusknop in de lijst gaan
+ * via updateTaskStatusAction, de eigenschappenlijst op de ticketpagina via
+ * updateTaskVeldAction. Vandaar deze tussenstap in plaats van de code twee
+ * keer.
+ */
+async function meldKlaarAls(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  id: string,
+  status: string,
+) {
+  if (status !== "done") return;
+  const kop = await ticketVoorMelding(supabase, id);
+  if (kop) await meldTicketKlaar(supabase, kop, await huidigeGebruiker(supabase));
 }
 
 export async function deleteTaskAction(formData: FormData) {
