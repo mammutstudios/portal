@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { logActiviteit } from "@/lib/activity";
 import { TICKET_STATUS_LABEL } from "@/lib/tickets";
 import { standaardToegewezene } from "@/lib/team";
-import { meldTicketKlaar, ticketVoorMelding } from "@/lib/slackMeldingen";
+import { meldTicketAangemaakt, meldTicketKlaar, ticketVoorMelding } from "@/lib/slackMeldingen";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -41,7 +41,7 @@ export async function createTaskAction(formData: FormData) {
   // zou een ticket zonder project bij niemand horen.
   const gekozenClient = (formData.get("client_id") as string) || null;
 
-  const { error } = await supabase.from("tasks").insert({
+  const { data: nieuw, error } = await supabase.from("tasks").insert({
     title: formData.get("title") as string,
     description: (formData.get("description") as string) || null,
     project_id: projectId,
@@ -56,9 +56,24 @@ export async function createTaskAction(formData: FormData) {
     // staan en verdeel je hem daarna op het bord.
     assigned_profile_id:
       (formData.get("assigned_profile_id") as string) || (await standaardToegewezene(supabase)),
-  });
+  })
+    .select("id")
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
+
+  const nieuwId = (nieuw?.id as string | undefined) ?? null;
+  if (nieuwId) {
+    const kop = await ticketVoorMelding(supabase, nieuwId);
+    if (kop) {
+      await meldTicketAangemaakt(
+        supabase,
+        kop,
+        await huidigeGebruiker(supabase),
+        (formData.get("description") as string) || null,
+      );
+    }
+  }
 
   await logActiviteit({
     action: "taak.aangemaakt",

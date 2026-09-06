@@ -79,8 +79,8 @@ export async function createPortalTicketAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  // De melding komt na het loggen: een ticket dat er staat is belangrijker dan
-  // een bericht dat aankomt, en stuurSlack gooit niet.
+  // Pas nadat het ticket er staat. stuurSlack gooit niet, dus een melding die
+  // niet aankomt laat het verzoek verder met rust.
   const nieuwId = (nieuw?.id as string | undefined) ?? null;
   if (nieuwId) {
     const kop = await ticketVoorMelding(supabase, nieuwId);

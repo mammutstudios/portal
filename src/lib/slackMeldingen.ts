@@ -51,6 +51,29 @@ export async function meldVerzoekIngediend(
   });
 }
 
+/** Het team heeft zelf een ticket aangemaakt, vanuit het dashboard. */
+export async function meldTicketAangemaakt(
+  supabase: SupabaseClient,
+  ticket: TicketKop,
+  doorId: string | null,
+  omschrijving: string | null,
+) {
+  const door = await naamVan(supabase, doorId);
+  const organisatie = ticket.clients?.name;
+  const uitleg = kort(omschrijving);
+
+  await stuurSlack({
+    tekst: `Nieuw ticket: ${ticket.title}`,
+    kop: `Nieuw ticket: ${ticket.title}`,
+    regels: [
+      ...(organisatie ? [`_${organisatie}_`] : []),
+      `Aangemaakt door ${door}`,
+      ...(uitleg ? [uitleg] : []),
+    ],
+    link: { label: "Open ticket", url: appUrl(`/dashboard/tasks/${ticket.id}`) },
+  });
+}
+
 /**
  * Er is gereageerd op een ticket.
  *
