@@ -118,11 +118,8 @@ export default function TicketForm({ clients }: { clients: KlantOptie[] }) {
         <SearchSelect
           name="client_id"
           placeholder="Geen"
-          options={clients.map((c) => ({
-            value: c.id,
-            label: c.name,
-            rightMeta: { label: c.name, logo_url: c.logo_url },
-          }))}
+          showLogos
+          options={clients.map((c) => ({ value: c.id, label: c.name, logo: c.logo_url }))}
         />
       </Veld>
 

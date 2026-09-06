@@ -129,7 +129,8 @@ export default function TicketEigenschappen({
             name="client_id"
             defaultValue={task.client_id ?? undefined}
             placeholder="Geen klant"
-            options={clients.map((c) => ({ value: c.id, label: c.name }))}
+            showLogos
+            options={clients.map((c) => ({ value: c.id, label: c.name, logo: c.logo_url }))}
             onChange={(w) => schrijf("client_id", w ?? "")}
             startOpen
             subtle

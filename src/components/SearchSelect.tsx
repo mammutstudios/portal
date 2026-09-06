@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { CaretDown } from "@phosphor-icons/react";
+import ClientLogo from "@/components/ClientLogo";
 
-type Option = { value: string; label: string; sublabel?: string; avatar?: string | null; rightMeta?: { label: string; logo_url?: string | null } };
+type Option = { value: string; label: string; sublabel?: string; avatar?: string | null; logo?: string | null; rightMeta?: { label: string; logo_url?: string | null } };
 
 function Avatar({ url, label }: { url?: string | null; label: string }) {
   if (url) return <img src={url} alt={label} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />;
@@ -24,6 +25,7 @@ export default function SearchSelect({
   onCreateNew,
   subtle,
   showAvatars,
+  showLogos,
   startOpen = false,
   onSluiten,
 }: {
@@ -36,6 +38,12 @@ export default function SearchSelect({
   onCreateNew?: (query: string) => Promise<Option | null>;
   subtle?: boolean;
   showAvatars?: boolean;
+  /**
+   * Zelfde idee als showAvatars, maar dan met het logo van een klant ervoor.
+   * Apart, want een klantlogo is een vierkantje met een rand en een avatar een
+   * rondje: de optie draagt daarvoor `logo` in plaats van `avatar`.
+   */
+  showLogos?: boolean;
   /**
    * Meteen open bij het monteren. Voor inline bewerken: daar heb je al
    * geklikt om het veld tevoorschijn te halen, en een tweede klik om het
@@ -140,6 +148,7 @@ export default function SearchSelect({
       >
         <span className="flex items-center gap-2">
           {showAvatars && selected && <Avatar url={selected.avatar} label={selected.label} />}
+          {showLogos && selected && <ClientLogo logo_url={selected.logo} name={selected.label} size="xs" />}
           {selected ? selected.label : placeholder}
         </span>
         <CaretDown size={15} weight="bold" className="flex-shrink-0 ml-2" style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
@@ -181,6 +190,7 @@ export default function SearchSelect({
               >
                 <span className="flex items-center gap-2">
                   {showAvatars && <Avatar url={option.avatar} label={option.label} />}
+                  {showLogos && <ClientLogo logo_url={option.logo} name={option.label} size="xs" />}
                   {option.label}
                   {option.sublabel && (
                     <span className="text-xs" style={{ color: "var(--text-muted)" }}>{option.sublabel}</span>
