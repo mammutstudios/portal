@@ -5,6 +5,7 @@ import Modal from "@/components/Modal";
 import TimeEntryForm from "@/components/TimeEntryForm";
 import { deleteTimeEntryAction } from "@/lib/actions/timeEntries";
 import type { TimeEntry, Profile } from "@/lib/types";
+import Button from "@/components/Button";
 
 type ProjectOption = { id: string; title: string; client_id: string; clients?: { name: string; logo_url: string | null } | null };
 
@@ -50,13 +51,9 @@ export default function TogglPageClient({
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
           Uren <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({totalHours.toFixed(2)})</span>
         </h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        <Button onClick={() => setShowAdd(true)}>
           + Uren toevoegen
-        </button>
+        </Button>
       </div>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Urenregistratie</p>
 

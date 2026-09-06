@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { createContactAction, updateContactAction } from "@/lib/actions/contacts";
 import type { Contact } from "@/lib/types";
+import Button from "@/components/Button";
 
 export default function ContactForm({
   contact,
@@ -71,21 +72,12 @@ export default function ContactForm({
       </div>
 
       <div className="flex justify-end gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 rounded-md text-sm"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
+        <Button variant="secondary" onClick={onClose}>
           Annuleren
-        </button>
-        <button
-          type="submit"
-          className="px-3 py-1.5 rounded-md text-sm font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        </Button>
+        <Button type="submit">
           {contact ? "Opslaan" : "Aanmaken"}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -7,6 +7,7 @@ import DatePicker from "@/components/DatePicker";
 import Select from "@/components/Select";
 import { PROJECT_PHASES, PHASE_LABEL } from "@/lib/types";
 import type { Project, Client } from "@/lib/types";
+import Button from "@/components/Button";
 
 const PROJECT_TAGS = ["Branding", "Design", "Development", "Retainer"];
 
@@ -243,12 +244,12 @@ export default function EditProjectForm({
       {error && <p className="text-xs px-3 py-2 rounded-md" style={{ background: "#fef2f2", color: "#e57373" }}>{error}</p>}
 
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-md text-sm" style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+        <Button variant="secondary" onClick={onClose}>
           Annuleren
-        </button>
-        <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-md text-sm font-medium" style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}>
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? "Opslaan..." : "Opslaan"}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -5,6 +5,7 @@ import Modal from "@/components/Modal";
 import TransactionForm from "@/components/TransactionForm";
 import { deleteTransactionAction } from "@/lib/actions/transactions";
 import type { Transaction, Client, Project } from "@/lib/types";
+import Button from "@/components/Button";
 
 function fmtFull(amount: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(amount);
@@ -68,11 +69,11 @@ function TransactionDetail({
       <div className="flex justify-between pt-2" style={{ borderTop: "1px solid var(--border)" }}>
         <form action={deleteTransactionAction} onSubmit={onClose}>
           <input type="hidden" name="id" value={transaction.id} />
-          <button type="submit" className="text-sm px-3 py-1.5 rounded-md" style={{ color: "#e57373" }}>Verwijderen</button>
+          <Button variant="danger" type="submit">Verwijderen</Button>
         </form>
-        <button onClick={() => setEditing(true)} className="text-sm px-3 py-1.5 rounded-md font-medium" style={{ background: "var(--text-heading)", color: "#fff" }}>
+        <Button onClick={() => setEditing(true)}>
           Bewerken
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -94,13 +95,9 @@ export default function TransactionsPageClient({
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>Transacties</h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        <Button onClick={() => setShowAdd(true)}>
           + Toevoegen
-        </button>
+        </Button>
       </div>
 
       <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>

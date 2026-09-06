@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { addContactToProjectAction, removeContactFromProjectAction } from "@/lib/actions/contacts";
 import type { Contact, ProjectContact } from "@/lib/types";
+import Button from "@/components/Button";
 
 export default function LinkContactToProject({
   projectId,
@@ -24,13 +25,9 @@ export default function LinkContactToProject({
           Contactpersonen
         </h2>
         {available.length > 0 && (
-          <button
-            onClick={() => setShowPicker((v) => !v)}
-            className="text-xs px-2.5 py-1 rounded-md"
-            style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-          >
+          <Button variant="secondary" onClick={() => setShowPicker((v) => !v)}>
             + Koppelen
-          </button>
+          </Button>
         )}
       </div>
 

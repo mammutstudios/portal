@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { DealStatusBadge } from "@/components/StatusBadge";
 import { DEAL_OPEN, type Deal, type DealStatus } from "@/lib/types";
+import { ButtonLink } from "@/components/Button";
 
 const FILTERS = [
   { label: "Open", value: "open" },
@@ -66,13 +67,9 @@ export default function DealsPageClient({
             ({zichtbaar.length})
           </span>
         </h1>
-        <Link
-          href="/dashboard/deals/nieuw"
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        <ButtonLink href="/dashboard/deals/nieuw">
           + Nieuwe deal
-        </Link>
+        </ButtonLink>
       </div>
       <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
         Aanvragen en nieuw werk, van nieuwe klanten en van bestaande.

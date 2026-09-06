@@ -6,6 +6,7 @@ import { CaretRight } from "@phosphor-icons/react";
 import Modal from "@/components/Modal";
 import ContactForm from "@/components/ContactForm";
 import type { Contact, Client } from "@/lib/types";
+import Button from "@/components/Button";
 
 type ContactWithClients = Contact & {
   contact_clients?: { clients: Pick<Client, "id" | "name" | "logo_url"> }[];
@@ -51,13 +52,9 @@ export default function ContactsPageClient({
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
           Contactpersonen <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({contacts.length})</span>
         </h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        <Button onClick={() => setShowModal(true)}>
           + Nieuw contact
-        </button>
+        </Button>
       </div>
       <div className="mb-8" />
 

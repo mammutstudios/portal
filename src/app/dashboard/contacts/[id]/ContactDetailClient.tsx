@@ -14,6 +14,7 @@ import { linkContactToClientAction, unlinkContactFromClientAction } from "@/lib/
 import { inviteContactAction, revokeContactAccessAction } from "@/lib/actions/portalAccess";
 import type { PortaalToegang } from "@/lib/portalToegang";
 import type { Contact, Client } from "@/lib/types";
+import Button from "@/components/Button";
 
 type LinkedClient = Pick<Client, "id" | "name" | "logo_url" | "client_number">;
 
@@ -54,12 +55,12 @@ function AddClientForm({ contactId, allClients, linkedIds, onClose }: {
         required
       />
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-md text-sm" style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+        <Button variant="secondary" onClick={onClose}>
           Annuleren
-        </button>
-        <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-md text-sm font-medium" style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}>
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? "Bezig..." : "Koppelen"}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -141,14 +142,9 @@ function PortaalToegangKaart({
             <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
               Nog geen toegang. Uitnodigen maakt een account aan en stuurt {contact.email} een mail.
             </p>
-            <button
-              onClick={() => doe("uitnodigen")}
-              disabled={bezig !== null}
-              className="w-full px-3 py-1.5 rounded-md text-sm font-medium"
-              style={{ background: "var(--text-heading)", color: "#fff", opacity: bezig ? 0.6 : 1 }}
-            >
+            <Button onClick={() => doe("uitnodigen")} disabled={bezig !== null} className="w-full">
               {bezig === "uitnodigen" ? "Bezig..." : "Uitnodigen"}
-            </button>
+            </Button>
           </>
         )}
 

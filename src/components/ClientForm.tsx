@@ -17,6 +17,7 @@ const EmojiPicker = dynamic(() => import("@/components/EmojiPicker"), {
 import { createClientAction, updateClientAction } from "@/lib/actions/clients";
 import { useRouter } from "next/navigation";
 import type { Client } from "@/lib/types";
+import Button from "@/components/Button";
 
 function isEmoji(val: string) {
   return !val.startsWith("http") && !val.startsWith("/") && !val.startsWith("data:");
@@ -117,14 +118,9 @@ export default function ClientForm({
               )}
             </div>
             <div>
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="text-sm px-3 py-1.5 rounded-md"
-                style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-              >
+              <Button variant="secondary" onClick={() => fileRef.current?.click()}>
                 {preview ? "Wijzigen" : "Uploaden"}
-              </button>
+              </Button>
               <input
                 ref={fileRef}
                 name="logo"
@@ -240,17 +236,12 @@ export default function ClientForm({
       {error && <p className="text-sm" style={{ color: "#c0392b" }}>{error}</p>}
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onClick={onClose} className="text-sm px-3 py-1.5" style={{ color: "var(--text-muted)" }}>
+        <Button variant="ghost" onClick={onClose}>
           Annuleren
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="text-sm px-4 py-1.5 rounded-md font-medium disabled:opacity-50"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? "Opslaan…" : isEdit ? "Opslaan" : "Organisatie aanmaken"}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -8,6 +8,7 @@ import Modal from "@/components/Modal";
 import ClientForm from "@/components/ClientForm";
 import { ClientTagBadge } from "@/components/StatusBadge";
 import type { Client } from "@/lib/types";
+import Button from "@/components/Button";
 
 export default function ClientsPageClient({ clients }: { clients: Client[] }) {
   const [showModal, setShowModal] = useState(false);
@@ -19,13 +20,9 @@ export default function ClientsPageClient({ clients }: { clients: Client[] }) {
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
           Organisaties <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({clients.length})</span>
         </h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        <Button onClick={() => setShowModal(true)}>
           + Nieuwe organisatie
-        </button>
+        </Button>
       </div>
       <div className="mb-8" />
 

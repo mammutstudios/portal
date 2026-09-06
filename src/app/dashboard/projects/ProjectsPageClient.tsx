@@ -7,6 +7,7 @@ import Modal from "@/components/Modal";
 import CreateProjectForm from "@/components/CreateProjectForm";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import { opStatus, type Project, type Client } from "@/lib/types";
+import Button from "@/components/Button";
 
 const Chevron = () => (
   <CaretRight size={15} weight="bold" style={{ color: "var(--text-muted)" }} />
@@ -49,13 +50,9 @@ export default function ProjectsPageClient({
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
           Projecten <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({gesorteerd.length})</span>
         </h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        <Button onClick={() => setShowModal(true)}>
           + Nieuw project
-        </button>
+        </Button>
       </div>
 
       {/* Filters */}

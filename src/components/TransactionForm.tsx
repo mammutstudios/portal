@@ -6,6 +6,7 @@ import { createTransactionAction, updateTransactionAction } from "@/lib/actions/
 import { quickCreateProjectAction } from "@/lib/actions/projects";
 import SearchSelect from "@/components/SearchSelect";
 import type { Transaction, Client, Project } from "@/lib/types";
+import Button from "@/components/Button";
 
 const TYPES = ["Aanbetaling", "Restant", "Retainer", "Volledig"] as const;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
@@ -295,22 +296,12 @@ export default function TransactionForm({
       )}
 
       <div className="flex justify-end gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 rounded-md text-sm"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
+        <Button variant="secondary" onClick={onClose}>
           Annuleren
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-3 py-1.5 rounded-md text-sm font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}
-        >
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? "Bezig..." : transaction ? "Opslaan" : "Aanmaken"}
-        </button>
+        </Button>
       </div>
     </form>
   );

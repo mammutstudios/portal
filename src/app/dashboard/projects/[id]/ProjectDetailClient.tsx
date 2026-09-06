@@ -11,6 +11,7 @@ import ProgressBar from "@/components/ProgressBar";
 import ProjectTimeline, { type TimelineEntry } from "@/components/ProjectTimeline";
 import ProjectInvoices, { type KoppelbareFactuur } from "@/components/ProjectInvoices";
 import type { Project, Task, File as ProjectFile, TimeEntry } from "@/lib/types";
+import { ButtonLink } from "@/components/Button";
 
 const euro = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
@@ -56,13 +57,13 @@ export default function ProjectDetailClient({
             {project.title}
           </h1>
         </div>
-        <Link
+        <ButtonLink
           href={`/dashboard/projects/${project.id}/bewerken`}
-          className="card-hover text-sm px-3 py-1.5 rounded-md flex-shrink-0"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+          variant="secondary"
+          className="flex-shrink-0"
         >
           Bewerken
-        </Link>
+        </ButtonLink>
       </div>
 
       {project.description && (

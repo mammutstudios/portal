@@ -15,6 +15,7 @@ import ContactForm from "@/components/ContactForm";
 import { unlinkContactFromClientAction, linkContactToClientAction } from "@/lib/actions/contacts";
 import SearchSelect from "@/components/SearchSelect";
 import type { Client, Project, Contact } from "@/lib/types";
+import Button from "@/components/Button";
 
 function LinkContactForm({ clientId, allContacts, linkedIds, onClose }: {
   clientId: string;
@@ -51,12 +52,12 @@ function LinkContactForm({ clientId, allContacts, linkedIds, onClose }: {
         required
       />
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-md text-sm" style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+        <Button variant="secondary" onClick={onClose}>
           Annuleren
-        </button>
-        <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-md text-sm font-medium" style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}>
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? "Bezig..." : "Koppelen"}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -132,13 +133,9 @@ export default function ClientDetailClient({
             )}
           </div>
         </div>
-        <button
-          onClick={() => setShowEdit(true)}
-          className="card-hover text-sm px-3 py-1.5 rounded-md flex-shrink-0"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
+        <Button variant="secondary" onClick={() => setShowEdit(true)} className="flex-shrink-0">
           Bewerken
-        </button>
+        </Button>
       </div>
 
       {/* Contactpersonen */}
@@ -147,20 +144,12 @@ export default function ClientDetailClient({
           Contactpersonen
         </h2>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowLinkContact(true)}
-            className="text-xs px-2.5 py-1 rounded-md"
-            style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-          >
+          <Button variant="secondary" onClick={() => setShowLinkContact(true)}>
             Koppelen
-          </button>
-          <button
-            onClick={() => setShowAddContact(true)}
-            className="text-xs px-2.5 py-1 rounded-md"
-            style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-          >
+          </Button>
+          <Button variant="secondary" onClick={() => setShowAddContact(true)}>
             + Nieuw
-          </button>
+          </Button>
         </div>
       </div>
 

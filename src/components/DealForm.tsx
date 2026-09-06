@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { Paperclip } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Select from "@/components/Select";
 import SearchSelect from "@/components/SearchSelect";
 import { createDealAction, updateDealAction } from "@/lib/actions/deals";
@@ -11,6 +10,7 @@ import { quickCreateClientAction } from "@/lib/actions/clients";
 import { quickCreateContactAction } from "@/lib/actions/contacts";
 import { uploadDealBestand, bestandsgrootte } from "@/lib/dealUpload";
 import { DEAL_STATUSSEN, DEAL_STATUS_LABEL, type Deal } from "@/lib/types";
+import Button, { ButtonLink } from "@/components/Button";
 
 const invoerStijl = {
   border: "1px solid var(--border)",
@@ -293,21 +293,12 @@ export default function DealForm({
       )}
 
       <div className="flex justify-end gap-2 pt-1">
-        <Link
-          href="/dashboard/deals"
-          className="text-sm px-3 py-1.5 rounded-md"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
+        <ButtonLink href="/dashboard/deals" variant="secondary">
           Annuleren
-        </Link>
-        <button
-          type="submit"
-          disabled={bezig}
-          className="text-sm px-3 py-1.5 rounded-md font-medium"
-          style={{ background: "var(--text-heading)", color: "#fff", opacity: bezig ? 0.6 : 1 }}
-        >
+        </ButtonLink>
+        <Button type="submit" disabled={bezig}>
           {bezig ? "Bezig…" : deal ? "Opslaan" : "Deal toevoegen"}
-        </button>
+        </Button>
       </div>
     </form>
   );

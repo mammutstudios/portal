@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClientAction } from "@/lib/actions/clients";
 import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
 
 export default function CreateClientForm({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
@@ -60,17 +61,12 @@ export default function CreateClientForm({ onClose }: { onClose: () => void }) {
       {error && <p className="text-sm" style={{ color: "#c0392b" }}>{error}</p>}
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onClick={onClose} className="text-sm px-3 py-1.5" style={{ color: "var(--text-muted)" }}>
+        <Button variant="ghost" onClick={onClose}>
           Annuleren
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="text-sm px-4 py-1.5 rounded-md font-medium disabled:opacity-50"
-          style={{ background: "var(--text-heading)", color: "#fff" }}
-        >
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? "Opslaan…" : "Klant aanmaken"}
-        </button>
+        </Button>
       </div>
     </form>
   );

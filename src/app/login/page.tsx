@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Button from "@/components/Button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -84,14 +85,9 @@ export default function LoginPage() {
 
               {error && <p className="mt-3 text-sm" style={{ color: "#c0392b" }}>{error}</p>}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-6 py-2 px-4 text-sm font-medium rounded-md transition-opacity disabled:opacity-50"
-                style={{ background: "var(--text-heading)", color: "#fff" }}
-              >
+              <Button type="submit" disabled={loading} className="w-full mt-6">
                 {loading ? "Versturen…" : "Stuur inloglink"}
-              </button>
+              </Button>
             </form>
           ) : (
             <div className="mt-6">

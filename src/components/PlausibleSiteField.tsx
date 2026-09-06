@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { linkPlausibleSiteAction } from "@/lib/actions/clients";
+import Button from "@/components/Button";
 
 /** Domein zoals het in Plausible staat. Eenmalig per organisatie. */
 export default function PlausibleSiteField({
@@ -40,14 +41,9 @@ export default function PlausibleSiteField({
           className="px-3 py-2 text-sm rounded-md flex-1 min-w-0 outline-none"
           style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)", color: "var(--text)", opacity: pending ? 0.5 : 1 }}
         />
-        <button
-          onClick={save}
-          disabled={pending}
-          className="card-hover text-sm px-3 py-2 rounded-md flex-shrink-0"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
+        <Button variant="secondary" onClick={save} disabled={pending} className="card-hover flex-shrink-0">
           {pending ? "Bezig…" : "Opslaan"}
-        </button>
+        </Button>
       </div>
       {error && <p className="text-xs mt-2" style={{ color: "#b0413e" }}>{error}</p>}
       {saved && !error && <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>Opgeslagen.</p>}

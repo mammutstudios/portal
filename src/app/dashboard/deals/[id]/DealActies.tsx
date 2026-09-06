@@ -6,6 +6,7 @@ import Link from "next/link";
 import Modal from "@/components/Modal";
 import { convertDealAction, deleteDealAction } from "@/lib/actions/deals";
 import type { Deal } from "@/lib/types";
+import Button from "@/components/Button";
 
 /**
  * Omzetten en verwijderen: de twee dingen die je met een deal doet buiten het
@@ -62,22 +63,14 @@ export default function DealActies({ deal, klantNaam }: { deal: Deal; klantNaam:
             Kies een organisatie om deze deal om te kunnen zetten.
           </span>
         ) : (
-          <button
-            onClick={() => setOmzetten(true)}
-            className="text-sm px-3 py-1.5 rounded-md font-medium"
-            style={{ background: "var(--text-heading)", color: "#fff" }}
-          >
+          <Button onClick={() => setOmzetten(true)}>
             Omzetten naar project
-          </button>
+          </Button>
         )}
 
-        <button
-          onClick={() => setVerwijderen(true)}
-          className="text-sm px-3 py-1.5 rounded-md ml-auto"
-          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-        >
+        <Button variant="secondary" onClick={() => setVerwijderen(true)} className="ml-auto">
           Verwijderen
-        </button>
+        </Button>
       </div>
 
       {omzetten && (
@@ -106,21 +99,12 @@ export default function DealActies({ deal, klantNaam }: { deal: Deal; klantNaam:
             </p>
             {fout && <p className="text-sm" style={{ color: "#b0413e" }}>{fout}</p>}
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setOmzetten(false)}
-                className="text-sm px-3 py-1.5 rounded-md"
-                style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-              >
+              <Button variant="secondary" onClick={() => setOmzetten(false)}>
                 Annuleren
-              </button>
-              <button
-                onClick={doeOmzetten}
-                disabled={bezig}
-                className="text-sm px-3 py-1.5 rounded-md font-medium"
-                style={{ background: "var(--text-heading)", color: "#fff", opacity: bezig ? 0.6 : 1 }}
-              >
+              </Button>
+              <Button onClick={doeOmzetten} disabled={bezig}>
                 {bezig ? "Bezig…" : "Omzetten"}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>
@@ -135,13 +119,9 @@ export default function DealActies({ deal, klantNaam }: { deal: Deal; klantNaam:
             </p>
             {fout && <p className="text-sm" style={{ color: "#b0413e" }}>{fout}</p>}
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setVerwijderen(false)}
-                className="text-sm px-3 py-1.5 rounded-md"
-                style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-              >
+              <Button variant="secondary" onClick={() => setVerwijderen(false)}>
                 Annuleren
-              </button>
+              </Button>
               <button
                 onClick={doeVerwijderen}
                 disabled={bezig}

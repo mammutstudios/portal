@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateProfileAction, updateNotificationPrefsAction } from "@/lib/actions/profile";
 import { NOTIFICATION_TYPES, isEnabled, type NotificationPrefs } from "@/lib/notifications";
 import type { Profile } from "@/lib/types";
+import Button from "@/components/Button";
 
 export default function ProfileSettings({ profile, email }: { profile: Profile | null; email: string }) {
   const initialPrefs = (profile?.notification_prefs ?? null) as NotificationPrefs | null;
@@ -179,14 +180,9 @@ export default function ProfileSettings({ profile, email }: { profile: Profile |
         )}
 
         <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 rounded-md text-sm font-medium"
-            style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}
-          >
+          <Button type="submit" disabled={loading}>
             {loading ? "Bezig..." : "Opslaan"}
-          </button>
+          </Button>
         </div>
       </form>
 

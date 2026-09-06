@@ -5,6 +5,7 @@ import { createTimeEntryAction, updateTimeEntryAction } from "@/lib/actions/time
 import SearchSelect from "@/components/SearchSelect";
 import DatePicker from "@/components/DatePicker";
 import type { TimeEntry, Profile } from "@/lib/types";
+import Button from "@/components/Button";
 
 type ProjectOption = { id: string; title: string; clients?: { name: string; logo_url: string | null } | null };
 
@@ -112,12 +113,12 @@ export default function TimeEntryForm({
       )}
 
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-md text-sm" style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+        <Button variant="secondary" onClick={onClose}>
           Annuleren
-        </button>
-        <button type="submit" disabled={loading} className="px-3 py-1.5 rounded-md text-sm font-medium" style={{ background: "var(--text-heading)", color: "#fff", opacity: loading ? 0.6 : 1 }}>
+        </Button>
+        <Button type="submit" disabled={loading}>
           {loading ? "Bezig..." : entry ? "Opslaan" : "Toevoegen"}
-        </button>
+        </Button>
       </div>
     </form>
   );
