@@ -20,6 +20,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     { data: projects },
     { data: profiles },
     { data: reacties },
+    { data: klantLeden },
     {
       data: { user },
     },
@@ -38,6 +39,12 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       .select("id, body, created_at, profile_id, mentions, profiles(full_name, avatar_url)")
       .eq("task_id", id)
       .order("created_at"),
+    // Alle koppelingen in één keer, en hieronder filteren op de klant van dit
+    // ticket. Dat kon niet in deze ronde zolang we eerst het ticket moesten
+    // hebben om te weten wélke klant; het was daardoor een tweede rondje naar
+    // de database waar de hele pagina op wachtte. De tabel is klein genoeg om
+    // hem in zijn geheel op te halen.
+    supabase.from("client_members").select("client_id, profiles(id, full_name, avatar_url)"),
     supabase.auth.getUser(),
   ]);
 
@@ -53,13 +60,6 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     (task.client_id as string | null) ??
     ((task.projects as { client_id?: string | null } | null)?.client_id ?? null);
 
-  const { data: klantLeden } = klantId
-    ? await supabase
-        .from("client_members")
-        .select("profiles(id, full_name, avatar_url)")
-        .eq("client_id", klantId)
-    : { data: null };
-
   const noembaar: Noembaar[] = [
     ...(profiles ?? []).map((p) => ({
       id: p.id as string,
@@ -67,7 +67,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       avatar_url: p.avatar_url as string | null,
       groep: "Mammut",
     })),
-    ...((klantLeden ?? [])
+    ...((klantId ? (klantLeden ?? []).filter((rij) => rij.client_id === klantId) : [])
       .map((rij) => (rij as { profiles: Noembaar | Noembaar[] | null }).profiles)
       .flatMap((p) => (Array.isArray(p) ? p : p ? [p] : []))
       .map((p) => ({
