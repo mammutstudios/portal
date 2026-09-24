@@ -39,16 +39,27 @@ export default async function DashboardPage({
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
 
-  const [{ data: projects }, { count: taskCount }, transactions] = await Promise.all([
-    supabase.from("projects").select("*, clients(name, logo_url)").in("status", ["active", "upcoming"]).order("created_at", { ascending: false }).limit(10),
-    supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
-    fetchInvoicesAsTransactions(supabase),
-  ]);
+  const [{ data: projects }, { count: taskCount }, transactions, { data: openstaandeFacturen }] =
+    await Promise.all([
+      supabase.from("projects").select("*, clients(name, logo_url)").in("status", ["active", "upcoming"]).order("created_at", { ascending: false }).limit(10),
+      supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
+      fetchInvoicesAsTransactions(supabase),
+      // Verstuurd maar nog niet betaald. Op paid_at en niet op een lijstje
+      // statusnamen: Moneybird kent er een stuk of zeven voor "nog niet
+      // betaald" (open, late, pending_payment, reminded) en die kunnen
+      // veranderen. Leeg betaalmoment plus geen concept dekt ze allemaal.
+      supabase
+        .from("moneybird_invoices")
+        .select("total_excl_tax, due_date")
+        .is("paid_at", null)
+        .not("state", "eq", "draft"),
+    ]);
 
   // Cijfers van de eigen site, dezelfde kaart als op de analyticspagina en in
-  // het klantportaal. Standaard deze maand, zodat het aansluit op de
-  // omzetkaarten eronder; via ?periode= is dat aan te passen.
-  const periodeKey = isPeriod(gekozen) ? gekozen : "month";
+  // het klantportaal. Standaard de laatste zeven dagen: aan het begin van een
+  // maand had "deze maand" nog nauwelijks cijfers, en dan zegt de grafiek
+  // niets. Via ?periode= is het aan te passen.
+  const periodeKey = isPeriod(gekozen) ? gekozen : "7d";
   const periode = resolvePeriod(periodeKey, now);
   // Zie loadSiteAnalytics: dag-imports passen niet in uuremmers.
   const metImports = periode.interval !== "time:hour";
@@ -87,21 +98,18 @@ export default async function DashboardPage({
     })
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Forecast volgende maand
-  const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-  const nextMonthYear = currentMonth === 11 ? currentYear + 1 : currentYear;
-  const nextMonthTx = (transactions ?? []).filter((t) => {
-    const d = new Date(t.date);
-    return d.getFullYear() === nextMonthYear && d.getMonth() === nextMonth;
-  });
-  const nextMonthConfirmed = nextMonthTx.filter((t) => t.status !== "draft").reduce((sum, t) => sum + t.amount, 0);
-  const nextMonthDraft = nextMonthTx.filter((t) => t.status === "draft").reduce((sum, t) => sum + t.amount, 0);
-  const nextMonthForecast = nextMonthConfirmed + nextMonthDraft;
+  const openstaandTotaal = (openstaandeFacturen ?? []).reduce(
+    (som, f) => som + (Number(f.total_excl_tax) || 0),
+    0,
+  );
+  // Over de vervaldatum heen. Die is het vermelden waard, want dat is het
+  // deel waar je achteraan moet.
+  const vandaag = new Date(currentYear, currentMonth, now.getDate()).getTime();
+  const teLaat = (openstaandeFacturen ?? []).filter(
+    (f) => f.due_date && new Date(f.due_date).getTime() < vandaag,
+  ).length;
 
   const monthLabel = new Date(currentYear, currentMonth)
-    .toLocaleDateString("nl-NL", { month: "long", year: "numeric" })
-    .replace(/^\w/, (c) => c.toUpperCase());
-  const nextMonthLabel = new Date(nextMonthYear, nextMonth)
     .toLocaleDateString("nl-NL", { month: "long", year: "numeric" })
     .replace(/^\w/, (c) => c.toUpperCase());
 
@@ -184,21 +192,32 @@ export default async function DashboardPage({
           <p className="text-sm relative z-10 mt-1" style={{ color: "var(--text-muted)" }}>{monthLabel}</p>
         </Link>
 
-        {/* Forecast volgende maand */}
+        {/* Openstaand. Stond hier eerst de forecast voor volgende maand, maar
+            die vertelde iets wat nog moet gebeuren; dit is geld dat al is
+            gefactureerd en nog binnen moet komen. */}
         <Link
-          href="/dashboard/finance"
+          href="/dashboard/finance/facturen"
           className="card-hover squircle p-6 flex flex-col justify-between"
           style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
         >
           <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Volgende maand
+            Openstaand
           </p>
           <div>
             <p className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--text-heading)" }}>
-              {fmtFull(nextMonthForecast)}
+              {fmtFull(openstaandTotaal)}
             </p>
           </div>
-          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{nextMonthLabel}</p>
+          <p
+            className="text-sm mt-1"
+            style={{ color: teLaat > 0 ? "#b0413e" : "var(--text-muted)" }}
+          >
+            {openstaandeFacturen?.length
+              ? teLaat > 0
+                ? `${openstaandeFacturen.length} facturen, ${teLaat} te laat`
+                : `${openstaandeFacturen.length} ${openstaandeFacturen.length === 1 ? "factuur" : "facturen"}`
+              : "Alles betaald"}
+          </p>
         </Link>
 
         {/* Openstaande taken */}
