@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { meet } from "@/lib/meten";
 import { redirect } from "next/navigation";
 import Sidebar, { SidebarFallback } from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
@@ -30,15 +31,17 @@ async function DashboardTopBar() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await meet("layout.getUser", () => supabase.auth.getUser());
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, avatar_url, role")
-    .eq("id", user.id)
-    .maybeSingle();
+  const { data: profile } = await meet("layout.profiel", () =>
+    supabase
+      .from("profiles")
+      .select("full_name, avatar_url, role")
+      .eq("id", user.id)
+      .maybeSingle(),
+  );
 
   // Vangnet achter de proxy, die een klant al vóór het renderen wegstuurt.
   // Hier gebeurt het pas terwijl de pagina al streamt, dus dit is een tweede
