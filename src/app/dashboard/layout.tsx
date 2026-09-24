@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Sidebar, { SidebarFallback } from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
-import SmoothScroll from "@/components/SmoothScroll";
 
 /**
  * De schil van het dashboard.
@@ -14,13 +13,6 @@ import SmoothScroll from "@/components/SmoothScroll";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell flex flex-col h-dvh overflow-hidden">
-      {/* In een <Suspense>, want SmoothScroll leest de route met usePathname.
-          Met cacheComponents aan is dat ongecachte data, en zonder grens
-          eromheen blokkeert het het prerenderen van elke route met een
-          dynamische parameter. Hij rendert zelf niets, dus fallback null. */}
-      <Suspense fallback={null}>
-        <SmoothScroll />
-      </Suspense>
       <Suspense fallback={<TopBar name={null} avatarUrl={null} homeHref="/dashboard" />}>
         <DashboardTopBar />
       </Suspense>
@@ -28,11 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Suspense fallback={<SidebarFallback role="admin" />}>
           <Sidebar role="admin" />
         </Suspense>
-        <main className="app-main flex-1 overflow-y-auto pt-14 md:pt-0">
-          {/* Dit omhulsel blijft staan zolang de schil staat; SmoothScroll meet
-              eraan. Zie de toelichting in SmoothScroll waarom dat moet. */}
-          <div data-scroll-content>{children}</div>
-        </main>
+        <main className="app-main flex-1 overflow-y-auto pt-14 md:pt-0">{children}</main>
       </div>
     </div>
   );

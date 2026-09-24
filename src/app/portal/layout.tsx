@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Sidebar, { SidebarFallback } from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
-import SmoothScroll from "@/components/SmoothScroll";
 import { stopPreviewAction } from "@/lib/actions/preview";
 import { getPortalContext } from "@/lib/portal";
 import { plausibleIsConfigured } from "@/lib/analytics/plausible";
@@ -20,13 +19,6 @@ import { hasBrandGuide } from "@/lib/brand";
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell flex flex-col h-dvh overflow-hidden">
-      {/* In een <Suspense>, want SmoothScroll leest de route met usePathname.
-          Met cacheComponents aan is dat ongecachte data, en zonder grens
-          eromheen blokkeert het het prerenderen van elke route met een
-          dynamische parameter. Hij rendert zelf niets, dus fallback null. */}
-      <Suspense fallback={null}>
-        <SmoothScroll />
-      </Suspense>
       <Suspense
         fallback={
           <TopBar name={null} avatarUrl={null} homeHref="/portal" settingsHref="/portal/instellingen" />
@@ -39,14 +31,10 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <PortalSidebar />
         </Suspense>
         <main className="app-main flex-1 overflow-y-auto pt-14 md:pt-0">
-          {/* Dit omhulsel blijft staan zolang de schil staat; SmoothScroll meet
-              eraan. Zie de toelichting in SmoothScroll waarom dat moet. */}
-          <div data-scroll-content>
-            <Suspense fallback={null}>
-              <PreviewBalk />
-            </Suspense>
-            {children}
-          </div>
+          <Suspense fallback={null}>
+            <PreviewBalk />
+          </Suspense>
+          {children}
         </main>
       </div>
     </div>
