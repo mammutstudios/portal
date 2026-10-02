@@ -58,8 +58,10 @@ function NavLink({
 
   const linkStyle = (active: boolean, isHovered = false, sub = false) => ({
     background: active ? "var(--bg-hover)" : isHovered ? "var(--bg-hover)" : "transparent",
+    // Gewoon de tekstkleur, niet de doffe: op --text-muted las het menu als
+    // uitgegrijsd in plaats van rustig. Het lichtere gewicht doet het werk.
     color: active || isHovered ? "var(--text-heading)" : "var(--text)",
-    fontWeight: sub ? 400 : 600,
+    fontWeight: sub ? 400 : 500,
     transition: "background 150ms, color 150ms",
   });
 
@@ -67,7 +69,7 @@ function NavLink({
     return (
       <div>
         <div
-          className="flex items-center rounded-md h-10"
+          className="flex items-center rounded-md h-[30px]"
           style={{
             background: (isActive && !isChildActive) || hovered ? "var(--bg-hover)" : "transparent",
             transition: "background 150ms",
@@ -78,10 +80,10 @@ function NavLink({
           <Link
             href={item.href}
             onClick={() => { setOpen(true); onNavigate?.(); }}
-            className="flex items-center gap-2.5 px-2 h-full text-sm flex-1"
+            className="flex items-center gap-2 px-2 h-full text-sm flex-1"
             style={{
               color: (isActive && !isChildActive) || hovered ? "var(--text-heading)" : "var(--text)",
-              fontWeight: 600,
+              fontWeight: 500,
               transition: "color 150ms",
             }}
           >
@@ -92,8 +94,8 @@ function NavLink({
             onClick={() => setOpen((o) => !o)}
             className="rounded-md flex items-center justify-center flex-shrink-0"
             style={{
-              width: 40,
-              height: 40,
+              width: 30,
+              height: 30,
               color: "var(--text-muted)",
               background: "transparent",
               transition: "background 150ms, color 150ms",
@@ -116,13 +118,13 @@ function NavLink({
         </div>
 
         {open && (
-          // Verticale lijn op 16px: het hart van het icoon hierboven (px-2 = 8px + halve
-          // icoonbreedte van 16px). De sub-items schuiven er zelf langs.
+          // Verticale lijn door het hart van het icoon hierboven: px-2 is 8px,
+          // plus de helft van een icoon van 16px, min de halve lijndikte.
           <div className="relative mt-0.5 space-y-0.5">
             <span
               aria-hidden
               className="absolute"
-              style={{ top: 6, bottom: 6, left: 17.25, width: 1.5, borderRadius: 1, background: "var(--border)" }}
+              style={{ top: 4, bottom: 4, left: 15.25, width: 1.5, borderRadius: 1, background: "var(--border)" }}
             />
             {item.children!.map((sub) => {
               const subActive = pathname === sub.href;
@@ -142,7 +144,7 @@ function NavLink({
       onClick={() => onNavigate?.()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex items-center gap-2.5 px-2 h-10 rounded-md text-sm"
+      className="flex items-center gap-2 px-2 h-[30px] rounded-md text-sm"
       style={linkStyle(isActive, hovered)}
     >
       <span className="w-4 h-4 flex-shrink-0">{item.icon}</span>
@@ -159,9 +161,9 @@ function SubNavLink({ sub, active, onNavigate }: { sub: { label: string; href: s
       onClick={() => onNavigate?.()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="flex items-center py-2 rounded-md text-sm"
+      className="flex items-center rounded-md text-sm h-[28px]"
       style={{
-        marginLeft: 26,
+        marginLeft: 24,
         paddingLeft: 12,
         paddingRight: 12,
         fontWeight: 400,
@@ -179,17 +181,17 @@ const adminNav: NavItem[] = [
   {
     label: "Overzicht",
     href: "/dashboard",
-    icon: <SquaresFour size={19} weight="fill" />,
+    icon: <SquaresFour size={16} weight="fill" />,
   },
   {
     label: "Tickets",
     href: "/dashboard/tasks",
-    icon: <CheckSquare size={19} weight="fill" />,
+    icon: <CheckSquare size={16} weight="fill" />,
   },
   {
     label: "Projecten",
     href: "/dashboard/projects",
-    icon: <Folder size={19} weight="fill" />,
+    icon: <Folder size={16} weight="fill" />,
   },
   {
     label: "Deals",
@@ -197,12 +199,12 @@ const adminNav: NavItem[] = [
     // Een trechter: het beeld voor een pijplijn, en de enige driehoekige vorm
     // in dit rijtje. Handshake stond er eerst, maar twee handen met vingers
     // worden op 19 pixels gevuld een vlek naast al die strakke vormen.
-    icon: <Funnel size={19} weight="fill" />,
+    icon: <Funnel size={16} weight="fill" />,
   },
   {
     label: "Toggl",
     href: "/dashboard/toggl",
-    icon: <Clock size={19} weight="fill" />,
+    icon: <Clock size={16} weight="fill" />,
   },
   {
     label: "Analytics",
@@ -212,7 +214,7 @@ const adminNav: NavItem[] = [
   {
     label: "Finance",
     href: "/dashboard/finance",
-    icon: <CurrencyDollar size={19} weight="bold" />,
+    icon: <CurrencyDollar size={16} weight="bold" />,
     children: [
       { label: "Overzicht", href: "/dashboard/finance" },
       { label: "Facturen", href: "/dashboard/finance/facturen" },
@@ -222,12 +224,12 @@ const adminNav: NavItem[] = [
   {
     label: "Organisaties",
     href: "/dashboard/clients",
-    icon: <Buildings size={19} weight="fill" />,
+    icon: <Buildings size={16} weight="fill" />,
   },
   {
     label: "Contactpersonen",
     href: "/dashboard/contacts",
-    icon: <AddressBook size={19} weight="fill" />,
+    icon: <AddressBook size={16} weight="fill" />,
   },
 ];
 
@@ -235,39 +237,39 @@ const adminNav: NavItem[] = [
 const activiteitenItem: NavItem = {
   label: "Activiteiten",
   href: "/dashboard/activiteiten",
-  icon: <PulseIcon size={19} weight="fill" />,
+  icon: <PulseIcon size={16} weight="fill" />,
 };
 
 const clientNav: NavItem[] = [
   {
     label: "Overzicht",
     href: "/portal/overzicht",
-    icon: <SquaresFour size={19} weight="fill" />,
+    icon: <SquaresFour size={16} weight="fill" />,
   },
   {
     label: "Projecten",
     href: "/portal/projecten",
-    icon: <Folder size={19} weight="fill" />,
+    icon: <Folder size={16} weight="fill" />,
   },
   {
     label: "Tickets",
     href: "/portal/tickets",
-    icon: <CheckSquare size={19} weight="fill" />,
+    icon: <CheckSquare size={16} weight="fill" />,
   },
   {
     label: "Huisstijl",
     href: "/portal/huisstijl",
-    icon: <Palette size={19} weight="fill" />,
+    icon: <Palette size={16} weight="fill" />,
   },
   {
     label: "Analytics",
     href: "/portal/analytics",
-    icon: <ChartBar size={19} weight="fill" />,
+    icon: <ChartBar size={16} weight="fill" />,
   },
   {
     label: "Facturen",
     href: "/portal/facturen",
-    icon: <CurrencyDollar size={19} weight="fill" />,
+    icon: <CurrencyDollar size={16} weight="fill" />,
   },
 ];
 
@@ -280,7 +282,7 @@ const OPTIONEEL = new Set(["/portal/huisstijl", "/portal/analytics"]);
  */
 function NavSkeleton() {
   return (
-    <div className="flex items-center gap-2.5 px-2 h-10" aria-hidden>
+    <div className="flex items-center gap-2 px-2 h-[30px]" aria-hidden>
       <span className="w-4 h-4 rounded flex-shrink-0" style={{ background: "var(--border)" }} />
       <span className="h-3 rounded" style={{ width: 72, background: "var(--border)" }} />
     </div>
@@ -420,7 +422,7 @@ function SidebarBody({
           <Link
             href="/dashboard/klantportaal"
             onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2.5 px-2 h-10 rounded-md text-sm w-full transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-heading)]"
+            className="flex items-center gap-2 px-2 h-[30px] rounded-md text-sm w-full transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-heading)]"
             style={{ color: "var(--text-muted)" }}
           >
             <Eye size={18} weight="regular" className="opacity-70" />
