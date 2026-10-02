@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { fetchInvoicesAsTransactions } from "@/lib/moneybird/asTransactions";
 import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
@@ -14,6 +13,7 @@ import {
 } from "@/lib/analytics/plausible";
 import { resolvePeriod, isPeriod } from "@/lib/analytics/periods";
 import { opStatus, PROJECT_STATUS_VOLGORDE, type Project } from "@/lib/types";
+import { TICKET_STATUS, alsTicketStatus } from "@/lib/tickets";
 
 /**
  * Onze eigen website. Bewust een losse instelling in plaats van een klantnaam
@@ -23,8 +23,10 @@ const EIGEN_SITE = process.env.PLAUSIBLE_OWN_SITE_ID ?? "mammutstudios.com";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
-function fmtFull(amount: number) {
-  return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(amount);
+/** Supabase geeft een gekoppelde rij als object, of als array bij twijfel. */
+function eerste<T>(waarde: unknown): T | null {
+  if (Array.isArray(waarde)) return (waarde[0] as T) ?? null;
+  return (waarde as T) ?? null;
 }
 
 export default async function DashboardPage({
@@ -39,21 +41,17 @@ export default async function DashboardPage({
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
 
-  const [{ data: projects }, { count: taskCount }, transactions, { data: openstaandeFacturen }] =
-    await Promise.all([
-      supabase.from("projects").select("*, clients(name, logo_url)").in("status", ["active", "upcoming"]).order("created_at", { ascending: false }).limit(10),
-      supabase.from("tasks").select("*", { count: "exact", head: true }).not("status", "eq", "done"),
-      fetchInvoicesAsTransactions(supabase),
-      // Verstuurd maar nog niet betaald. Op paid_at en niet op een lijstje
-      // statusnamen: Moneybird kent er een stuk of zeven voor "nog niet
-      // betaald" (open, late, pending_payment, reminded) en die kunnen
-      // veranderen. Leeg betaalmoment plus geen concept dekt ze allemaal.
-      supabase
-        .from("moneybird_invoices")
-        .select("total_excl_tax, due_date")
-        .is("paid_at", null)
-        .not("state", "eq", "draft"),
-    ]);
+  const [{ data: projects }, { data: openTickets }] = await Promise.all([
+    supabase.from("projects").select("*, clients(name, logo_url)").in("status", ["active", "upcoming"]).order("created_at", { ascending: false }).limit(10),
+    // De zes eerstvolgende, op deadline. Hier stond een telling, maar een
+    // getal vertelt niet wát er ligt en daar begint je dag mee.
+    supabase
+      .from("tasks")
+      .select("id, title, status, due_date, clients:client_id(name, logo_url), profiles:assigned_profile_id(full_name, avatar_url)")
+      .not("status", "eq", "done")
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(6),
+  ]);
 
   // Cijfers van de eigen site, dezelfde kaart als op de analyticspagina en in
   // het klantportaal. Standaard de laatste zeven dagen: aan het begin van een
@@ -91,28 +89,7 @@ export default async function DashboardPage({
       Number(isRetainer(a)) - Number(isRetainer(b)),
   );
 
-  const thisMonthTotal = (transactions ?? [])
-    .filter((t) => {
-      const d = new Date(t.date);
-      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-    })
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const openstaandTotaal = (openstaandeFacturen ?? []).reduce(
-    (som, f) => som + (Number(f.total_excl_tax) || 0),
-    0,
-  );
-  // Over de vervaldatum heen. Die is het vermelden waard, want dat is het
-  // deel waar je achteraan moet.
   const vandaag = new Date(currentYear, currentMonth, now.getDate()).getTime();
-  const teLaat = (openstaandeFacturen ?? []).filter(
-    (f) => f.due_date && new Date(f.due_date).getTime() < vandaag,
-  ).length;
-
-  const monthLabel = new Date(currentYear, currentMonth)
-    .toLocaleDateString("nl-NL", { month: "long", year: "numeric" })
-    .replace(/^\w/, (c) => c.toUpperCase());
-
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
@@ -121,6 +98,76 @@ export default async function DashboardPage({
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
         Welkom terug bij Mammut Studios
       </p>
+
+      {/* Openstaande tickets. Staat boven de sitecijfers: dit is waar je mee
+          aan de slag moet, de cijfers zijn om naar te kijken. Zelfde vorm als
+          de projectenlijst eronder. */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
+            Openstaande tickets
+          </h2>
+          <Link href="/dashboard/tasks" className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Alle tickets →
+          </Link>
+        </div>
+
+        <div className="squircle overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
+          {openTickets && openTickets.length > 0 ? (
+            <table className="w-full">
+              <tbody>
+                {openTickets.map((ticket, i) => {
+                  const stijl = TICKET_STATUS[alsTicketStatus(ticket.status)];
+                  const klant = eerste<{ name: string; logo_url: string | null }>(ticket.clients);
+                  const wie = eerste<{ full_name: string | null }>(ticket.profiles);
+                  const teLaat = ticket.due_date && new Date(ticket.due_date).getTime() < vandaag;
+
+                  return (
+                    <HoverRow
+                      key={ticket.id}
+                      href={`/dashboard/tasks/${ticket.id}`}
+                      style={{ borderBottom: i < openTickets.length - 1 ? "1px solid var(--border)" : "none" }}
+                    >
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/dashboard/tasks/${ticket.id}`}
+                          className="text-sm font-semibold"
+                          style={{ color: "var(--text-heading)" }}
+                        >
+                          {ticket.title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
+                        {klant?.name ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm" style={{ color: teLaat ? "#b0413e" : "var(--text-muted)" }}>
+                        {ticket.due_date
+                          ? new Date(ticket.due_date).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
+                        {wie?.full_name ?? ""}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span
+                          className="px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap"
+                          style={{ background: stijl.bg, color: stijl.text, border: `1px solid ${stijl.border}` }}
+                        >
+                          {stijl.label}
+                        </span>
+                      </td>
+                    </HoverRow>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <p className="px-4 py-8 text-sm text-center" style={{ color: "var(--text-muted)" }}>
+              Niets open. Alles staat op Klaar.
+            </p>
+          )}
+        </div>
+      </div>
 
       {eigenReeks.length > 0 && (
         <div className="mb-8">
@@ -169,75 +216,6 @@ export default async function DashboardPage({
           />
         </div>
       )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-
-        {/* Omzet deze maand */}
-        <Link
-          href="/dashboard/finance"
-          className="card-hover squircle p-6 flex flex-col justify-between relative overflow-hidden"
-          style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
-        >
-          <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full" style={{ background: "var(--bg-secondary)" }} />
-          <div className="absolute -right-4 bottom-0 w-24 h-24 rounded-full opacity-60" style={{ background: "var(--bg-secondary)" }} />
-          <p className="text-xs font-medium uppercase tracking-wider relative z-10" style={{ color: "var(--text-muted)" }}>
-            Deze maand
-          </p>
-          <div className="relative z-10">
-            <p className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--text-heading)" }}>
-              {fmtFull(thisMonthTotal)}
-            </p>
-          </div>
-          <p className="text-sm relative z-10 mt-1" style={{ color: "var(--text-muted)" }}>{monthLabel}</p>
-        </Link>
-
-        {/* Openstaand. Stond hier eerst de forecast voor volgende maand, maar
-            die vertelde iets wat nog moet gebeuren; dit is geld dat al is
-            gefactureerd en nog binnen moet komen. */}
-        <Link
-          href="/dashboard/finance/facturen"
-          className="card-hover squircle p-6 flex flex-col justify-between"
-          style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
-        >
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Openstaand
-          </p>
-          <div>
-            <p className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--text-heading)" }}>
-              {fmtFull(openstaandTotaal)}
-            </p>
-          </div>
-          <p
-            className="text-sm mt-1"
-            style={{ color: teLaat > 0 ? "#b0413e" : "var(--text-muted)" }}
-          >
-            {openstaandeFacturen?.length
-              ? teLaat > 0
-                ? `${openstaandeFacturen.length} facturen, ${teLaat} te laat`
-                : `${openstaandeFacturen.length} ${openstaandeFacturen.length === 1 ? "factuur" : "facturen"}`
-              : "Alles betaald"}
-          </p>
-        </Link>
-
-        {/* Openstaande taken */}
-        <Link
-          href="/dashboard/tasks"
-          className="card-hover squircle p-6 flex flex-col justify-between"
-          style={{ border: "1px solid var(--border)", background: "var(--bg)", minHeight: 160 }}
-        >
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Taken
-          </p>
-          <div>
-            <p className="text-3xl font-extrabold tracking-tight" style={{ color: "var(--text-heading)" }}>
-              {taskCount ?? 0}
-            </p>
-          </div>
-          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>Openstaande taken</p>
-        </Link>
-
-      </div>
 
       {/* Recent projects */}
       <div>
