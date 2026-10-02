@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { ProjectStatusBadge, ProjectTagBadge } from "@/components/StatusBadge";
 import HoverRow from "@/components/HoverRow";
+import ClientLogo from "@/components/ClientLogo";
 import CurrentVisitors from "@/components/CurrentVisitors";
 import VisitorsCard from "@/components/analytics/VisitorsCard";
 import PeriodPicker from "@/components/analytics/PeriodPicker";
@@ -138,7 +139,14 @@ export default async function DashboardPage({
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
-                        {klant?.name ?? "—"}
+                        {klant ? (
+                          <span className="flex items-center gap-2 min-w-0">
+                            <ClientLogo logo_url={klant.logo_url} name={klant.name} size="xs" />
+                            <span className="truncate">{klant.name}</span>
+                          </span>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm" style={{ color: teLaat ? "#b0413e" : "var(--text-muted)" }}>
                         {ticket.due_date
