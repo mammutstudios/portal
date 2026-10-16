@@ -17,7 +17,7 @@ const FILTERS = [
   { label: "Actief", value: "active" },
   { label: "On hold", value: "on_hold" },
   { label: "Voltooid", value: "completed" },
-  { label: "Alle projecten", value: "all" },
+  { label: "Alle projects", value: "all" },
 ] as const;
 
 type Filter = typeof FILTERS[number]["value"];
@@ -48,7 +48,7 @@ export default function ProjectsPageClient({
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          Projecten <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({gesorteerd.length})</span>
+          Projects <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({gesorteerd.length})</span>
         </h1>
         <Button onClick={() => setShowModal(true)}>
           + Nieuw project

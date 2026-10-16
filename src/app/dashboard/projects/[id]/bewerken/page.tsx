@@ -20,7 +20,7 @@ export default async function ProjectBewerkenPage({ params }: { params: Promise<
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-2xl mx-auto">
       <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-        <Link href="/dashboard/projects" className="hover:underline">Projecten</Link>
+        <Link href="/dashboard/projects" className="hover:underline">Projects</Link>
         <CaretRight size={13} weight="bold" />
         <Link href={`/dashboard/projects/${id}`} className="hover:underline">{project.title}</Link>
         <CaretRight size={13} weight="bold" />

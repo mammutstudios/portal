@@ -17,7 +17,7 @@ export default function PortalTicketsPage() {
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-4xl mx-auto">
       <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-        Tickets
+        Tasks
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
         Wat er voor je openstaat, en waar je iets nieuws kunt aanmelden.
@@ -32,7 +32,7 @@ export default function PortalTicketsPage() {
 
 async function Tickets() {
   const { clientIds, activeClientId, isPreview } = await getPortalContext();
-  await logPaginabezoek("Tickets");
+  await logPaginabezoek("Tasks");
   if (clientIds.length === 0) return <PortalEmpty />;
 
   const supabase = await createClient();

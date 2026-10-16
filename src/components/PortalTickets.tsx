@@ -40,7 +40,7 @@ export default function PortalTickets({
       {kanIndienen && (
         <div className="flex justify-end mb-4">
           <Button onClick={() => setOpenFormulier(true)}>
-            + Nieuw ticket
+            + Nieuwe task
           </Button>
         </div>
       )}
@@ -77,7 +77,7 @@ export default function PortalTickets({
       )}
 
       {openFormulier && (
-        <Modal title="Nieuw ticket" onClose={() => setOpenFormulier(false)}>
+        <Modal title="Nieuwe task" onClose={() => setOpenFormulier(false)}>
           <TicketFormulier
             projecten={projecten}
             clientId={clientId}
@@ -219,7 +219,7 @@ function TicketFormulier({
           Annuleren
         </Button>
         <Button type="submit" disabled={bezig}>
-          {bezig ? "Bezig..." : "Ticket indienen"}
+          {bezig ? "Bezig..." : "Task indienen"}
         </Button>
       </div>
     </form>

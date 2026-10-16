@@ -257,7 +257,7 @@ export default function ClientDetailClient({
       </div>
 
       <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>
-        Projecten
+        Projects
       </h2>
 
       <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>

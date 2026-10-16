@@ -45,7 +45,7 @@ export default function ProjectDetailClient({
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
         <Link href="/dashboard/projects" className="hover:underline" style={{ color: "var(--text-muted)" }}>
-          Projecten
+          Projects
         </Link>
         <CaretRight size={13} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{project.title}</span>

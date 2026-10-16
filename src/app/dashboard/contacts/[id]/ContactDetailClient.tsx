@@ -280,7 +280,7 @@ export default function ContactDetailClient({
 
         {/* Right: projects */}
         <div className="flex-1">
-          <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Projecten</h2>
+          <h2 className="text-sm font-medium mb-3" style={{ color: "var(--text-heading)" }}>Projects</h2>
           <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
             {projects.length > 0 ? (
               <table className="w-full min-w-[40rem]">

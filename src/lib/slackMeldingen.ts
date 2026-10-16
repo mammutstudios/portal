@@ -90,8 +90,8 @@ export async function meldTicketAangemaakt(
   const uitleg = kort(omschrijving);
 
   await stuurSlack({
-    tekst: `Nieuw ticket: ${ticket.title}`,
-    kop: `${TEKEN.nieuw} Nieuw ticket: ${ticket.title}`,
+    tekst: `Nieuwe task: ${ticket.title}`,
+    kop: `${TEKEN.nieuw} Nieuwe task: ${ticket.title}`,
     regels: [klantRegel(ticket, `Aangemaakt door ${door}`), ...(uitleg ? [uitleg] : [])],
     link: { label: "Open ticket", url: appUrl(`/dashboard/tasks/${ticket.id}`) },
   });

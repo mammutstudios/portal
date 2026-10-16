@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
 import TicketDetail from "@/components/TicketDetail";
+import { ZetKruimel } from "@/components/Kruimels";
 import { TEAM_ROL } from "@/lib/team";
 import type { TicketReactie, Noembaar } from "@/components/TicketReacties";
 import type { Task, Subtask } from "@/lib/types";
@@ -80,11 +79,9 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-4xl mx-auto">
-      <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-        <Link href="/dashboard/tasks" className="hover:underline">Tickets</Link>
-        <CaretRight size={13} weight="bold" />
-        <span className="truncate" style={{ color: "var(--text-heading)" }}>{task.title}</span>
-      </nav>
+      {/* Het kruimelpad staat in de topbalk; deze pagina meldt alleen hoe dit
+          ticket heet, want dat is het enige dat het adres niet zegt. */}
+      <ZetKruimel label={task.title as string} />
 
       <TicketDetail
         task={task as unknown as Task}

@@ -7,7 +7,7 @@ export type SearchHit = {
   label: string;
   sublabel: string | null;
   href: string;
-  group: "Klanten" | "Projecten" | "Tickets" | "Facturen";
+  group: "Klanten" | "Projects" | "Tasks" | "Facturen";
   logo_url?: string | null;
 };
 
@@ -47,13 +47,13 @@ export async function globalSearchAction(query: string): Promise<SearchHit[]> {
   for (const p of (projects.data ?? []) as unknown as { id: string; title: string; clients: { name: string } | null }[]) {
     hits.push({
       id: p.id, label: p.title, sublabel: p.clients?.name ?? null,
-      href: `/dashboard/projects/${p.id}`, group: "Projecten",
+      href: `/dashboard/projects/${p.id}`, group: "Projects",
     });
   }
   for (const t of (tasks.data ?? []) as unknown as { id: string; title: string; projects: { title: string } | null }[]) {
     hits.push({
       id: t.id, label: t.title, sublabel: t.projects?.title ?? null,
-      href: `/dashboard/tasks`, group: "Tickets",
+      href: `/dashboard/tasks`, group: "Tasks",
     });
   }
   for (const i of invoices.data ?? []) {

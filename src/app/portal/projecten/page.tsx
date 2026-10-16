@@ -23,7 +23,7 @@ export default function PortalProjectenPage() {
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-        Projecten
+        Projects
       </h1>
       <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
         Waar we aan werken, en wat we voor je hebben opgeleverd.
@@ -38,7 +38,7 @@ export default function PortalProjectenPage() {
 
 async function Projecten() {
   const { clientIds } = await getPortalContext();
-  await logPaginabezoek("Projecten");
+  await logPaginabezoek("Projects");
   if (clientIds.length === 0) return <PortalEmpty />;
 
   const supabase = await createClient();

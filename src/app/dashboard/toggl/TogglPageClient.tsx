@@ -49,7 +49,7 @@ export default function TogglPageClient({
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          Uren <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({totalHours.toFixed(2)})</span>
+          Time <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({totalHours.toFixed(2)})</span>
         </h1>
         <Button onClick={() => setShowAdd(true)}>
           + Uren toevoegen

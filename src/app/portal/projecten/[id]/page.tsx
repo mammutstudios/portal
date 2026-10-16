@@ -75,7 +75,7 @@ async function Projectpagina({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
       <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-        <Link href="/portal/projecten" className="hover:underline">Projecten</Link>
+        <Link href="/portal/projecten" className="hover:underline">Projects</Link>
         <CaretRight size={13} weight="bold" />
         <span style={{ color: "var(--text-heading)" }}>{project.title}</span>
       </nav>

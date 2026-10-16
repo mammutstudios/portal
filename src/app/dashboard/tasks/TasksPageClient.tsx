@@ -48,6 +48,51 @@ import { createClient } from "@/lib/supabase/client";
 import type { Task, TaskStatus } from "@/lib/types";
 import Button, { ButtonLink } from "@/components/Button";
 
+/** TSK-00042. Vijf cijfers, zodat de kolom niet verspringt bij nummer 100. */
+function taskNummer(nummer: number | null): string {
+  return nummer === null ? "" : `TSK-${String(nummer).padStart(5, "0")}`;
+}
+
+/** Deadline voorbij, en nog niet klaar. */
+function teLaat(task: Task): boolean {
+  return Boolean(task.due_date && task.status !== "done" && new Date(task.due_date) < new Date());
+}
+
+/**
+ * Afvinken vanuit de lijst.
+ *
+ * Eén klik zet een task op Klaar, en nog een klik zet hem terug op Open. Dat
+ * tweede is er zodat een misklik met dezelfde beweging te herstellen is; een
+ * vinkje dat alleen één kant op werkt dwingt je de task te openen.
+ */
+function Afvinken({ task }: { task: Task }) {
+  const klaar = task.status === "done";
+
+  return (
+    <form action={updateTaskStatusAction}>
+      <input type="hidden" name="id" value={task.id} />
+      <input type="hidden" name="status" value={klaar ? "open" : "done"} />
+      <button
+        type="submit"
+        aria-label={klaar ? "Terugzetten op Open" : "Afvinken"}
+        title={klaar ? "Terugzetten op Open" : "Afvinken"}
+        className="w-4 h-4 rounded-full flex items-center justify-center"
+        style={{
+          border: `1.5px solid ${klaar ? "#16a34a" : "var(--border)"}`,
+          background: klaar ? "#16a34a" : "transparent",
+          transition: "border-color 150ms, background 150ms",
+        }}
+      >
+        {klaar && (
+          <svg width="9" height="9" viewBox="0 0 8 8" fill="none">
+            <path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </button>
+    </form>
+  );
+}
+
 function StatusCycle({ task }: { task: Task }) {
   const currentIdx = TICKET_STATUS_ORDER.indexOf(task.status);
   const next = TICKET_STATUS_ORDER[(currentIdx + 1) % TICKET_STATUS_ORDER.length];
@@ -117,60 +162,49 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
   // die passen niet in een leesbreedte.
   return (
     <div className="px-4 py-6 md:px-10 md:py-10">
-      <h1 className="text-3xl font-extrabold mb-1" style={{ color: "var(--text-heading)" }}>
-        Tickets <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({openCount})</span>
-      </h1>
-
-      {/* Eén wit vlak om de hele weergave: de wissel en de knop horen bij wat
-          eronder staat, niet bij de paginatitel. De lijst en de kanban delen
-          dat vlak, zodat het omschakelen alleen de inhoud verwisselt en niet
-          het kader eromheen. */}
-      <div
-        className="squircle overflow-hidden mt-6"
-        style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
-      >
-        <div
-          className="flex items-center justify-between gap-2 px-5 py-3"
-          style={{ borderBottom: "1px solid var(--border)" }}
+      {/* Geen paginakop: het kruimelpad in de balk zegt al dat je bij Tasks
+          bent, en twee keer hetzelfde woord boven elkaar kost alleen hoogte.
+          Ook geen kader om de boel heen; de lijst mag de volle breedte. */}
+      <div className="flex items-center justify-between gap-2 mb-5">
+        <label
+          className="flex items-center gap-2 px-3 rounded-lg min-w-0"
+          style={{ height: 36, maxWidth: "20rem", flex: "1 1 12rem", border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
         >
-          <label
-            className="flex items-center gap-2 px-3 rounded-lg min-w-0"
-            style={{ height: 40, maxWidth: "20rem", flex: "1 1 12rem", border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
-          >
-            <MagnifyingGlass size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-            <input
-              value={zoek}
-              onChange={(e) => setZoek(e.target.value)}
-              placeholder="Zoeken in tickets"
-              className="flex-1 min-w-0 bg-transparent outline-none text-sm"
-              style={{ color: "var(--text-heading)" }}
-            />
-          </label>
+          <MagnifyingGlass size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+          <input
+            value={zoek}
+            onChange={(e) => setZoek(e.target.value)}
+            placeholder="Zoeken in tasks"
+            className="flex-1 min-w-0 bg-transparent outline-none text-sm"
+            style={{ color: "var(--text-heading)" }}
+          />
+        </label>
 
-          <div className="flex items-center gap-2 self-stretch">
+        <div className="flex items-center gap-2 self-stretch">
           <WeergaveWissel weergave={weergave} onKies={schrijfWeergave} />
           <ButtonLink href="/dashboard/tasks/nieuw">
-            + Nieuw ticket
+            + Nieuwe task
           </ButtonLink>
-          </div>
         </div>
+      </div>
 
       {weergave === "kanban" ? (
-        <div className="px-5 py-4">
-          <TicketKanban tasks={zichtbaar} />
-        </div>
+        <TicketKanban tasks={zichtbaar} />
       ) : (
       <div className="overflow-x-auto">
         {zichtbaar.length > 0 ? (
           <table className="w-full min-w-[40rem]">
             <thead>
               <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-                {/* De rij hierboven en de knoppenrij erboven raken elkaar; de
-                    lijn hier is de enige die je ziet. */}
-                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Ticket</th>
+                {/* Lege kop boven de vinkjes: een kolomnaam boven een rondje
+                    van 16 pixels leest als ruis. */}
+                <th className="w-8" />
+                <th className="text-left pr-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Task</th>
                 <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
                 <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
                 <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Toegewezen</th>
+                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
+                <th className="text-right px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Nr</th>
               </tr>
             </thead>
             <tbody>
@@ -185,8 +219,22 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                   >
-                    <td className="px-5 py-2">
-                      <p className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>{task.title}</p>
+                    {/* Afvinken zonder de task te openen. Klaar zet hem terug
+                        op Open, zodat een misklik met dezelfde klik te
+                        herstellen is. */}
+                    <td className="py-2 w-8" onClick={(e) => e.stopPropagation()}>
+                      <Afvinken task={task} />
+                    </td>
+                    <td className="pr-5 py-2">
+                      <p
+                        className="text-sm font-medium"
+                        style={{
+                          color: task.status === "done" ? "var(--text-muted)" : "var(--text-heading)",
+                          textDecoration: task.status === "done" ? "line-through" : "none",
+                        }}
+                      >
+                        {task.title}
+                      </p>
                     </td>
                     {/* De statusknop mag niet doorklikken naar het ticket: hier
                         wissel je hem, en dat is een andere handeling. */}
@@ -215,6 +263,17 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
                         </div>
                       ) : "—"}
                     </td>
+                    <td
+                      className="px-5 py-2 text-sm"
+                      style={{ color: teLaat(task) ? "#b0413e" : "var(--text-muted)" }}
+                    >
+                      {task.due_date
+                        ? new Date(task.due_date).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })
+                        : "—"}
+                    </td>
+                    <td className="px-5 py-2 text-right text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+                      {taskNummer(task.nummer)}
+                    </td>
                   </tr>
                 );
               })}
@@ -236,8 +295,6 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
         )}
       </div>
       )}
-      </div>
-
     </div>
   );
 }

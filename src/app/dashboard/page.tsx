@@ -100,16 +100,16 @@ export default async function DashboardPage({
         Welkom terug bij Mammut Studios
       </p>
 
-      {/* Openstaande tickets. Staat boven de sitecijfers: dit is waar je mee
+      {/* Openstaande tasks. Staat boven de sitecijfers: dit is waar je mee
           aan de slag moet, de cijfers zijn om naar te kijken. Zelfde vorm als
           de projectenlijst eronder. */}
       <div className="mb-10">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
-            Openstaande tickets
+            Openstaande tasks
           </h2>
           <Link href="/dashboard/tasks" className="text-sm" style={{ color: "var(--text-muted)" }}>
-            Alle tickets →
+            Alle tasks →
           </Link>
         </div>
 
@@ -229,10 +229,10 @@ export default async function DashboardPage({
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
-            Actieve projecten
+            Actieve projects
           </h2>
           <Link href="/dashboard/projects" className="text-sm" style={{ color: "var(--text-muted)" }}>
-            Alle projecten →
+            Alle projects →
           </Link>
         </div>
 

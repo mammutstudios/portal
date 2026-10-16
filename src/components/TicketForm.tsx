@@ -134,7 +134,7 @@ export default function TicketForm({ clients }: { clients: KlantOptie[] }) {
           Annuleren
         </ButtonLink>
         <Button type="submit" disabled={bezig}>
-          {bezig ? "Bezig…" : "Ticket aanmaken"}
+          {bezig ? "Bezig…" : "Task aanmaken"}
         </Button>
       </div>
     </form>

@@ -43,10 +43,10 @@ export default function PortalOverzichtPage({
       <section className="mb-10">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
-            Projecten
+            Projects
           </h2>
           <Link href="/portal/projecten" className="text-sm hover:underline" style={{ color: "var(--text-muted)" }}>
-            Alle projecten →
+            Alle projects →
           </Link>
         </div>
         <Suspense fallback={<TabelSkelet />}>

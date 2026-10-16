@@ -174,6 +174,8 @@ export type TaskPriority = "medium" | "high";
 
 export type Task = {
   id: string;
+  /** Kort kenmerk om naar te verwijzen, getoond als TSK-00042. */
+  nummer: number | null;
   project_id: string | null;
   title: string;
   description: string | null;
