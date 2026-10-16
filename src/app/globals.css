@@ -47,16 +47,19 @@
   --text-muted: var(--muted);
   --accent: var(--ink);
 
-  /* Werkblad achter de kaarten. Bewust warmer dan de site-tinten: het koele
-     blauw van --lightest werkte niet als groot vlak in de app. */
-  --canvas: #fafaf9;
+  /* Werkblad achter de kaarten. Wit, met het menu als grijze kant ernaast:
+     de inhoud is dan het heldere vlak en de navigatie de rand eromheen.
+     Stond eerder op #fafaf9 met een bijna wit menu, precies andersom. */
+  --canvas: var(--white);
 
   /* Breedte van het zijmenu. Topbar en sidebar delen deze waarde, anders
      loopt het streepje boven niet meer gelijk met de rand eronder. */
   --sidebar-width: 15.5rem;
 
-  /* Sidebar — ink op lage dekking (Figma: fill 4%, stroke 2%) */
-  --sidebar-bg: color-mix(in srgb, var(--ink) 4%, transparent);
+  /* Sidebar — net iets getint, zodat de navigatie van het witte werkblad te
+     onderscheiden is zonder een grijze balk te worden. Gemengd met wit en niet
+     met transparant: dan weet je wat eruit komt, los van wat erachter staat. */
+  --sidebar-bg: color-mix(in srgb, var(--ink) 3%, var(--white));
   --sidebar-border: color-mix(in srgb, var(--ink) 2%, transparent);
 }
 
@@ -120,7 +123,9 @@ th, td {
      browserbalken in beeld staan, waardoor de onderkant van het menu onder die
      balken verdween. */
   height: 100dvh;
-  background: var(--bg);
+  /* --sidebar-bg en niet --bg: dat token stond er wel maar werd nergens
+     gebruikt, dus het menu was gewoon wit. */
+  background: var(--sidebar-bg);
   /* De la komt op mobiel van rechts, dus zit de scheidingslijn aan de kant die
      naar de inhoud wijst: links. Op desktop draait dat om. */
   border-left: 1px solid var(--border);

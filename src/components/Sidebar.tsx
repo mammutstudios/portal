@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import MammutMark from "@/components/MammutMark";
+import Zoeken from "@/components/Zoeken";
 import {
   SquaresFour,
   CheckSquare,
@@ -28,6 +29,13 @@ type SubItem = { label: string; href: string };
 type NavItem = {
   label: string;
   href: string;
+  /**
+   * Begint met dit item een nieuwe groep, en zo ja onder welke kop. Als
+   * markering op het item en niet als geneste lijst: de lijst blijft daardoor
+   * plat, en het wegfilteren van items die deze klant niet heeft blijft een
+   * gewone filter.
+   */
+  groep?: string;
   icon: React.ReactNode;
   children?: SubItem[];
 };
@@ -177,6 +185,30 @@ function SubNavLink({ sub, active, onNavigate }: { sub: { label: string; href: s
   );
 }
 
+/**
+ * Een kopje boven een rijtje menu-items, zoals "Workspace" bij Bonsai.
+ *
+ * Een los tekstje en geen NavItem met een lege href: dan zou hij per ongeluk
+ * aanklikbaar of markeerbaar worden.
+ */
+function GroepKop({ label }: { label: string }) {
+  return (
+    <p
+      className="px-2 pt-4 pb-1 text-xs"
+      style={{ color: "color-mix(in srgb, var(--text-muted) 72%, var(--bg))" }}
+    >
+      {label}
+    </p>
+  );
+}
+
+/**
+ * De menu-items, in groepjes.
+ *
+ * De eerste groep heeft geen kop: dat is waar je elke dag begint en een kopje
+ * erboven zou alleen ruimte kosten. De rest staat op onderwerp bij elkaar,
+ * zodat je niet door tien losse regels hoeft te lezen.
+ */
 const adminNav: NavItem[] = [
   {
     label: "Overzicht",
@@ -184,16 +216,17 @@ const adminNav: NavItem[] = [
     icon: <SquaresFour size={16} weight="fill" />,
   },
   {
-    label: "Tickets",
+    label: "Tasks",
     href: "/dashboard/tasks",
     icon: <CheckSquare size={16} weight="fill" />,
   },
   {
-    label: "Projecten",
+    label: "Projects",
     href: "/dashboard/projects",
     icon: <Folder size={16} weight="fill" />,
   },
   {
+    groep: "Work",
     label: "Deals",
     href: "/dashboard/deals",
     // Een trechter: het beeld voor een pijplijn, en de enige driehoekige vorm
@@ -202,7 +235,7 @@ const adminNav: NavItem[] = [
     icon: <Funnel size={16} weight="fill" />,
   },
   {
-    label: "Toggl",
+    label: "Time",
     href: "/dashboard/toggl",
     icon: <Clock size={16} weight="fill" />,
   },
@@ -222,6 +255,7 @@ const adminNav: NavItem[] = [
     ],
   },
   {
+    groep: "CRM",
     label: "Organisaties",
     href: "/dashboard/clients",
     icon: <Buildings size={16} weight="fill" />,
@@ -247,12 +281,12 @@ const clientNav: NavItem[] = [
     icon: <SquaresFour size={16} weight="fill" />,
   },
   {
-    label: "Projecten",
+    label: "Projects",
     href: "/portal/projecten",
     icon: <Folder size={16} weight="fill" />,
   },
   {
-    label: "Tickets",
+    label: "Tasks",
     href: "/portal/tickets",
     icon: <CheckSquare size={16} weight="fill" />,
   },
@@ -393,20 +427,28 @@ function SidebarBody({
           </button>
         </div>
 
+        {/* Zoeken bovenaan, buiten de nav die scrollt: bij een lange lijst
+            hoort het veld te blijven staan. */}
+        <div className="px-3 pt-3 pb-2">
+          <Zoeken />
+        </div>
+
         {/* Nav */}
-        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) =>
-            pending && OPTIONEEL.has(item.href) ? (
-              <NavSkeleton key={item.href} />
-            ) : (
-              <NavLink
-                key={item.href}
-                item={item}
-                pathname={pathname}
-                onNavigate={() => setMobileOpen(false)}
-              />
-            ),
-          )}
+        <nav className="flex-1 px-3 pb-3 space-y-0.5 overflow-y-auto">
+          {navItems.map((item) => (
+            <div key={item.href}>
+              {item.groep && <GroepKop label={item.groep} />}
+              {pending && OPTIONEEL.has(item.href) ? (
+                <NavSkeleton />
+              ) : (
+                <NavLink
+                  item={item}
+                  pathname={pathname}
+                  onNavigate={() => setMobileOpen(false)}
+                />
+              )}
+            </div>
+          ))}
         </nav>
 
       {/* Preview + Sign out */}

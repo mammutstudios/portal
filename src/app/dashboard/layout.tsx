@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { meet } from "@/lib/meten";
+import { KruimelProvider } from "@/components/Kruimels";
 import { redirect } from "next/navigation";
 import Sidebar, { SidebarFallback } from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
@@ -13,6 +14,7 @@ import TopBar from "@/components/TopBar";
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
+    <KruimelProvider>
     <div className="app-shell flex flex-col h-dvh overflow-hidden">
       <Suspense fallback={<TopBar name={null} avatarUrl={null} homeHref="/dashboard" />}>
         <DashboardTopBar />
@@ -24,6 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="app-main flex-1 overflow-y-auto pt-14 md:pt-0">{children}</main>
       </div>
     </div>
+    </KruimelProvider>
   );
 }
 
