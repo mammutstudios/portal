@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useSyncExternalStore } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
 import { updateTaskStatusAction } from "@/lib/actions/tasks";
 import TicketKanban from "@/components/TicketKanban";
 import { Rows, Kanban, MagnifyingGlass } from "@phosphor-icons/react";
 import { TICKET_STATUS, TICKET_STATUS_ORDER } from "@/lib/tickets";
 
-type Weergave = "lijst" | "kanban";
+type Weergave = "board" | "list";
 
 /**
  * Lijst of kanban is een voorkeur van jou, niet van een ticket: hij moet blijven
@@ -24,7 +24,9 @@ let weergaveNu: Weergave | null = null;
 
 function leesWeergave(): Weergave {
   if (weergaveNu === null) {
-    weergaveNu = localStorage.getItem(WEERGAVE_SLEUTEL) === "lijst" ? "lijst" : "kanban";
+    // "lijst" is de oude opgeslagen waarde; wie die nog heeft houdt zijn keuze.
+    const bewaard = localStorage.getItem(WEERGAVE_SLEUTEL);
+    weergaveNu = bewaard === "list" || bewaard === "lijst" ? "list" : "board";
   }
   return weergaveNu;
 }
@@ -43,14 +45,14 @@ function abonneerOpWeergave(melden: () => void) {
 }
 import Link from "next/link";
 import ClientLogo from "@/components/ClientLogo";
+import TaskFilter, { STANDAARD_FILTERS, pasToe, type Filters } from "@/components/TaskFilter";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import type { Task, TaskStatus } from "@/lib/types";
-import Button, { ButtonLink } from "@/components/Button";
+import type { Task } from "@/lib/types";
+import { ButtonLink } from "@/components/Button";
 
-/** TSK-00042. Vijf cijfers, zodat de kolom niet verspringt bij nummer 100. */
+/** 042. Drie cijfers; loopt het ooit over de 999 heen, dan groeit hij vanzelf. */
 function taskNummer(nummer: number | null): string {
-  return nummer === null ? "" : `TSK-${String(nummer).padStart(5, "0")}`;
+  return nummer === null ? "" : String(nummer).padStart(3, "0");
 }
 
 /** Deadline voorbij, en nog niet klaar. */
@@ -76,7 +78,9 @@ function Afvinken({ task }: { task: Task }) {
         type="submit"
         aria-label={klaar ? "Terugzetten op Open" : "Afvinken"}
         title={klaar ? "Terugzetten op Open" : "Afvinken"}
-        className="w-4 h-4 rounded-full flex items-center justify-center"
+        // Vierkant met een ronding, net als de subtaken in het ticket zelf: een
+        // rondje leest als een keuzerondje waar er maar één van mag.
+        className="w-4 h-4 rounded flex items-center justify-center"
         style={{
           border: `1.5px solid ${klaar ? "#16a34a" : "var(--border)"}`,
           background: klaar ? "#16a34a" : "transparent",
@@ -104,7 +108,7 @@ function StatusCycle({ task }: { task: Task }) {
       <button
         type="submit"
         title={`Zet naar: ${TICKET_STATUS[next].label}`}
-        className="px-2 py-0.5 rounded-md text-xs font-medium"
+        className="px-2 py-0.5 rounded-md text-xs font-medium leading-4"
         style={{
           background: TICKET_STATUS[task.status].bg,
           color: TICKET_STATUS[task.status].text,
@@ -121,6 +125,7 @@ function StatusCycle({ task }: { task: Task }) {
 // staat nu op de ticketpagina en haalt ze daar zelf op.
 export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
   const [zoek, setZoek] = useState("");
+  const [filters, setFilters] = useState<Filters>(STANDAARD_FILTERS);
   const router = useRouter();
   const weergave = useSyncExternalStore(
     abonneerOpWeergave,
@@ -128,10 +133,8 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
     // Wat de server rendert zolang er nog geen browser is om localStorage te
     // lezen. Moet gelijk zijn aan de standaard hierboven, anders wisselt het
     // scherm meteen na het laden van weergave.
-    () => "kanban" as Weergave,
+    () => "board" as Weergave,
   );
-
-  const openCount = tasks.filter((t) => t.status !== "done").length;
 
   /**
    * Zoeken doet de browser, niet de server: alle tickets staan hier al. Zodra
@@ -143,9 +146,12 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
    * hem heeft of hem indiende.
    */
   const zichtbaar = useMemo(() => {
+    // Eerst de filters, dan de zoekterm: beide beperken, de volgorde maakt
+    // voor de uitkomst niet uit, maar zo doorzoekt hij de kleinste stapel.
+    const gefilterd = pasToe(tasks, filters, weergave === "list");
     const term = zoek.trim().toLowerCase();
-    if (!term) return tasks;
-    return tasks.filter((t) =>
+    if (!term) return gefilterd;
+    return gefilterd.filter((t) =>
       [
         t.title,
         t.description,
@@ -156,19 +162,22 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
         t.created_by_profile?.full_name,
       ].some((veld) => veld?.toLowerCase().includes(term)),
     );
-  }, [tasks, zoek]);
+  }, [tasks, zoek, filters, weergave]);
 
   // Geen max-width zoals de andere pagina's: de kanban telt vier kolommen en
   // die passen niet in een leesbreedte.
   return (
-    <div className="px-4 py-6 md:px-10 md:py-10">
+    // Smallere marge dan de andere pagina's (md:px-10): een lijst met zeven
+    // kolommen heeft de breedte nodig, en de rand van het scherm is hier niet
+    // het probleem.
+    <div className="px-4 pt-4 pb-6 md:px-6 md:pt-5 md:pb-10">
       {/* Geen paginakop: het kruimelpad in de balk zegt al dat je bij Tasks
           bent, en twee keer hetzelfde woord boven elkaar kost alleen hoogte.
           Ook geen kader om de boel heen; de lijst mag de volle breedte. */}
       <div className="flex items-center justify-between gap-2 mb-5">
         <label
-          className="flex items-center gap-2 px-3 rounded-lg min-w-0"
-          style={{ height: 36, maxWidth: "20rem", flex: "1 1 12rem", border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+          className="flex items-center gap-2 px-3 rounded-md min-w-0"
+          style={{ height: 32, width: "18rem", flexShrink: 1, minWidth: "8rem", border: "1px solid var(--border)", background: "var(--bg)" }}
         >
           <MagnifyingGlass size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
           <input
@@ -180,15 +189,19 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
           />
         </label>
 
-        <div className="flex items-center gap-2 self-stretch">
+        {/* De keuzes komen uit alle tasks en niet uit wat er na het zoeken
+            overblijft: anders verdwijnt een filter uit de lijst zodra je typt. */}
+        <TaskFilter tasks={tasks} filters={filters} onWijzig={setFilters} />
+
+        <div className="flex items-center gap-2 self-stretch ml-auto">
           <WeergaveWissel weergave={weergave} onKies={schrijfWeergave} />
-          <ButtonLink href="/dashboard/tasks/nieuw">
-            + Nieuwe task
+          <ButtonLink href="/dashboard/tasks/nieuw" size="xs">
+            New task
           </ButtonLink>
         </div>
       </div>
 
-      {weergave === "kanban" ? (
+      {weergave === "board" ? (
         <TicketKanban tasks={zichtbaar} />
       ) : (
       <div className="overflow-x-auto">
@@ -196,15 +209,15 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
           <table className="w-full min-w-[40rem]">
             <thead>
               <tr style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
-                {/* Lege kop boven de vinkjes: een kolomnaam boven een rondje
-                    van 16 pixels leest als ruis. */}
-                <th className="w-8" />
-                <th className="text-left pr-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Task</th>
-                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
-                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
-                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Toegewezen</th>
-                <th className="text-left px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
-                <th className="text-right px-5 py-2.5 text-xs font-semibold" style={{ color: "var(--ink)" }}>Nr</th>
+                {/* Over het vinkjeskolommetje heen, zodat de kop tegen de
+                    linkermarge staat en niet achter een rondje van 16 pixels
+                    vandaan begint. */}
+                <th colSpan={2} className="text-left pr-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Task</th>
+                <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Status</th>
+                <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
+                <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Toegewezen</th>
+                <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
+                <th className="text-left pl-5 pr-2 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>ID</th>
               </tr>
             </thead>
             <tbody>
@@ -215,19 +228,23 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
                     key={task.id}
                     onClick={() => router.push(`/dashboard/tasks/${task.id}`)}
                     className="cursor-pointer"
-                    style={{ borderBottom: i < zichtbaar.length - 1 ? "1px solid var(--border)" : "none", transition: "background 120ms" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                    style={{
+                      height: 28,
+                      borderBottom: i < zichtbaar.length - 1 ? "1px solid var(--border)" : "none",
+                      transition: "background 120ms",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--row-hover)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                   >
                     {/* Afvinken zonder de task te openen. Klaar zet hem terug
                         op Open, zodat een misklik met dezelfde klik te
                         herstellen is. */}
-                    <td className="py-2 w-8" onClick={(e) => e.stopPropagation()}>
+                    <td className="pl-2 py-0 w-8" onClick={(e) => e.stopPropagation()}>
                       <Afvinken task={task} />
                     </td>
-                    <td className="pr-5 py-2">
+                    <td className="pr-5 py-0">
                       <p
-                        className="text-sm font-medium"
+                        className="text-sm font-medium leading-4"
                         style={{
                           color: task.status === "done" ? "var(--text-muted)" : "var(--text-heading)",
                           textDecoration: task.status === "done" ? "line-through" : "none",
@@ -238,10 +255,10 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
                     </td>
                     {/* De statusknop mag niet doorklikken naar het ticket: hier
                         wissel je hem, en dat is een andere handeling. */}
-                    <td className="px-5 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-5 py-0" onClick={(e) => e.stopPropagation()}>
                       <StatusCycle task={task} />
                     </td>
-                    <td className="px-5 py-2 text-sm" style={{ color: "var(--text-muted)" }}>
+                    <td className="px-5 py-0 text-sm" style={{ color: "var(--text-muted)" }}>
                       {task.clients?.name ? (
                         <span className="flex items-center gap-2 min-w-0">
                           <ClientLogo logo_url={task.clients.logo_url} name={task.clients.name} size="xs" />
@@ -249,7 +266,7 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
                         </span>
                       ) : "—"}
                     </td>
-                    <td className="px-5 py-2 text-sm" style={{ color: "var(--text-muted)" }}>
+                    <td className="px-5 py-0 text-sm" style={{ color: "var(--text-muted)" }}>
                       {assignee ? (
                         <div className="flex items-center gap-2">
                           {task.profiles?.avatar_url ? (
@@ -264,14 +281,14 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
                       ) : "—"}
                     </td>
                     <td
-                      className="px-5 py-2 text-sm"
+                      className="px-5 py-0 text-sm"
                       style={{ color: teLaat(task) ? "#b0413e" : "var(--text-muted)" }}
                     >
                       {task.due_date
                         ? new Date(task.due_date).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })
                         : "—"}
                     </td>
-                    <td className="px-5 py-2 text-right text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+                    <td className="pl-5 pr-2 py-0 text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
                       {taskNummer(task.nummer)}
                     </td>
                   </tr>
@@ -308,10 +325,10 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
  * rijtje kolommen op 16 pixels te veel op elkaar lijken.
  */
 const WEERGAVEN: { waarde: Weergave; label: string; icoon: React.ReactNode }[] = [
-  // Kanban vooraan: dat is de standaardweergave, en die hoort links te staan
+  // Board vooraan: dat is de standaardweergave, en die hoort links te staan
   // zodat de volgorde van de knoppen klopt met waar je terechtkomt.
-  { waarde: "kanban", label: "Kanban", icoon: <Kanban size={16} weight="bold" /> },
-  { waarde: "lijst", label: "Lijst", icoon: <Rows size={16} weight="bold" /> },
+  { waarde: "board", label: "Board", icoon: <Kanban size={15} weight="bold" /> },
+  { waarde: "list", label: "List", icoon: <Rows size={15} weight="bold" /> },
 ];
 
 function WeergaveWissel({
@@ -327,7 +344,7 @@ function WeergaveWissel({
     // ook als die knop ooit andere padding krijgt. De radius is die van het
     // zoekveld en van de zoekbalk in de topbalk (0.5rem).
     <div
-      className="flex self-stretch overflow-hidden rounded-lg"
+      className="flex self-stretch overflow-hidden rounded-md"
       style={{ border: "1px solid var(--border)" }}
     >
       {WEERGAVEN.map(({ waarde, label, icoon }) => (
@@ -335,7 +352,7 @@ function WeergaveWissel({
           key={waarde}
           onClick={() => onKies(waarde)}
           aria-pressed={weergave === waarde}
-          className="text-sm font-medium px-3 flex items-center gap-1.5"
+          className="text-xs font-medium px-2.5 flex items-center gap-1.5"
           style={{
             background: weergave === waarde ? "var(--bg-hover)" : "transparent",
             color: weergave === waarde ? "var(--text-heading)" : "var(--text-muted)",

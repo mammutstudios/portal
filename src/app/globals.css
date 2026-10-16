@@ -61,6 +61,12 @@
      met transparant: dan weet je wat eruit komt, los van wat erachter staat. */
   --sidebar-bg: color-mix(in srgb, var(--ink) 3%, var(--white));
   --sidebar-border: color-mix(in srgb, var(--ink) 2%, transparent);
+
+  /* Een regel in een lijst is geen knop. --bg-hover (9%) licht de hele regel
+     op en trekt daarmee harder aan je aandacht dan de regel waard is; deze
+     tint zegt alleen waar je muis staat. Bewust dezelfde als de zijbalk, dus
+     als die verschuift verschuift dit mee. */
+  --row-hover: var(--sidebar-bg);
 }
 
 /* Basisschaal: 110% — alsof de browser op 110% zoomt.
@@ -236,6 +242,22 @@ th, td {
    1.125rem is de maat die de site zelf aanhoudt. */
 .mammut-button--md {
   font-size: 1.125rem;
+}
+
+/* Voor een werkbalk boven een lijst: daar staat de knop naast een zoekveld en
+   een weergavewissel, en op de normale maat domineert hij die rij. */
+.mammut-button--xs {
+  /* Een vaste hoogte in plaats van padding in em: deze knop staat naast een
+     zoekveld van 32 pixels, en met em moet je dat bij elke wijziging van de
+     tekstgrootte opnieuw uitrekenen. box-sizing staat op border-box, dus de
+     rand telt mee. */
+  --mb-pad-y: 0;
+  --mb-pad-x: 0.85em;
+  /* Minder ronding dan de grote maat: dezelfde 0.5rem op een knop van 32
+     pixels geeft een halve stadionvorm. */
+  --mb-radius: 0.375rem;
+  height: 32px;
+  font-size: 0.8125rem;
 }
 
 .mammut-button:hover {

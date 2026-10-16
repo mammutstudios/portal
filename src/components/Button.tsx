@@ -6,7 +6,7 @@ import type { ComponentPropsWithoutRef } from "react";
  * de klassen op één plek te houden.
  */
 type Variant = "primary" | "secondary" | "ghost" | "danger";
-type Size = "sm" | "md";
+type Size = "xs" | "sm" | "md";
 
 type Opmaak = {
   variant?: Variant;
@@ -18,7 +18,7 @@ function klassen({ variant = "primary", size = "sm", className = "" }: Opmaak) {
   return [
     "mammut-button",
     `mammut-button--${variant}`,
-    size === "md" ? "mammut-button--md" : "",
+    size === "md" ? "mammut-button--md" : size === "xs" ? "mammut-button--xs" : "",
     className,
   ]
     .filter(Boolean)
