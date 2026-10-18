@@ -124,6 +124,22 @@ th, td {
   background: var(--bg);
 }
 
+/* Als app in het Dock tekent macOS de drie knopjes over de pagina heen,
+   linksboven, precies waar het logovak staat. Ze zijn samen zo'n 60 pixels
+   breed vanaf x=18 en hun hart ligt 33 pixels onder de bovenkant van het
+   venster. Vandaar twee dingen alleen in deze stand: de balk terug naar 64
+   zodat ons hart op diezelfde hoogte ligt, en het logo opzij zodat het niet
+   onder de knopjes verdwijnt. In een tabblad verandert er niets. */
+@media (display-mode: standalone) {
+  .app-topbar {
+    height: 64px;
+  }
+
+  .app-topbar-logo {
+    padding-left: 84px;
+  }
+}
+
 .app-sidebar {
   /* dvh, niet vh: op mobiel is 100vh hoger dan het zichtbare venster zodra de
      browserbalken in beeld staan, waardoor de onderkant van het menu onder die

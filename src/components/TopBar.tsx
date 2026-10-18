@@ -52,7 +52,7 @@ export default function TopBar({
 
   return (
     <header
-      className="hidden md:flex items-stretch flex-shrink-0"
+      className="app-topbar hidden md:flex items-stretch flex-shrink-0"
       // 48 en niet 64: sinds het zoekveld naar de zijbalk ging staan hier
       // alleen nog het logo en het account, en die vragen die hoogte niet.
       style={{ height: 48, borderBottom: "1px solid var(--border)", background: "var(--bg)" }}
@@ -60,7 +60,7 @@ export default function TopBar({
       {/* Logo-vak precies zo breed als de sidebar, met dezelfde scheidingslijn erna. */}
       <Link
         href={homeHref}
-        className="flex items-center gap-2.5 flex-shrink-0 px-4"
+        className="app-topbar-logo flex items-center gap-2.5 flex-shrink-0 px-4"
         // Min de 1px van het streepje hierna: samen zijn ze precies zo breed als de
         // sidebar, waarvan de rand binnen die breedte valt (border-box).
         //

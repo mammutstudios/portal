@@ -4,10 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Mammut Portal",
   description: "Mammut Studios client portal",
-  icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
-  },
+  // Geen icons-blok: dat wees allebei naar dezelfde png van 510 pixels en
+  // overschreef daarmee icon.svg en apple-icon.png, die er juist voor bedoeld
+  // zijn. Next pakt die bestanden nu vanzelf, elk op zijn eigen maat.
 };
 
 export default function RootLayout({
