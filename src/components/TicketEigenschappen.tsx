@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Buildings,
   CalendarBlank,
@@ -59,12 +60,15 @@ export default function TicketEigenschappen({
   clients,
   projects,
   profiles,
+  gewerkteUren,
 }: {
   task: Task;
   clients: KlantOptie[];
   projects: Pick<Project, "id" | "title">[];
   /** Alleen team Mammut: een ticket is werk dat wij doen. Zie lib/team.ts. */
   profiles: Pick<Profile, "id" | "full_name" | "avatar_url">[];
+  /** Som van de uren die op deze task geschreven zijn. */
+  gewerkteUren: number;
 }) {
   const router = useRouter();
   const [bezig, start] = useTransition();
@@ -257,6 +261,28 @@ export default function TicketEigenschappen({
               <Leeg />
             )}
           </Waarde>
+        )}
+      </Rij>
+
+      {/* Niet aanpasbaar: uren schrijf je in het weekrooster, waar je ziet
+          hoe je dag eruitziet. Hier staat alleen de uitkomst. */}
+      <Rij icoon={<Clock size={16} />} label="Uren">
+        {gewerkteUren > 0 ? (
+          <Link
+            href="/dashboard/toggl"
+            className="px-2 py-1 text-sm rounded-md"
+            style={{ color: "var(--text-heading)" }}
+          >
+            {gewerkteUren.toFixed(2).replace(".", ",")}
+          </Link>
+        ) : (
+          <Link
+            href="/dashboard/toggl"
+            className="px-2 py-1 text-sm rounded-md"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Nog geen uren
+          </Link>
         )}
       </Rij>
 

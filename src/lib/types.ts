@@ -220,11 +220,23 @@ export type TimeEntry = {
   task: string;
   hours: number;
   project_id: string | null;
+  /**
+   * De task waar deze uren op geschreven zijn, als er een is. Let op het
+   * verschil met `task` hierboven: dat is de omschrijving die je zelf typt.
+   */
+  task_id: string | null;
   date: string;
+  /**
+   * Begintijd, als die er is. Leeg betekent: die dag geschreven, maar niemand
+   * heeft opgeschreven wanneer. Zo'n regel staat boven de dag in het rooster
+   * en niet ergens in het midden van de ochtend alsof het vaststaat.
+   */
+  start_at: string | null;
   profile_id: string | null;
   created_at: string;
   projects?: { id: string; title: string; clients?: { name: string; logo_url: string | null } | null } | null;
   profiles?: { id: string; full_name: string | null; avatar_url: string | null } | null;
+  tasks?: { id: string; title: string; nummer: number | null } | null;
 };
 
 export type Contact = {

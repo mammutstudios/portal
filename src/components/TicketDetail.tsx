@@ -25,6 +25,7 @@ export default function TicketDetail({
   reacties,
   huidigeGebruikerId,
   noembaar,
+  gewerkteUren,
 }: {
   task: Task;
   subtasks: Subtask[];
@@ -37,6 +38,8 @@ export default function TicketDetail({
   projects: Pick<Project, "id" | "title">[];
   /** Alleen team Mammut. Zie lib/team.ts. */
   profiles: Pick<Profile, "id" | "full_name" | "avatar_url">[];
+  /** Som van de uren die op deze task geschreven zijn. */
+  gewerkteUren: number;
 }) {
 
   // Voor de avatar bij het invoerveld. Staat al in de teamlijst, dus dat
@@ -60,6 +63,7 @@ export default function TicketDetail({
             task={task}
             clients={clients}
             projects={projects}
+            gewerkteUren={gewerkteUren}
             profiles={profiles}
           />
         </div>

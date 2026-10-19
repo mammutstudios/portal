@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { CalendarBlank, Rows } from "@phosphor-icons/react";
+import TimeWeek, { type TaskOptie } from "@/components/TimeWeek";
 import Modal from "@/components/Modal";
 import TimeEntryForm from "@/components/TimeEntryForm";
 import { deleteTimeEntryAction } from "@/lib/actions/timeEntries";
@@ -32,32 +34,81 @@ function ClientLogo({ logo_url, name }: { logo_url: string | null; name: string 
 export default function TogglPageClient({
   entries,
   projects,
+  tasks,
   profiles,
   currentUserId,
 }: {
   entries: TimeEntry[];
   projects: ProjectOption[];
+  tasks: TaskOptie[];
   profiles: Pick<Profile, "id" | "full_name" | "avatar_url">[];
   currentUserId: string | null;
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editEntry, setEditEntry] = useState<TimeEntry | null>(null);
+  const [weergave, setWeergave] = useState<"week" | "lijst">("week");
 
   const totalHours = useMemo(() => entries.reduce((sum, e) => sum + Number(e.hours), 0), [entries]);
 
-  return (
-    <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-3xl font-extrabold" style={{ color: "var(--text-heading)" }}>
-          Time <span className="text-2xl font-normal" style={{ color: "var(--text-muted)" }}>({totalHours.toFixed(2)})</span>
-        </h1>
-        <Button onClick={() => setShowAdd(true)}>
-          + Uren toevoegen
-        </Button>
-      </div>
-      <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Urenregistratie</p>
+  const wissel = (
+    <div className="flex overflow-hidden rounded-md" style={{ border: "1px solid var(--border)", height: 30 }}>
+      {([["week", "Week", <CalendarBlank key="w" size={15} weight="bold" />],
+         ["lijst", "Lijst", <Rows key="l" size={15} weight="bold" />]] as const).map(([waarde, label, icoon]) => (
+        <button
+          key={waarde}
+          type="button"
+          aria-pressed={weergave === waarde}
+          onClick={() => setWeergave(waarde)}
+          className="text-xs font-medium px-2.5 flex items-center gap-1.5"
+          style={{
+            background: weergave === waarde ? "var(--bg-hover)" : "none",
+            color: weergave === waarde ? "var(--text-heading)" : "var(--text-muted)",
+            opacity: weergave === waarde ? 1 : 0.6,
+          }}
+        >
+          {icoon}
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 
-      <div className="squircle overflow-x-auto" style={{ border: "1px solid var(--border)", background: "var(--bg)" }}>
+  if (weergave === "week") {
+    return (
+      <>
+        <TimeWeek
+          entries={entries}
+          projects={projects}
+          tasks={tasks}
+          profiles={profiles as Profile[]}
+          currentUserId={currentUserId}
+          rechts={wissel}
+        />
+        {editEntry && (
+          <Modal onClose={() => setEditEntry(null)} title="Uren bewerken">
+            <TimeEntryForm entry={editEntry} projects={projects} profiles={profiles} onClose={() => setEditEntry(null)} />
+          </Modal>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className="px-4 py-6 md:px-6 md:py-5">
+      {/* Geen paginakop: de kruimel in de balk zegt al dat je bij Time bent. */}
+      <div className="flex items-center justify-between mb-5">
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+          Totaal <strong style={{ color: "var(--text-heading)" }}>{totalHours.toFixed(2)}</strong>
+        </span>
+        <div className="flex items-center gap-2">
+          {wissel}
+          <Button size="xs" onClick={() => setShowAdd(true)}>
+            + Uren toevoegen
+          </Button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
         {entries.length > 0 ? (
           <table className="w-full min-w-[40rem]">
             <thead>

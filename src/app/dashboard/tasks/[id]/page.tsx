@@ -20,6 +20,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     { data: profiles },
     { data: reacties },
     { data: klantLeden },
+    { data: urenRegels },
     {
       data: { user },
     },
@@ -44,10 +45,17 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     // de database waar de hele pagina op wachtte. De tabel is klein genoeg om
     // hem in zijn geheel op te halen.
     supabase.from("client_members").select("client_id, profiles(id, full_name, avatar_url)"),
+    // Alleen de uren, niet de regels zelf: de pagina toont er een totaal van.
+    supabase.from("time_entries").select("hours").eq("task_id", id),
     supabase.auth.getUser(),
   ]);
 
   if (!task) notFound();
+
+  const gewerkteUren = (urenRegels ?? []).reduce(
+    (som, r) => som + Number((r as { hours: number }).hours),
+    0,
+  );
 
   /**
    * Wie je in een reactie kunt noemen: het team, plus de mensen van de
@@ -92,6 +100,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
         noembaar={noembaar}
         reacties={(reacties ?? []) as unknown as TicketReactie[]}
         huidigeGebruikerId={user?.id ?? null}
+      gewerkteUren={gewerkteUren}
       />
     </div>
   );
