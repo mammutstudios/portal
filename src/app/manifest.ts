@@ -9,6 +9,11 @@ import type { MetadataRoute } from "next";
  *
  * Let op: een app die al in het Dock staat onthoudt zijn icoon van het moment
  * van toevoegen. Verandert het icoon, dan moet hij er opnieuw in.
+ *
+ * De twee iconen zijn elkaars negatief, en dat is met opzet. Het Dock staat
+ * vol donkere vlakken, dus daar valt het lichte icoon op; een tabblad heeft
+ * een lichte balk, en daar is het donkere icoon het duidelijkst. Vandaar: hier
+ * en in apple-icon.png de lichte, in icon.svg en favicon.ico de donkere.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

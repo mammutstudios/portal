@@ -194,6 +194,11 @@ export type Task = {
   client_id: string | null;
   /** Wie het heeft ingediend: het team, of de klant vanuit het portaal. */
   created_by: string | null;
+  /**
+   * Hoeveel uur je denkt dat het wordt, in uren. Mag leeg blijven; naast de
+   * geschreven uren op de taskpagina laat hij zien of het uit de hand loopt.
+   */
+  estimate_hours: number | null;
   projects?: { id: string; title: string } | null;
   clients?: { id: string; name: string; logo_url: string | null } | null;
   contacts?: { id: string; name: string } | null;

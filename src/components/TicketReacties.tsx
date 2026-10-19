@@ -218,7 +218,9 @@ export default function TicketReacties({
 
       <div
         className="flex items-center gap-3 rounded-lg px-3 py-2"
-        style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+        // Wit, net als het vlak eromheen: een grijs veld leest als iets wat
+        // dicht staat, en dit is de regel waar je in moet typen.
+        style={{ background: "var(--bg)", border: "1px solid var(--border)" }}
       >
         <Avatar naam={huidigeNaam} url={huidigeAvatar} />
         <textarea
@@ -258,8 +260,8 @@ export default function TicketReacties({
           aria-label="Reactie plaatsen"
           className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
-            // Niet --bg-secondary: dat is nu de kleur van het veld eronder,
-            // en dan is de knop in rust onzichtbaar.
+            // In rust een tint grijs: het veld eronder is wit, en daar zou
+            // de knop in verdwijnen.
             background: tekst.trim() ? "var(--ink)" : "var(--bg-hover)",
             color: tekst.trim() ? "var(--white)" : "var(--text-muted)",
             opacity: bezig ? 0.5 : 1,

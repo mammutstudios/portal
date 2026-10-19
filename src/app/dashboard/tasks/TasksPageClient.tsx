@@ -10,7 +10,8 @@ type Weergave = "board" | "list";
 
 /**
  * Lijst of kanban is een voorkeur van jou, niet van een ticket: hij moet blijven
- * staan als je terugkomt. Zonder opgeslagen voorkeur is het de kanban.
+ * staan als je terugkomt. Zonder opgeslagen voorkeur is het de lijst: daar zie
+ * je alles in één scherm, en het bord is wat je erbij pakt om te verdelen.
  * localStorage bestaat alleen in de browser, dus de server rendert de
  * standaard en useSyncExternalStore wisselt daarna om naar wat jij koos.
  * Dat is de reden voor dit winkeltje in plaats van een useState met een effect
@@ -26,7 +27,7 @@ function leesWeergave(): Weergave {
   if (weergaveNu === null) {
     // "lijst" is de oude opgeslagen waarde; wie die nog heeft houdt zijn keuze.
     const bewaard = localStorage.getItem(WEERGAVE_SLEUTEL);
-    weergaveNu = bewaard === "list" || bewaard === "lijst" ? "list" : "board";
+    weergaveNu = bewaard === "board" ? "board" : "list";
   }
   return weergaveNu;
 }
@@ -43,9 +44,9 @@ function abonneerOpWeergave(melden: () => void) {
     weergaveLuisteraars.delete(melden);
   };
 }
-import Link from "next/link";
 import ClientLogo from "@/components/ClientLogo";
 import TaskFilter, { STANDAARD_FILTERS, pasToe, type Filters } from "@/components/TaskFilter";
+import TaskToevoegen, { type KlantOptie, type ProjectOptie } from "@/components/TaskToevoegen";
 import { useRouter } from "next/navigation";
 import type { Task } from "@/lib/types";
 import { ButtonLink } from "@/components/Button";
@@ -123,7 +124,15 @@ function StatusCycle({ task }: { task: Task }) {
 
 // De lijsten voor het bewerkformulier zaten hier ook in, maar dat formulier
 // staat nu op de ticketpagina en haalt ze daar zelf op.
-export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
+export default function TasksPageClient({
+  tasks,
+  klanten,
+  projecten,
+}: {
+  tasks: Task[];
+  klanten: KlantOptie[];
+  projecten: ProjectOptie[];
+}) {
   const [zoek, setZoek] = useState("");
   const [filters, setFilters] = useState<Filters>(STANDAARD_FILTERS);
   const router = useRouter();
@@ -133,7 +142,7 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
     // Wat de server rendert zolang er nog geen browser is om localStorage te
     // lezen. Moet gelijk zijn aan de standaard hierboven, anders wisselt het
     // scherm meteen na het laden van weergave.
-    () => "board" as Weergave,
+    () => "list" as Weergave,
   );
 
   /**
@@ -297,19 +306,20 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
             </tbody>
           </table>
         ) : (
-          <p className="px-5 py-8 text-sm text-center" style={{ color: "var(--text-muted)" }}>
+          <p className="px-2 py-6 text-sm" style={{ color: "var(--text-muted)" }}>
             {zoek.trim() ? (
               <>Niets gevonden voor &ldquo;{zoek.trim()}&rdquo;.</>
             ) : (
-              <>
-                Nog geen tickets.{" "}
-                <Link href="/dashboard/tasks/nieuw" className="underline" style={{ color: "var(--text)" }}>
-                  Maak het eerste aan.
-                </Link>
-              </>
+              <>Nog geen tasks.</>
             )}
           </p>
         )}
+
+        {/* Ook als er niets staat: dan is dit de enige weg naar een eerste
+            task, en die hoort op dezelfde plek te zitten als later. */}
+        <div style={{ borderTop: "1px solid var(--border)" }}>
+          <TaskToevoegen klanten={klanten} projecten={projecten} />
+        </div>
       </div>
       )}
     </div>
@@ -325,10 +335,10 @@ export default function TasksPageClient({ tasks }: { tasks: Task[] }) {
  * rijtje kolommen op 16 pixels te veel op elkaar lijken.
  */
 const WEERGAVEN: { waarde: Weergave; label: string; icoon: React.ReactNode }[] = [
-  // Board vooraan: dat is de standaardweergave, en die hoort links te staan
+  // List vooraan: dat is de standaardweergave, en die hoort links te staan
   // zodat de volgorde van de knoppen klopt met waar je terechtkomt.
-  { waarde: "board", label: "Board", icoon: <Kanban size={15} weight="bold" /> },
   { waarde: "list", label: "List", icoon: <Rows size={15} weight="bold" /> },
+  { waarde: "board", label: "Board", icoon: <Kanban size={15} weight="bold" /> },
 ];
 
 function WeergaveWissel({

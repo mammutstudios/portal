@@ -25,6 +25,19 @@ async function clientVanProject(
   return (data?.client_id as string | null) ?? null;
 }
 
+/**
+ * Een getal uit een invoerveld, in uren.
+ *
+ * Accepteert zowel 1.5 als 1,5: op een Nederlands toetsenbord is de komma wat
+ * je vanzelf typt, en een inschatting die stil op null uitkomt omdat je het
+ * verkeerde teken gebruikte is erger dan geen veld.
+ */
+function uren(ruw: string | null): number | null {
+  if (!ruw || !ruw.trim()) return null;
+  const getal = Number(ruw.trim().replace(",", "."));
+  return Number.isFinite(getal) && getal >= 0 ? getal : null;
+}
+
 /** Wie is er ingelogd? Belandt in created_by, de indiener van het ticket. */
 async function huidigeGebruiker(supabase: SupabaseClient): Promise<string | null> {
   const { data } = await supabase.auth.getClaims();
@@ -50,6 +63,7 @@ export async function createTaskAction(formData: FormData) {
     status: (formData.get("status") as string) || "open",
     priority: (formData.get("priority") as string) || "medium",
     due_date: (formData.get("due_date") as string) || null,
+    estimate_hours: uren(formData.get("estimate_hours") as string | null),
     assigned_contact_id: (formData.get("assigned_contact_id") as string) || null,
     // Niemand kiezen betekent niet: laat maar liggen. Een ticket zonder
     // eigenaar valt tussen wal en schip, dus komt hij standaard op Daniel te
@@ -179,6 +193,7 @@ const AANPASBARE_VELDEN = [
   "due_date",
   "priority",
   "status",
+  "estimate_hours",
 ] as const;
 
 type AanpasbaarVeld = (typeof AANPASBARE_VELDEN)[number];
@@ -199,7 +214,9 @@ export async function updateTaskVeldAction(formData: FormData) {
 
   const supabase = await createClient();
 
-  const wijziging: Record<string, unknown> = { [veld]: waarde };
+  const wijziging: Record<string, unknown> = {
+    [veld]: veld === "estimate_hours" ? uren(ruw) : waarde,
+  };
 
   // Twee velden slepen iets mee. De status stempelt het moment van afronden,
   // en toewijzen kan maar aan één kant tegelijk: een teamlid óf een

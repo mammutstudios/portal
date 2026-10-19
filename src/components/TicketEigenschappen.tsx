@@ -9,6 +9,7 @@ import {
   CircleDashed,
   Clock,
   Folder,
+  Timer,
   User,
   Warning,
 } from "@phosphor-icons/react";
@@ -259,6 +260,42 @@ export default function TicketEigenschappen({
               </span>
             ) : (
               <Leeg />
+            )}
+          </Waarde>
+        )}
+      </Rij>
+
+      {/* Vlak boven de uren, want die twee lees je samen: zonder inschatting
+          zegt "3,50" niets over of het meevalt. */}
+      <Rij icoon={<Timer size={16} />} label="Inschatting" open={open === "inschatting"} openBreedte="7rem">
+        {open === "inschatting" ? (
+          <input
+            autoFocus
+            inputMode="decimal"
+            defaultValue={task.estimate_hours === null ? "" : String(task.estimate_hours).replace(".", ",")}
+            onBlur={(e) => schrijf("estimate_hours", e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              // Escape laat het veld staan zoals het was: onBlur zou anders
+              // alsnog schrijven wat je net wilde weggooien.
+              if (e.key === "Escape") setOpen(null);
+            }}
+            className="w-full px-2 py-1 rounded-md text-sm outline-none"
+            style={{
+              border: "1px solid var(--text-heading)",
+              background: "var(--bg-secondary)",
+              color: "var(--text-heading)",
+            }}
+          />
+        ) : (
+          <Waarde onClick={() => setOpen("inschatting")}>
+            {task.estimate_hours === null ? (
+              <Leeg />
+            ) : (
+              <span>
+                {String(task.estimate_hours).replace(".", ",")}
+                <span style={{ color: "var(--text-muted)" }}> uur</span>
+              </span>
             )}
           </Waarde>
         )}
