@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { CaretRight } from "@phosphor-icons/react";
+import { ZetKruimel } from "@/components/Kruimels";
 import { ProjectStatusBadge, ProjectTagBadge, TaskStatusBadge } from "@/components/StatusBadge";
 import { PHASE_LABEL } from "@/lib/types";
 import DetailList from "@/components/DetailList";
@@ -42,14 +41,9 @@ export default function ProjectDetailClient({
 
   return (
     <div className="px-4 py-6 md:px-10 md:py-10 max-w-5xl mx-auto">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-        <Link href="/dashboard/projects" className="hover:underline" style={{ color: "var(--text-muted)" }}>
-          Projects
-        </Link>
-        <CaretRight size={13} weight="bold" />
-        <span style={{ color: "var(--text-heading)" }}>{project.title}</span>
-      </nav>
+      {/* De naam van het project gaat naar de kruimels in de topbalk; twee
+          keer hetzelfde pad boven elkaar kost alleen hoogte. */}
+      <ZetKruimel label={project.title} />
 
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-3 flex-wrap">
