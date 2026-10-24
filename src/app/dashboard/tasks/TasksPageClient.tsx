@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useMemo, useSyncExternalStore } from "react";
-import { updateTaskStatusAction } from "@/lib/actions/tasks";
+import { useState, useMemo, useRef, useSyncExternalStore, useTransition } from "react";
+import { createPortal } from "react-dom";
+import DatePicker from "@/components/DatePicker";
+import { updateTaskStatusAction, updateTaskVeldAction } from "@/lib/actions/tasks";
 import TicketKanban from "@/components/TicketKanban";
 import { Rows, Kanban, MagnifyingGlass } from "@phosphor-icons/react";
 import { TICKET_STATUS, TICKET_STATUS_ORDER } from "@/lib/tickets";
@@ -47,6 +49,8 @@ function abonneerOpWeergave(melden: () => void) {
 import ClientLogo from "@/components/ClientLogo";
 import TaskFilter, { STANDAARD_FILTERS, pasToe, type Filters } from "@/components/TaskFilter";
 import TaskToevoegen, { type KlantOptie, type ProjectOptie } from "@/components/TaskToevoegen";
+import RijKiezer from "@/components/RijKiezer";
+import RijUren from "@/components/RijUren";
 import { useRouter } from "next/navigation";
 import type { Task } from "@/lib/types";
 import { ButtonLink } from "@/components/Button";
@@ -54,6 +58,84 @@ import { ButtonLink } from "@/components/Button";
 /** 042. Drie cijfers; loopt het ooit over de 999 heen, dan groeit hij vanzelf. */
 function taskNummer(nummer: number | null): string {
   return nummer === null ? "" : String(nummer).padStart(3, "0");
+}
+
+/**
+ * Een lege cel die wel aan te klikken is.
+ *
+ * Een streepje en niet niets: zonder teken is de cel leeg, en dan is er ook
+ * niets om aan te wijzen.
+ */
+function Streepje() {
+  return <span style={{ color: "var(--text-muted)" }}>&mdash;</span>;
+}
+
+/**
+ * De deadline in de regel aanpassen: onze eigen kalender, in een portal.
+ *
+ * Het datumveld van de browser zou hier makkelijker zijn, maar dat is in elke
+ * browser een ander ding en je moet er eerst een pietepeuterig icoontje van
+ * raken voordat er een kalender komt. Dus dezelfde kalender als op de
+ * taskpagina, en net als bij RijKiezer aan de body gehangen: de tabel zit in
+ * een vak dat schuift, en dat knipt ook van onderen af.
+ */
+function RijDatum({
+  waarde,
+  onKies,
+}: {
+  waarde: string | null;
+  onKies: (waarde: string | null) => void;
+}) {
+  const [plek, setPlek] = useState<{ x: number; y: number } | null>(null);
+  const knop = useRef<HTMLButtonElement>(null);
+
+  function openen() {
+    const r = knop.current?.getBoundingClientRect();
+    if (!r) return;
+    // De kalender is 260 breed en ruim 300 hoog; past hij er onder niet bij,
+    // dan klapt hij omhoog.
+    const naarBoven = r.bottom + 320 > window.innerHeight && r.top > 320;
+    setPlek({
+      x: Math.min(r.left, window.innerWidth - 280),
+      y: naarBoven ? r.top - 320 : r.top,
+    });
+  }
+
+  return (
+    <>
+      <button
+        ref={knop}
+        type="button"
+        onClick={openen}
+        className="w-full text-left text-sm rounded px-1.5 flex items-center"
+        style={{ height: 22, color: "inherit", transition: "background 120ms" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      >
+        {waarde
+          ? new Date(waarde).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })
+          : <Streepje />}
+      </button>
+
+      {plek &&
+        createPortal(
+          <div className="fixed z-50" style={{ left: plek.x, top: plek.y, width: 260 }}>
+            <DatePicker
+              name="due_date"
+              defaultValue={waarde ?? undefined}
+              placeholder="Kies datum"
+              startOpen
+              onChange={(nieuweWaarde) => {
+                setPlek(null);
+                onKies(nieuweWaarde || null);
+              }}
+              onSluiten={() => setPlek(null)}
+            />
+          </div>,
+          document.body,
+        )}
+    </>
+  );
 }
 
 /** Deadline voorbij, en nog niet klaar. */
@@ -124,15 +206,43 @@ function StatusCycle({ task }: { task: Task }) {
 
 // De lijsten voor het bewerkformulier zaten hier ook in, maar dat formulier
 // staat nu op de ticketpagina en haalt ze daar zelf op.
+export type Teamlid = { id: string; full_name: string | null; avatar_url: string | null };
+
 export default function TasksPageClient({
   tasks,
   klanten,
   projecten,
+  team,
+  urenPerTask,
 }: {
   tasks: Task[];
   klanten: KlantOptie[];
   projecten: ProjectOptie[];
+  team: Teamlid[];
+  /** Som van de geschreven uren, per task-id. */
+  urenPerTask: Record<string, number>;
 }) {
+  const [, schrijfBezig] = useTransition();
+
+  /**
+   * Eén veld van één task wegschrijven vanuit de regel.
+   *
+   * Via updateTaskVeldAction en niet het hele formulier: die schrijft precies
+   * dit ene veld, zodat de rest van de task niet meegestuurd hoeft te worden
+   * en dus ook niet kan verdwijnen. Zelfde weg als het inline bewerken op de
+   * taskpagina zelf.
+   */
+  function schrijf(taskId: string, veld: string, waarde: string | null) {
+    const fd = new FormData();
+    fd.set("id", taskId);
+    fd.set("veld", veld);
+    fd.set("waarde", waarde ?? "");
+    schrijfBezig(async () => {
+      await updateTaskVeldAction(fd);
+      router.refresh();
+    });
+  }
+
   const [zoek, setZoek] = useState("");
   const [filters, setFilters] = useState<Filters>(STANDAARD_FILTERS);
   const router = useRouter();
@@ -226,6 +336,7 @@ export default function TasksPageClient({
                 <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Klant</th>
                 <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Toegewezen</th>
                 <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Deadline</th>
+                <th className="text-left px-5 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>Uren</th>
                 <th className="text-left pl-5 pr-2 py-2 text-xs font-semibold" style={{ color: "var(--ink)" }}>ID</th>
               </tr>
             </thead>
@@ -268,34 +379,78 @@ export default function TasksPageClient({
                       <StatusCycle task={task} />
                     </td>
                     <td className="px-5 py-0 text-sm" style={{ color: "var(--text-muted)" }}>
-                      {task.clients?.name ? (
-                        <span className="flex items-center gap-2 min-w-0">
-                          <ClientLogo logo_url={task.clients.logo_url} name={task.clients.name} size="xs" />
-                          <span className="truncate">{task.clients.name}</span>
-                        </span>
-                      ) : "—"}
+                      <RijKiezer
+                        waarde={task.client_id}
+                        leegLabel="Geen klant"
+                        zoekPlaatshouder="Zoek een klant"
+                        opties={klanten.map((k) => ({
+                          waarde: k.id,
+                          label: k.name,
+                          logo: k.logo_url,
+                          soort: "klant" as const,
+                        }))}
+                        onKies={(w) => schrijf(task.id, "client_id", w)}
+                      >
+                        {task.clients?.name ? (
+                          <span className="flex items-center gap-2 min-w-0">
+                            <ClientLogo logo_url={task.clients.logo_url} name={task.clients.name} size="xs" />
+                            <span className="truncate">{task.clients.name}</span>
+                          </span>
+                        ) : (
+                          <Streepje />
+                        )}
+                      </RijKiezer>
                     </td>
                     <td className="px-5 py-0 text-sm" style={{ color: "var(--text-muted)" }}>
-                      {assignee ? (
-                        <div className="flex items-center gap-2">
-                          {task.profiles?.avatar_url ? (
-                            <img src={task.profiles.avatar_url} alt={assignee} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
-                          ) : (
-                            <span className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-white" style={{ background: "var(--text-heading)", fontSize: "0.5625rem" }}>
-                              {assignee.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                          {assignee}
-                        </div>
-                      ) : "—"}
+                      <RijKiezer
+                        waarde={task.assigned_profile_id}
+                        leegLabel="Niemand"
+                        zoekPlaatshouder="Zoek een teamlid"
+                        opties={team.map((t) => ({
+                          waarde: t.id,
+                          label: t.full_name ?? "Onbekend",
+                          avatar: t.avatar_url,
+                          soort: "persoon" as const,
+                        }))}
+                        onKies={(w) => schrijf(task.id, "assigned_profile_id", w)}
+                      >
+                        {assignee ? (
+                          <span className="flex items-center gap-2 min-w-0">
+                            {task.profiles?.avatar_url ? (
+                              <img src={task.profiles.avatar_url} alt={assignee} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                            ) : (
+                              <span className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-white" style={{ background: "var(--text-heading)", fontSize: "0.5625rem" }}>
+                                {assignee.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                            <span className="truncate">{assignee}</span>
+                          </span>
+                        ) : (
+                          <Streepje />
+                        )}
+                      </RijKiezer>
                     </td>
                     <td
                       className="px-5 py-0 text-sm"
                       style={{ color: teLaat(task) ? "#b0413e" : "var(--text-muted)" }}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {task.due_date
-                        ? new Date(task.due_date).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })
-                        : "—"}
+                      <RijDatum
+                        waarde={task.due_date}
+                        onKies={(w) => schrijf(task.id, "due_date", w)}
+                      />
+                    </td>
+                    <td
+                      className="px-5 py-0 text-sm"
+                      style={{ color: "var(--text-muted)" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <RijUren
+                        taskId={task.id}
+                        geschreven={urenPerTask[task.id] ?? 0}
+                        inschatting={task.estimate_hours}
+                        onKlaar={() => router.refresh()}
+                      />
                     </td>
                     <td className="pl-5 pr-2 py-0 text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
                       {taskNummer(task.nummer)}

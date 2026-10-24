@@ -148,3 +148,53 @@ export async function zetUrenBlokAction(blok: UrenBlok): Promise<string> {
   revalidatePath("/dashboard/toggl");
   return id!;
 }
+
+/**
+ * Uren op een task schrijven zonder tijdstip.
+ *
+ * Vanuit de tasklijst weet je wel hoeveel uur er heen ging, maar niet wanneer
+ * precies, en daar ga je in zo'n regel ook niet over nadenken. De regel komt
+ * daarom op de dag van vandaag te staan zonder begintijd: in het weekrooster
+ * verschijnt hij boven die dag, en daar sleep je hem op zijn plek als het je
+ * wat kan schelen.
+ *
+ * Het project komt van de task mee, zodat de uren ook op de projectpagina
+ * meetellen zonder dat je het apart hoeft te kiezen.
+ */
+export async function urenOpTaskAction(taskId: string, uren: number): Promise<void> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: taak } = await supabase
+    .from("tasks")
+    .select("title, project_id")
+    .eq("id", taskId)
+    .maybeSingle();
+
+  if (!taak) throw new Error("Die task bestaat niet meer.");
+
+  const rij = {
+    task: (taak as { title: string }).title,
+    task_id: taskId,
+    project_id: (taak as { project_id: string | null }).project_id,
+    profile_id: user?.id ?? null,
+    hours: Math.max(0.25, Math.round(uren * 100) / 100),
+    date: dagIn(new Date()),
+    start_at: null,
+  };
+
+  const { error } = await supabase.from("time_entries").insert(rij);
+  if (error) throw new Error(error.message);
+
+  await logActiviteit({
+    action: "uren.geschreven",
+    entityType: "taak",
+    entityId: taskId,
+    entityLabel: rij.task,
+    meta: { uren: rij.hours },
+  });
+
+  revalidatePath("/dashboard/toggl");
+  revalidatePath("/dashboard/tasks");
+}
+
