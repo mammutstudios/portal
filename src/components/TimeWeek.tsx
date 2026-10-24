@@ -976,7 +976,7 @@ function baantjes(entries: TimeEntry[]): Map<string, { baan: number; van: number
  * altijd dezelfde tint, ook na een herstart, en hoeft er niets opgeslagen te
  * worden. Lage verzadiging, want er staan er twintig naast elkaar.
  */
-function kleurVan(sleutel: string | null): { vlak: string; rand: string } {
+export function kleurVan(sleutel: string | null): { vlak: string; rand: string } {
   // Nog nergens aan gekoppeld: grijs. Een hash van niets kwam altijd op nul
   // uit, en nul is rood; dat las als een foutmelding terwijl er alleen nog
   // geen task bij stond.

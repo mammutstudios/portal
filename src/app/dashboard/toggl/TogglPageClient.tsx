@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CalendarBlank, Rows } from "@phosphor-icons/react";
+import { CalendarBlank, ChartBar, Rows } from "@phosphor-icons/react";
 import TimeWeek, { type TaskOptie } from "@/components/TimeWeek";
+import TimeOverzicht from "@/components/TimeOverzicht";
 import Modal from "@/components/Modal";
 import TimeEntryForm from "@/components/TimeEntryForm";
 import { deleteTimeEntryAction } from "@/lib/actions/timeEntries";
@@ -46,14 +47,15 @@ export default function TogglPageClient({
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editEntry, setEditEntry] = useState<TimeEntry | null>(null);
-  const [weergave, setWeergave] = useState<"week" | "lijst">("week");
+  const [weergave, setWeergave] = useState<"week" | "lijst" | "overzicht">("week");
 
   const totalHours = useMemo(() => entries.reduce((sum, e) => sum + Number(e.hours), 0), [entries]);
 
   const wissel = (
     <div className="flex overflow-hidden rounded-md" style={{ border: "1px solid var(--border)", height: 30 }}>
       {([["week", "Week", <CalendarBlank key="w" size={15} weight="bold" />],
-         ["lijst", "Lijst", <Rows key="l" size={15} weight="bold" />]] as const).map(([waarde, label, icoon]) => (
+         ["lijst", "Lijst", <Rows key="l" size={15} weight="bold" />],
+         ["overzicht", "Overzicht", <ChartBar key="o" size={15} weight="bold" />]] as const).map(([waarde, label, icoon]) => (
         <button
           key={waarde}
           type="button"
@@ -72,6 +74,17 @@ export default function TogglPageClient({
       ))}
     </div>
   );
+
+  if (weergave === "overzicht") {
+    return (
+      <TimeOverzicht
+        entries={entries}
+        profiles={profiles}
+        currentUserId={currentUserId}
+        rechts={wissel}
+      />
+    );
+  }
 
   if (weergave === "week") {
     return (
