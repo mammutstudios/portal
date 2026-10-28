@@ -12,12 +12,6 @@ export const NOTIFICATION_TYPES = [
     default: true,
   },
   {
-    key: "new_invoice",
-    label: "Nieuwe factuur",
-    description: "Zodra er een factuur wordt verstuurd.",
-    default: true,
-  },
-  {
     key: "ticket_update",
     label: "Update op een ticket",
     description: "Als er iets verandert aan een ticket waar je bij betrokken bent.",

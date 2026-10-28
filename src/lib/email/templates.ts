@@ -41,14 +41,14 @@ function knop(href: string, label: string) {
       </tr></table>`;
 }
 
-const euro = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
-
-const VOET_MELDINGEN =
-  "Je krijgt deze mail omdat je meldingen aan hebt staan in het portaal van Mammut Studios.";
-
-/** Sober sjabloon in de huisstijl. Tabellen en inline stijl, want mailclients. */
-function layout(title: string, body: string, voet: string = VOET_MELDINGEN) {
+/**
+ * Sober sjabloon in de huisstijl. Tabellen en inline stijl, want mailclients.
+ *
+ * De voet is verplicht: elke mail hoort te zeggen waarom hij er is. Er stond
+ * een standaardvoet over meldingen, maar die is met de factuurmelding
+ * verdwenen, en die regel onder een uitnodiging zetten zou niet kloppen.
+ */
+function layout(title: string, body: string, voet: string) {
   return `<!doctype html>
 <html lang="nl">
 <head>
@@ -66,44 +66,6 @@ function layout(title: string, body: string, voet: string = VOET_MELDINGEN) {
     </td></tr>
   </table>
 </body></html>`;
-}
-
-export function newInvoiceMail(invoice: {
-  invoiceNumber: string | null;
-  reference: string | null;
-  amountExclTax: number | null;
-  invoiceDate: string | null;
-  clientName: string | null;
-}) {
-  const nummer = invoice.invoiceNumber ? `Factuur ${invoice.invoiceNumber}` : "Nieuwe factuur";
-  const datum = invoice.invoiceDate
-    ? new Date(invoice.invoiceDate).toLocaleDateString("nl-NL", {
-        day: "2-digit", month: "2-digit", year: "numeric",
-      })
-    : null;
-
-  const rows = [
-    invoice.reference && ["Omschrijving", invoice.reference],
-    datum && ["Factuurdatum", datum],
-    invoice.amountExclTax != null && ["Bedrag excl. btw", euro(invoice.amountExclTax)],
-  ].filter(Boolean) as [string, string][];
-
-  const body = `
-    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:${MUTED}">
-      Er staat een nieuwe factuur voor ${invoice.clientName ?? "je"} klaar.
-    </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
-      ${rows
-        .map(
-          ([k, v]) => `<tr>
-            <td style="padding:8px 0;color:${MUTED};width:45%">${k}</td>
-            <td style="padding:8px 0;color:${INK};font-weight:600">${v}</td>
-          </tr>`,
-        )
-        .join("")}
-    </table>`;
-
-  return { subject: `${nummer}${invoice.clientName ? ` — ${invoice.clientName}` : ""}`, html: layout(nummer, body) };
 }
 
 /**
